@@ -127,7 +127,7 @@ body {
 .steps-wrap {
   max-width:1000px;
   margin:0 auto;
-  padding:72px 32px 48px;
+  padding:72px 32px 100px;
 }
 
 /* Step progress */
@@ -217,7 +217,9 @@ body {
   transform:translateY(-2px);
   box-shadow:0 8px 32px rgba(26,77,62,.25);
 }
-.cc-icon { font-size:1.6rem; margin-bottom:10px; display:block; }
+.cc-icon { font-size:1.6rem; margin-bottom:10px; display:block; width:28px; height:28px; color:var(--teal); }
+.cc-icon svg { width:28px; height:28px; display:block; }
+.choice-card.selected .cc-icon { color:#fff; }
 .cc-title {
   font-family:'Playfair Display',serif;
   font-size:1.1rem;
@@ -484,12 +486,107 @@ body {
 @media(max-width:640px) {
   .hero-nav { padding:20px 24px; }
   .steps-wrap { padding:48px 20px 32px; }
-  .choice-grid.col2 { grid-template-columns:1fr; }
-  .tier-grid { grid-template-columns:1fr; }
+  .choice-grid.col2 { grid-template-columns:1fr 1fr; }
+  .choice-card { padding:14px 12px; }
+  .cc-icon { font-size:1rem; margin-bottom:6px; width:22px; height:22px; }
+  .cc-icon svg { width:22px; height:22px; }
+  .cc-title { font-size:.85rem; }
+  .cc-desc { font-size:.72rem; }
+  .tier-grid { grid-template-columns:1fr; gap:8px; }
+  .tier-card {
+    padding:12px 14px;
+    flex-direction:row;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .tier-badge { position:static; margin-bottom:4px; display:block; width:fit-content; }
+  .tier-name { font-size:.85rem; margin-bottom:0; flex:1; min-width:0; }
+  .tier-price { font-size:1.2rem; margin-bottom:0; white-space:nowrap; flex-shrink:0; }
+  .tier-includes { display:none; }
+  .tier-card.selected .tier-includes {
+    display:block;
+    width:100%;
+    flex-basis:100%;
+    margin-top:8px;
+    font-size:.72rem;
+    line-height:1.6;
+  }
   .info-grid { grid-template-columns:1fr; }
   .info-field.full { grid-column:auto; }
   .footer { padding:18px 24px; }
+  .addon-grid { grid-template-columns:1fr 1fr; gap:8px; }
+  .addon-pill { padding:8px 10px; }
+  .ap-name { font-size:.75rem; }
 }
+
+/* ── STICKY TOTAL BAR ── */
+.sticky-total {
+  position:fixed;
+  bottom:0; left:0; right:0;
+  z-index:999;
+  background:var(--teal);
+  padding:12px 24px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  transform:translateY(100%);
+  transition:transform .3s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 -4px 24px rgba(0,0,0,.18);
+}
+.sticky-total.visible { transform:translateY(0); }
+.st-items { font-size:.72rem; color:rgba(255,255,255,.55); font-family:'Barlow Condensed',sans-serif; letter-spacing:.06em; }
+.st-amount { font-family:'Playfair Display',serif; font-size:1.5rem; font-weight:900; color:var(--gold-light); letter-spacing:-.02em; }
+.st-hst { font-size:.65rem; color:rgba(255,255,255,.4); margin-top:1px; }
+.st-cta { padding:8px 20px; background:var(--gold); color:var(--teal); border:none; border-radius:7px; font-family:'Barlow Condensed',sans-serif; font-size:.75rem; font-weight:700; letter-spacing:.08em; cursor:pointer; white-space:nowrap; transition:.15s; }
+.st-cta:hover { background:var(--gold-light); }
+
+/* ── STEP PERSUASION QUOTE ── */
+.step-quote {
+  background:var(--teal-pale);
+  border-left:3px solid var(--teal);
+  border-radius:0 8px 8px 0;
+  padding:12px 16px;
+  margin-bottom:28px;
+  font-size:.82rem;
+  color:var(--teal);
+  line-height:1.55;
+}
+.step-quote strong { font-weight:700; }
+.step-quote .sq-stat { font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:700; color:var(--teal); }
+
+/* ── ADDON POPUP ── */
+.addon-popup {
+  position:fixed;
+  z-index:9999;
+  background:#fff;
+  border:1.5px solid var(--border);
+  border-radius:12px;
+  padding:18px 20px;
+  max-width:300px;
+  width:90vw;
+  box-shadow:0 12px 40px rgba(0,0,0,.14);
+  animation:fadeUp .15s ease;
+}
+.ap-popup-name { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; color:var(--teal); margin-bottom:6px; }
+.ap-popup-desc { font-size:.8rem; color:var(--muted); line-height:1.65; margin-bottom:14px; }
+.ap-popup-price { font-family:'Playfair Display',serif; font-size:1.3rem; font-weight:900; color:var(--teal); margin-bottom:14px; }
+.ap-popup-btns { display:flex; gap:8px; }
+.ap-popup-add {
+  flex:1; padding:9px; background:var(--teal); color:#fff;
+  border:none; border-radius:7px; font-family:inherit; font-size:.78rem;
+  font-weight:600; cursor:pointer; transition:.15s;
+}
+.ap-popup-add:hover { background:var(--teal-mid); }
+.ap-popup-add.added { background:#15803d; }
+.ap-popup-cancel {
+  padding:9px 14px; background:transparent; color:var(--muted);
+  border:1.5px solid var(--border); border-radius:7px;
+  font-family:inherit; font-size:.78rem; cursor:pointer; transition:.15s;
+}
+.ap-popup-cancel:hover { border-color:var(--teal-light); color:var(--teal); }
 </style>
 </head>
 <body>
@@ -538,31 +635,6 @@ body {
 </div>
 <div class="gold-rule"></div>
 
-<!-- STAT BAR -->
-<div style="background:var(--ink);padding:14px 32px">
-  <div style="max-width:960px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:40px;flex-wrap:wrap">
-    <div style="text-align:center">
-      <div style="font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:900;color:var(--gold)">32%</div>
-      <div style="font-size:.68rem;color:rgba(255,255,255,.45);font-family:'Barlow Condensed',sans-serif;letter-spacing:.1em;text-transform:uppercase">Faster sales</div>
-    </div>
-    <div style="width:1px;height:32px;background:rgba(255,255,255,.1)"></div>
-    <div style="text-align:center">
-      <div style="font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:900;color:var(--gold)">4.5%</div>
-      <div style="font-size:.68rem;color:rgba(255,255,255,.45);font-family:'Barlow Condensed',sans-serif;letter-spacing:.1em;text-transform:uppercase">Higher sale price</div>
-    </div>
-    <div style="width:1px;height:32px;background:rgba(255,255,255,.1)"></div>
-    <div style="text-align:center">
-      <div style="font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:900;color:var(--gold)">48hr</div>
-      <div style="font-size:.68rem;color:rgba(255,255,255,.45);font-family:'Barlow Condensed',sans-serif;letter-spacing:.1em;text-transform:uppercase">Turnaround</div>
-    </div>
-    <div style="width:1px;height:32px;background:rgba(255,255,255,.1)"></div>
-    <div style="text-align:center">
-      <div style="font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:900;color:var(--gold)">🌱</div>
-      <div style="font-size:.68rem;color:rgba(255,255,255,.45);font-family:'Barlow Condensed',sans-serif;letter-spacing:.1em;text-transform:uppercase">Spring market — book now</div>
-    </div>
-  </div>
-</div>
-
 <!-- BOOKING FLOW -->
 <div id="booking" class="steps-wrap">
 
@@ -583,95 +655,103 @@ body {
   <div class="step-panel active" id="step1">
     <div class="step-question">What do you need<em> for this listing?</em></div>
     <p class="step-hint">Choose everything that applies — we'll build the right package around it.</p>
+    <div class="step-quote">
+      <strong>Listings with professional media sell 32% faster</strong> and for 4.5% more than those without. On a $900k listing, that's <span class="sq-stat">$40,500</span> more in your client's pocket — and a referral you'll actually get.
+    </div>
     <div class="choice-grid col2">
       <div class="choice-card" data-val="photos" onclick="toggleChoice(this)">
         <div class="cc-check">✓</div>
-        <span class="cc-icon">📷</span>
+        <span class="cc-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
         <div class="cc-title">Listing Photos</div>
         <div class="cc-desc">HDR photography that makes every room look its best</div>
       </div>
       <div class="choice-card" data-val="video" onclick="toggleChoice(this)">
         <div class="cc-check">✓</div>
-        <span class="cc-icon">🎬</span>
+        <span class="cc-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg></span>
         <div class="cc-title">Listing Video</div>
         <div class="cc-desc">Cinematic walkthroughs that stop the scroll</div>
       </div>
       <div class="choice-card" data-val="social" onclick="toggleChoice(this)">
         <div class="cc-check">✓</div>
-        <span class="cc-icon">📱</span>
+        <span class="cc-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.89L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg></span>
         <div class="cc-title">Social Media Content</div>
         <div class="cc-desc">Reels and content shot on-location for your personal brand</div>
       </div>
       <div class="choice-card" data-val="virtual" onclick="toggleChoice(this)">
         <div class="cc-check">✓</div>
-        <span class="cc-icon">🏠</span>
+        <span class="cc-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
         <div class="cc-title">Virtual Tour</div>
         <div class="cc-desc">Matterport 3D walkthrough — let buyers explore from anywhere</div>
       </div>
-
       <div class="choice-card" data-val="floorplans" onclick="toggleChoice(this)">
         <div class="cc-check">✓</div>
-        <span class="cc-icon">📐</span>
+        <span class="cc-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M3 3v18h18"/></svg></span>
         <div class="cc-title">Floor Plans</div>
         <div class="cc-desc">Accurate digital floor plans — required by many brokerages for MLS</div>
       </div>
       <div class="choice-card" data-val="twilight" onclick="toggleChoice(this)">
         <div class="cc-check">✓</div>
-        <span class="cc-icon">🌆</span>
+        <span class="cc-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 009 9 9 9 0 11-9-9z"/><path d="M19 3v4M21 5h-4"/></svg></span>
         <div class="cc-title">Twilight / Blue Hour</div>
         <div class="cc-desc">Golden hour and dusk shots that make listings stand out online</div>
       </div>
       <div class="choice-card" data-val="neighbourhood" onclick="toggleChoice(this)">
         <div class="cc-check">✓</div>
-        <span class="cc-icon">🏙️</span>
+        <span class="cc-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="18"/><path d="M16 8h4l3 3v10h-7V8z"/><line x1="5" y1="8" x2="5" y2="8.01"/><line x1="5" y1="12" x2="5" y2="12.01"/><line x1="5" y1="16" x2="5" y2="16.01"/><line x1="10" y1="8" x2="10" y2="8.01"/><line x1="10" y1="12" x2="10" y2="12.01"/><line x1="10" y1="16" x2="10" y2="16.01"/></svg></span>
         <div class="cc-title">Neighbourhood Shots</div>
         <div class="cc-desc">Coffee shops, parks, transit — buyers buy the lifestyle, not just the house</div>
       </div>
       <div class="choice-card" data-val="agentintro" onclick="toggleChoice(this)">
         <div class="cc-check">✓</div>
-        <span class="cc-icon">🎤</span>
+        <span class="cc-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></span>
         <div class="cc-title">Agent Intro Video</div>
         <div class="cc-desc">60 sec "meet your agent" reel for social bio and email signature</div>
       </div>
       <div class="choice-card" data-val="launch" onclick="toggleChoice(this)">
         <div class="cc-check">✓</div>
-        <span class="cc-icon">🚀</span>
+        <span class="cc-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
         <div class="cc-title">Listing Launch Package</div>
         <div class="cc-desc">The complete launch — media + property website + social content, all at once</div>
       </div>
-      <div class="choice-card" data-val="headshots" onclick="toggleChoice(this)">
-        <div class="cc-check">✓</div>
-        <span class="cc-icon">🤳</span>
-        <div class="cc-title">Headshots / Branding</div>
-        <div class="cc-desc">Professional agent headshots and personal brand sessions</div>
-      </div>
       <div class="choice-card" data-val="virtualstaging" onclick="toggleChoice(this)">
         <div class="cc-check">✓</div>
-        <span class="cc-icon">🛋️</span>
+        <span class="cc-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 9V6a2 2 0 00-2-2H6a2 2 0 00-2 2v3"/><path d="M2 11a2 2 0 012 2v3h16v-3a2 2 0 012-2 2 2 0 012 2v5H0v-5a2 2 0 012-2z"/><line x1="6" y1="19" x2="6" y2="21"/><line x1="18" y1="19" x2="18" y2="21"/></svg></span>
         <div class="cc-title">Virtual Staging</div>
         <div class="cc-desc">Digitally furnish vacant rooms — fraction of physical staging cost</div>
       </div>
+      <div class="choice-card" data-val="headshots" onclick="toggleChoice(this)">
+        <div class="cc-check">✓</div>
+        <span class="cc-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="10" r="3"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
+        <div class="cc-title">Headshots / Branding</div>
+        <div class="cc-desc">Professional agent headshots and personal brand sessions</div>
+      </div>
       <div class="choice-card" data-val="luxury" onclick="toggleChoice(this)">
         <div class="cc-check">✓</div>
-        <span class="cc-icon">🏛️</span>
+        <span class="cc-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg></span>
         <div class="cc-title">Luxury / Architectural</div>
         <div class="cc-desc">Prestige properties, architect portfolios, builder showcases</div>
       </div>
       <div class="choice-card" data-val="marketing" onclick="toggleChoice(this)">
         <div class="cc-check">✓</div>
-        <span class="cc-icon">📄</span>
+        <span class="cc-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>
         <div class="cc-title">Marketing Materials</div>
         <div class="cc-desc">Feature sheets, brochures, Google Business content</div>
       </div>
       <div class="choice-card" data-val="specialty" onclick="toggleChoice(this)">
         <div class="cc-check">✓</div>
-        <span class="cc-icon">⚡</span>
+        <span class="cc-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
         <div class="cc-title">Specialty / Urgent</div>
         <div class="cc-desc">Same-day rush, tenant-occupied, open house day-of, refresh shoots</div>
       </div>
+      <div class="choice-card" data-val="retainer" onclick="toggleChoice(this)">
+        <div class="cc-check">✓</div>
+        <span class="cc-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="8.01" y2="14"/><line x1="12" y1="14" x2="12.01" y2="14"/><line x1="16" y1="14" x2="16.01" y2="14"/></svg></span>
+        <div class="cc-title">Retainer / Bundle Plan</div>
+        <div class="cc-desc">Monthly, yearly, or pre-purchase shoot bundles — best value for repeat clients</div>
+      </div>
       <div class="choice-card" data-val="other" onclick="toggleChoice(this)">
         <div class="cc-check">✓</div>
-        <span class="cc-icon">✨</span>
+        <span class="cc-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg></span>
         <div class="cc-title">Something Else</div>
         <div class="cc-desc">Commercial, new construction, Airbnb…</div>
       </div>
@@ -689,6 +769,9 @@ body {
   <div class="step-panel" id="step2">
     <div class="step-question" id="s2-question">Pick <em>your package</em></div>
     <p class="step-hint" id="s2-hint">These are built around what you selected.</p>
+    <div class="step-quote" id="s2-quote">
+      <strong>The Pro Bundle is our most booked package</strong> — realtors who use professional photo + video see their listings go conditional <span class="sq-stat">2.1×</span> faster than photo-only listings. Most pay for itself on the first deal.
+    </div>
     <div class="tier-grid" id="tier-grid"></div>
     <div class="nav-row">
       <button class="btn-back" onclick="goStep(1)">← Back</button>
@@ -703,6 +786,9 @@ body {
   <div class="step-panel" id="step3">
     <div class="step-question">Anything to <em>add on?</em></div>
     <p class="step-hint">Optional extras to complete your listing package.</p>
+    <div class="step-quote">
+      <strong>Drone is added to 68% of our shoots.</strong> Buyers spend <span class="sq-stat">3× longer</span> on listings with aerial shots — and properties with drone sell for an average of 2.5% more. It's $75 that shows up in the sale price.
+    </div>
     <div class="addon-grid" id="addon-grid"></div>
     <div class="nav-row">
       <button class="btn-back" onclick="goStep(2)">← Back</button>
@@ -716,7 +802,10 @@ body {
   <!-- STEP 4: Client info -->
   <div class="step-panel" id="step4">
     <div class="step-question">Who are <em>we sending this to?</em></div>
-    <p class="step-hint">So we can put your name on the quote and follow up.</p>
+    <p class="step-hint">So we can put your name on the quote and follow up. Name, email and phone are required.</p>
+    <div class="step-quote">
+      <strong>You're almost there.</strong> We confirm every shoot within <span class="sq-stat">24 hrs</span> and deliver your media within 48 hrs of the shoot. Over <strong>200 Toronto realtors</strong> trust us to make their listings look their best.
+    </div>
     <div class="info-grid">
       <div class="info-field">
         <label class="info-label">Your Name *</label>
@@ -727,11 +816,11 @@ body {
         <input class="info-input" id="ci-brokerage" type="text" placeholder="RE/MAX, Compass…">
       </div>
       <div class="info-field">
-        <label class="info-label">Email</label>
+        <label class="info-label">Email *</label>
         <input class="info-input" id="ci-email" type="email" placeholder="jane@brokerage.com">
       </div>
       <div class="info-field">
-        <label class="info-label">Phone</label>
+        <label class="info-label">Phone *</label>
         <input class="info-input" id="ci-phone" type="tel" placeholder="(416) 555-1234">
       </div>
       <div class="info-field full">
@@ -751,10 +840,7 @@ body {
   <!-- STEP 5: Review & send -->
   <div class="step-panel" id="step5">
     <div class="step-question">Your <em>quote is ready</em></div>
-    <p class="step-hint">Everything looks good? Send it to our tracker and we'll be in touch within 24 hours.</p>
-    <div style="display:inline-flex;align-items:center;gap:8px;background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:8px 14px;margin-bottom:20px;font-size:.78rem;color:#854d0e">
-      ⚡ <strong>2026 pricing</strong> — rates increase May 1. Lock in your quote today.
-    </div>
+    <p class="step-hint">Everything looks good? Send it to our tracker and we'll be in touch.</p>
     <div class="summary-box" id="summary-box"></div>
     <div class="nav-row">
       <button class="btn-back" onclick="goStep(4)">← Back</button>
@@ -771,7 +857,6 @@ body {
     <div class="success-title">Quote sent!</div>
     <div class="success-sub">We've received your request, <span id="success-name"></span>. We'll be in touch within 24 hours to confirm your shoot.</div>
     <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
-      <button class="btn-open" onclick="window.open('tracker.html','_blank')">Open in Tracker</button>
       <button class="btn-again" onclick="resetFlow()">Build another quote</button>
     </div>
   </div>
@@ -789,10 +874,10 @@ body {
 // ── DATA ──
 const TIERS = {
   photos: [
-    { name:'Basic Listing Photos',    price:175,  includes:['Up to 25 HDR photos','Professionally edited','48hr delivery'] },
-    { name:'Standard Listing Photos', price:225,  includes:['Up to 40 HDR photos','Professionally edited','48hr delivery'] },
-    { name:'Premium Listing Photos',  price:275,  includes:['Up to 60 HDR photos','Detail shots included','48hr delivery'], featured:true },
-    { name:'Luxury Estate Photos',    price:325,  includes:['60+ photos','Architectural detail shots','Lifestyle highlights'] },
+    { name:'Basic Listing Photos',    price:175, includes:['Up to 25 HDR photos','Professionally edited','48hr delivery'] },
+    { name:'Standard Listing Photos', price:225, includes:['Up to 40 HDR photos','Professionally edited','48hr delivery'] },
+    { name:'Premium Listing Photos',  price:275, includes:['Up to 60 HDR photos','Detail shots included','48hr delivery'], featured:true },
+    { name:'Luxury Estate Photos',    price:325, includes:['60+ photos','Architectural detail shots','Lifestyle highlights'] },
   ],
   video: [
     { name:'Basic Walkthrough Video', price:250, includes:['30–45 sec vertical reel','Colour graded','Music licensed'] },
@@ -806,135 +891,180 @@ const TIERS = {
     { name:'Signature Cinematic Package', price:595, includes:['40 HDR + video + drone + reel','The complete package'] },
   ],
   social: [
-    { name:'Starter Presence — 5 Reels',   price:1250, includes:['1 shoot day','5 polished reels','Hook + structure strategy'] },
-    { name:'Consistent Brand — 10 Reels',  price:2000, includes:['1 shoot day','10 reels','Storytelling + variations'], featured:true },
-    { name:'Content Machine — 20 Reels',   price:3500, includes:['1–2 shoot days','20 reels','Multiple angles + hook variations'] },
-    { name:'Market Dominance — 30 Reels',  price:5500, includes:['2 shoot days','30 reels','Daily posting ready','Strategic planning'] },
-  ],
-  headshots: [
-    { name:'Agent Headshot Session',        price:150, includes:['30 min session','10 edited selects','Multiple outfits/backgrounds'] },
-    { name:'Personal Brand Session',        price:275, includes:['60 min session','25 edited selects','Lifestyle + headshots', 'Multiple locations'], featured:true },
-    { name:'Team / Brokerage Session',      price:450, includes:['90 min session','Full team coverage','Individual + group shots','Branded backgrounds'] },
+    { name:'Single Content Video',        price:200,  includes:['1 content video up to 30 seconds','Talking head, tips, or market update','Edited + ready to post','60 sec version: +$50'] },
+    { name:'Starter — 5 Videos',          price:750,  includes:['5 content videos up to 30 sec each','Basic hook + structure strategy','Saves $250 vs single pricing','60 sec version: +$25/video'] },
+    { name:'Consistent — 10 Videos',      price:1200, includes:['10 content videos up to 30 sec each','Storytelling + variations included','Saves $800 vs single pricing','60 sec version: +$20/video'], featured:true },
+    { name:'Content Machine — 20 Videos', price:2200, includes:['20 content videos up to 30 sec each','Multi-angle + hook variations','Saves $1,800 vs single pricing','60 sec version: +$15/video'] },
+    { name:'Market Dominance — 30 Videos',price:3000, includes:['30 content videos up to 30 sec each','Full strategy + content categories','Saves $3,000 vs single pricing','60 sec version: +$10/video'] },
   ],
   virtual: [
     { name:'Virtual Tour (Matterport 3D)', price:200, includes:['Interactive 3D walkthrough','Shareable link','Works on any device'], featured:true },
   ],
-  aerial: [
-    { name:'Drone Photo / Video', price:75, includes:['Aerial photos and/or video','Certified drone pilot','Same-day turnaround'], featured:true },
-  ],
-  other: [
-    { name:'Commercial Photography',  price:350, includes:['Office, retail, industrial','Professional grade'] },
-    { name:'Commercial Photo + Video',price:650, includes:['Full commercial production'] },
-    { name:'Airbnb Starter',          price:175, includes:['20 lifestyle photos','STR optimised'] },
-    { name:'Airbnb Pro',              price:325, includes:['30 photos + lifestyle reel','STR optimised'] },
-  ],
   floorplans: [
-    { name:'Floor Plans',             price:100, includes:['Accurate digital floor plans','MLS ready','Delivered same day'], featured:true },
+    { name:'Floor Plans', price:100, includes:['Accurate digital floor plans','MLS ready','Delivered same day'], featured:true },
   ],
   twilight: [
-    { name:'Twilight Add-On',         price:75,  includes:['Blue hour exterior shots','3–5 edited images','Same shoot day'] },
-    { name:'Dedicated Twilight Shoot',price:175, includes:['Full twilight session','15+ edited images','Interior + exterior'], featured:true },
+    { name:'Twilight Add-On',          price:75,  includes:['Blue hour exterior shots','3-5 edited images','Same shoot day'] },
+    { name:'Dedicated Twilight Shoot', price:175, includes:['Full twilight session','15+ edited images','Interior + exterior'], featured:true },
   ],
   neighbourhood: [
-    { name:'Neighbourhood Shots',     price:125, includes:['Local cafés, parks, transit','10–15 lifestyle images','Same-day delivery'], featured:true },
+    { name:'Neighbourhood Shots', price:125, includes:['Local cafes, parks, transit','10-15 lifestyle images','Same-day delivery'], featured:true },
   ],
   agentintro: [
-    { name:'Agent Intro Reel',        price:100, includes:['60 sec on-camera intro','Colour graded + music','Ready for Instagram bio'] },
-    { name:'Agent Brand Package',     price:275, includes:['Intro reel + 3 talking head clips','Headshots included','Full social kit'], featured:true },
+    { name:'Agent Intro Reel',       price:100, includes:['60 sec on-camera intro','Colour graded + music','Ready for Instagram bio'] },
+    { name:'Agent Brand Package',    price:275, includes:['Intro reel + 3 talking head clips','Headshots included','Full social kit'], featured:true },
   ],
   launch: [
-    { name:'Listing Launch — Starter', price:750,  includes:['Standard photos + reel','Property website','2 social posts ready to go'] },
-    { name:'Listing Launch — Pro',     price:1200, includes:['40 photos + cinematic video','Property website','5 social posts + stories','Drone included'], featured:true },
+    { name:'Listing Launch — Starter', price:750,  includes:['Standard photos + reel','Property website','2 social posts ready'] },
+    { name:'Listing Launch — Pro',     price:1200, includes:['40 photos + cinematic video','Property website','5 social posts','Drone included'], featured:true },
     { name:'Listing Launch — Premium', price:1800, includes:['Luxury photos + film','Property website','Full social content pack','Drone + twilight','Agent intro reel'] },
   ],
   virtualstaging: [
-    { name:'3D Virtual Staging — Starter',   price:225,  includes:['3 rooms furnished','2 style options','48hr delivery'] },
-    { name:'3D Virtual Staging — Full',      price:395,  includes:['6 rooms furnished','3 style options','48hr delivery'], featured:true },
-    { name:'3D Virtual Staging — Full Home', price:595,  includes:['10 rooms furnished','Multiple styles','Priority delivery'] },
+    { name:'3D Virtual Staging — Starter',   price:225, includes:['3 rooms furnished','2 style options','48hr delivery'] },
+    { name:'3D Virtual Staging — Full',      price:395, includes:['6 rooms furnished','3 style options','48hr delivery'], featured:true },
+    { name:'3D Virtual Staging — Full Home', price:595, includes:['10 rooms furnished','Multiple styles','Priority delivery'] },
   ],
-  specialty: [
-    { name:'Reels from Existing Photos', price:150, includes:['No shoot needed','Edit-only service','Cinematic reel from your photos'] },
-    { name:'Open House Day-Of Content',  price:250, includes:['30 min on-site morning of open house','Stories + reels ready before doors open'], featured:true },
-    { name:'Tenant-Occupied Shoot',      price:275, includes:['Staging guidance included','Flexible scheduling','Occupied-home specialist'] },
-    { name:'Seasonal Refresh Shoot',     price:175, includes:['New photos for relisted properties','Same quality as original shoot'] },
-    { name:'Condo / Assignment Marketing', price:450, includes:['Preconstruction package','Renders + video + floor plans'] },
-    { name:'Same-Day Rush Package',      price:750, includes:['Full shoot + editing same day','Emergency priority booking','Delivered before midnight'], featured:false },
+  headshots: [
+    { name:'Agent Headshot Session',   price:150, includes:['30 min session','10 edited selects','Multiple outfits'] },
+    { name:'Personal Brand Session',   price:275, includes:['60 min session','25 edited selects','Lifestyle + headshots'], featured:true },
+    { name:'Team / Brokerage Session', price:450, includes:['90 min session','Full team coverage','Individual + group shots'] },
   ],
   luxury: [
-    { name:'Luxury / Architectural Film', price:1200, includes:['3–5 min cinematic film','For $3M+ properties','Architects + builder portfolios','White glove service'], featured:true },
+    { name:'Luxury / Architectural Film', price:1200, includes:['3-5 min cinematic film','For $3M+ properties','Architects + builder portfolios','White glove service'], featured:true },
   ],
   marketing: [
     { name:'Property Feature Sheet', price:75,  includes:['Digital one-pager','Open house + email ready','Your branding included'] },
     { name:'Property Brochure',      price:125, includes:['Print-ready tri-fold','Agent + listing details','Professional design'], featured:true },
     { name:'Google Business Pack',   price:200, includes:['3 short clips','Google profile optimised','Ad-ready format'] },
   ],
+  specialty: [
+    { name:'Reels from Existing Photos',  price:150, includes:['No shoot needed','Edit-only service','Cinematic reel from your photos'] },
+    { name:'Open House Day-Of Content',   price:250, includes:['30 min on-site morning of open house','Stories + reels ready before doors open'], featured:true },
+    { name:'Tenant-Occupied Shoot',       price:275, includes:['Staging guidance included','Flexible scheduling'] },
+    { name:'Seasonal Refresh Shoot',      price:175, includes:['New photos for relisted properties'] },
+    { name:'Condo / Assignment Marketing',price:450, includes:['Preconstruction package','Renders + video + floor plans'] },
+    { name:'Same-Day Rush Package',       price:750, includes:['Full shoot + editing same day','Emergency priority booking'] },
+  ],
+  retainer: [
+    { name:'Agent Starter (Monthly)',  price:900,  includes:['2 listings/month','Standard photos + basic reel','Priority 24hr booking','Same dedicated editor'], tag:'monthly' },
+    { name:'Agent Pro (Monthly)',      price:1600, includes:['4 listings/month','Premium photos + cinematic video + drone','Priority booking + free reschedule'], featured:true, tag:'monthly' },
+    { name:'Team Package (Monthly)',   price:2800, includes:['8 listings/month','Full production suite','Dedicated editor','Monthly delivery recap'], tag:'monthly' },
+    { name:'Agent Starter (Yearly)',   price:9180, includes:['2 listings/month','Save $1,620/yr vs monthly','$765/mo effective'], tag:'yearly' },
+    { name:'Agent Pro (Yearly)',       price:16320,includes:['4 listings/month','Save $2,880/yr vs monthly','$1,360/mo effective'], featured:true, tag:'yearly' },
+    { name:'Team Package (Yearly)',    price:28560,includes:['8 listings/month','Save $5,040/yr vs monthly','$2,380/mo effective'], tag:'yearly' },
+    { name:'Starter Bundle (2 Shoots)',price:1100, includes:['2 shoots within 90 days','Standard photos + basic reel per shoot','$550/shoot'], tag:'onetime' },
+    { name:'Pro Bundle (4 Shoots)',    price:2100, includes:['4 shoots within 90 days','Premium photos + video + drone per shoot','$525/shoot'], featured:true, tag:'onetime' },
+    { name:'Team Bundle (8 Shoots)',   price:4000, includes:['8 shoots within 90 days','Full production package per shoot','$500/shoot'], tag:'onetime' },
+  ],
+  other: [
+    { name:'Commercial Photography',   price:350, includes:['Office, retail, industrial','Professional grade'] },
+    { name:'Commercial Photo + Video', price:650, includes:['Full commercial production'] },
+    { name:'Airbnb Starter',           price:175, includes:['20 lifestyle photos','STR optimised'] },
+    { name:'Airbnb Pro',               price:325, includes:['30 photos + lifestyle reel','STR optimised'] },
+  ],
 };
 
 const ADDONS = [
-  { name:'Drone Photo / Video',        price:75,  pinned:true, note:'🚁 Most popular add-on' },
-  { name:'Instagram Reel Edit',        price:75  },
-  { name:'Twilight Edit',              price:40  },
-  { name:'Floor Plans',                price:100 },
-  { name:'Virtual Staging',            price:35,  note:'per image' },
-  { name:'Agent On-Camera Intro',      price:100 },
-  { name:'Property Website',           price:125 },
-  { name:'Social Media Content Pack',  price:100 },
-  { name:'Headshot / Agent Branding',  price:150 },
-  { name:'Same-Day Rush',              price:150 },
-  { name:'Rush Delivery (Next Day)',   price:75  },
-  { name:'Travel Fee',                 price:50,  note:'outside service area' },
-  { name:'Licensing / Extended Usage', price:200 },
-  { name:'Reels from Existing Photos', price:150, note:'no shoot needed' },
-  { name:'Property Feature Sheet',     price:75,  note:'digital one-pager' },
-  { name:'Property Brochure',          price:125, note:'print-ready' },
-  { name:'Google Business Content',    price:200, note:'profile + ads' },
-  { name:'Open House Day-Of Content',  price:250 },
-  { name:'Seasonal Refresh Shoot',     price:175 },
-  { name:'Virtual Staging (per room)', price:75,  note:'3D furnished' },
+  { name:'Drone Photo / Video',         price:75,  pinned:true, note:'Most popular add-on',
+    desc:'Aerial photos and/or video captured by a certified drone pilot. Adds neighbourhood context, dramatic exterior shots, and premium feel to any listing. Added to your existing shoot day.' },
+  { name:'Listing Reel Cut',            price:75,
+    desc:'We take the footage from your listing shoot and cut a vertical reel optimised for Instagram and TikTok. No new shoot needed — just a fast, polished social edit of what we already captured.' },
+  { name:'Reels from Existing Photos',  price:150, note:'no shoot needed',
+    desc:'Already have listing photos but no video? We animate and cut them into a cinematic reel with music and motion. No shoot needed — send us your photos and we handle the rest.' },
+  { name:'Twilight Edit',              price:40,
+    desc:'A blue-hour exterior edit added to your existing shoot. We stay after the main shoot for 15–20 minutes during golden hour and capture 3–5 dramatic dusk shots. Same-day, no extra visit needed.' },
+  { name:'Floor Plans',                 price:100,
+    desc:'Accurate digital floor plans drawn from measurements taken during your shoot. MLS-ready format, delivered same day. Many brokerages now require these for listings.' },
+  { name:'Virtual Staging (per image)', price:35,  note:'per image',
+    desc:'Digitally furnish any room in an existing photo. Great for vacant properties — choose from modern, transitional, or Scandinavian styles. Priced per image, minimum 3 images recommended.' },
+  { name:'Agent On-Camera Intro',       price:100,
+    desc:'A short 30–60 sec on-camera clip of you introducing the property, filmed on location during the shoot. Perfect for social media or email campaigns to show buyers the highlights before they visit.' },
+  { name:'Property Website',            price:125,
+    desc:'A single-listing website at your own URL (e.g. 123mapledr.com or reelestatemedia.com/123maple). Includes photos, video embed, property details, and a contact form. Live within 24 hours.' },
+  { name:'Social Media Content Pack',   price:100,
+    desc:'We take your listing media and package it into Instagram-ready formats: square crop for feed, vertical for Reels/Stories, and 2–3 caption suggestions. Ready to post, no editing needed on your end.' },
+  { name:'Headshot / Agent Branding',   price:150, note:'30 min session',
+    desc:'A quick 30-minute headshot session added to your shoot day. Get 10 professionally edited photos in multiple outfits or backgrounds — perfect for your MLS profile, social bio, and email signature.' },
+  { name:'Property Feature Sheet',      price:75,  note:'digital one-pager',
+    desc:'A professionally designed one-page PDF showcasing the property — photos, key features, price, and your contact info. Perfect for open houses, email campaigns, and DM follow-ups.' },
+  { name:'Property Brochure',           price:125, note:'print-ready',
+    desc:'A premium tri-fold brochure design with full property details, photos, neighbourhood highlights, and agent branding. Delivered as a print-ready PDF you can order from any print shop.' },
+  { name:'Google Business Content',     price:200, note:'profile + ads',
+    desc:'3 short video clips (15–30 sec each) optimised for your Google Business profile and Google Ads. Boosts local search visibility and gives buyers a professional first impression when they Google you.' },
+  { name:'Open House Day-Of Content',   price:250,
+    desc:'We show up the morning of your open house and spend 30 minutes shooting fast content — a quick walkthrough, highlight clips, and Instagram Stories-ready footage. Everything is edited and sent before your first visitors arrive.' },
+  { name:'Seasonal Refresh Shoot',      price:175,
+    desc:'A quick return visit to re-photograph a listing that has been relisted, price-reduced, or updated. Same quality as the original shoot, designed to give your listing a fresh start without paying for a full new package.' },
+  { name:'Virtual Staging (3D rooms)',  price:75,  note:'3D furnished',
+    desc:'Full 3D virtual staging for a single room — a photorealistic furnished render placed into your listing photo. Choose from multiple interior styles. Minimum 3 rooms recommended for best impact.' },
+  { name:'Same-Day Rush',               price:150,
+    desc:'Need your photos or videos delivered the same day as the shoot? This add-on jumps your edit to the front of the queue. Delivery guaranteed by 10pm on shoot day.' },
+  { name:'Rush Delivery (Next Day)',    price:75,
+    desc:'Standard delivery is 48 hours — this add-on guarantees delivery by the next morning. Perfect for listings going live the day after the shoot.' },
+  { name:'Travel Fee',                  price:50,  note:'outside service area',
+    desc:'Applies to shoots outside the Toronto GTA service area (roughly beyond Mississauga, Brampton, Markham, or Richmond Hill). Covers fuel and transit time for outlying areas.' },
+  { name:'Licensing / Extended Usage',  price:200,
+    desc:'Standard licensing covers personal agent use (social, MLS, email). This add-on extends rights to brokerage-wide use, paid advertising campaigns, print publications, or third-party syndication.' },
 ];
 
 // ── STATE ──
-let currentStep    = 1;
-let choices        = [];
-let currentTiers   = [];
-let currentAddons  = [];
+let currentStep     = 1;
+let choices         = [];
+let currentTiers    = [];
+let currentAddons   = [];
 let selectedTierIdx = null;
-let selectedAddons = [];
+let selectedAddons  = [];
 
 // ── STEP 1 ──
 function toggleChoice(card) {
   card.classList.toggle('selected');
   choices = [...document.querySelectorAll('.choice-card.selected')].map(c => c.dataset.val);
   document.getElementById('btn1').disabled = choices.length === 0;
+  // Reset downstream selections when Step 1 changes
+  selectedTierIdx = null;
+  currentTiers    = [];
+  currentAddons   = [];
+  selectedAddons  = [];
+  updateStickyTotal();
 }
 
 // ── NAVIGATION ──
 function goStep(n) {
   if (n === 5) {
-    const name = document.getElementById('ci-name').value.trim();
-    if (!name) {
-      document.getElementById('ci-name').focus();
-      document.getElementById('ci-name').style.borderColor = '#dc2626';
-      return;
-    }
+    const name  = document.getElementById('ci-name').value.trim();
+    const email = document.getElementById('ci-email').value.trim();
+    const phone = document.getElementById('ci-phone').value.trim();
+    var error = false;
+    ['ci-name','ci-email','ci-phone'].forEach(function(id){ document.getElementById(id).style.borderColor=''; });
+    if (!name)  { document.getElementById('ci-name').style.borderColor='#dc2626';  document.getElementById('ci-name').focus();  error=true; }
+    if (!email) { document.getElementById('ci-email').style.borderColor='#dc2626'; if (!error) document.getElementById('ci-email').focus(); error=true; }
+    if (!phone) { document.getElementById('ci-phone').style.borderColor='#dc2626'; if (!error) document.getElementById('ci-phone').focus(); error=true; }
+    if (error) return;
     buildSummary();
   }
   document.getElementById('step' + currentStep).classList.remove('active');
   currentStep = n;
   document.getElementById('step' + n).classList.add('active');
   updateProgress(n);
+  if (n === 1) {
+    selectedTierIdx = null;
+    currentTiers    = [];
+    currentAddons   = [];
+    selectedAddons  = [];
+    updateStickyTotal();
+  }
   if (n === 2) buildTiers();
   if (n === 3) buildAddons();
-  window.scrollTo({ top: document.getElementById('booking').offsetTop - 20, behavior:'smooth' });
+  window.scrollTo({top: document.getElementById('booking').offsetTop - 20, behavior:'smooth'});
 }
 
 function updateProgress(n) {
   for (let i = 1; i <= 5; i++) {
     const dot  = document.getElementById('dot' + i);
     const line = document.getElementById('line' + i);
-    if (i < n)       dot.className = 'sp-dot done';
-    else if (i === n) dot.className = 'sp-dot active';
-    else              dot.className = 'sp-dot';
+    if (i < n)  { dot.className  = 'sp-dot done'; }
+    else if (i === n) { dot.className = 'sp-dot active'; }
+    else        { dot.className  = 'sp-dot'; }
     if (line) line.className = i < n ? 'sp-line done' : 'sp-line';
   }
 }
@@ -945,106 +1075,269 @@ function buildTiers() {
   selectedTierIdx = null;
   document.getElementById('btn2').disabled = true;
 
-  // Pick the right tier set — priority order matters
-  let set = 'other';
-  if (choices.includes('launch'))                              set = 'launch';
-  else if (choices.includes('headshots'))                      set = 'headshots';
-  else if (choices.includes('photos') && choices.includes('video')) set = 'both';
-  else if (choices.includes('photos'))                         set = 'photos';
-  else if (choices.includes('video'))                          set = 'video';
-  else if (choices.includes('social'))                         set = 'social';
-  else if (choices.includes('agentintro'))                     set = 'agentintro';
-  else if (choices.includes('twilight'))                       set = 'twilight';
-  else if (choices.includes('neighbourhood'))                  set = 'neighbourhood';
-  else if (choices.includes('floorplans'))                     set = 'floorplans';
-  else if (choices.includes('virtual'))                        set = 'virtual';
+  // Map each choice to a tier set key
+  const choiceToSet = {
+    retainer:      'retainer',
+    launch:        'launch',
+    photos:        null, // handled below with video check
+    video:         null,
+    social:        'social',
+    headshots:     'headshots',
+    virtualstaging:'virtualstaging',
+    specialty:     'specialty',
+    luxury:        'luxury',
+    marketing:     'marketing',
+    agentintro:    'agentintro',
+    twilight:      'twilight',
+    neighbourhood: 'neighbourhood',
+    floorplans:    'floorplans',
+    virtual:       'virtual',
+    other:         'other',
+  };
 
-  currentTiers = TIERS[set] || TIERS.other;
+  // Collect all sets to show
+  var setsToShow = [];
 
-  const q = document.getElementById('s2-question');
-  const h = document.getElementById('s2-hint');
-  if (set === 'social')        { q.innerHTML = 'Pick your <em>content package</em>';          h.textContent = 'Shot on-location. Built for realtors who want to show up every day.'; }
-  else if (set === 'both')     { q.innerHTML = 'Pick your <em>photo + video bundle</em>';      h.innerHTML   = 'Photos + video bought separately cost <s style="color:#dc2626">$725</s> — bundles start at $375. <strong>You save up to $350.</strong>'; }
-  else if (set === 'headshots'){ q.innerHTML = 'Pick your <em>headshot session</em>';           h.textContent = 'Professional headshots and personal brand photography.'; }
-  else if (set === 'twilight') { q.innerHTML = 'Pick your <em>twilight package</em>';           h.textContent = 'Blue hour and dusk shots that make your listing unforgettable.'; }
-  else if (set === 'neighbourhood') { q.innerHTML = 'Showcase the <em>neighbourhood</em>';     h.textContent = 'Buyers decide on the lifestyle first, then the house.'; }
-  else if (set === 'agentintro') { q.innerHTML = 'Pick your <em>agent intro package</em>';     h.textContent = 'A short reel that introduces you to every potential client.'; }
-  else if (set === 'launch')   { q.innerHTML = 'Pick your <em>listing launch package</em>';    h.textContent = 'Everything your listing needs from day one — in one bundle.'; }
-  else if (set === 'floorplans')      { q.innerHTML = 'Add <em>floor plans</em> to your listing';         h.textContent = 'Required by many brokerages. Buyers love them.'; }
-  else if (set === 'virtualstaging') { q.innerHTML = 'Pick your <em>virtual staging package</em>';        h.textContent = 'Transform vacant rooms into fully furnished, sale-ready spaces.'; }
-  else if (set === 'specialty')      { q.innerHTML = 'Pick a <em>specialty service</em>';                 h.textContent = 'Niche solutions for specific situations.'; }
-  else if (set === 'luxury')         { q.innerHTML = 'The <em>luxury experience</em>';                    h.textContent = 'Crafted for prestige properties, architects, and builders.'; }
-  else if (set === 'marketing')      { q.innerHTML = 'Pick your <em>marketing materials</em>';            h.textContent = 'Professional print and digital materials to complete your listing.'; }
-  else                               { q.innerHTML = 'Pick <em>your package</em>';                        h.textContent = 'Choose the size that fits your listing best.'; }
-
-  grid.innerHTML = currentTiers.map(function(t, i) {
-    var badge   = t.featured ? '<div class="tier-badge">★ Most Popular</div>' : '';
-    var inc     = t.includes.map(function(x){ return '<li>' + x + '</li>'; }).join('');
-    var classes = 'tier-card' + (t.featured ? ' featured' : '');
-    return '<div class="' + classes + '" onclick="selectTier(' + i + ')">'
-      + badge
-      + '<div class="tier-name">' + t.name + '</div>'
-      + '<div class="tier-price">$' + t.price.toLocaleString('en-CA') + '</div>'
-      + '<ul class="tier-includes">' + inc + '</ul>'
-      + '</div>';
-  }).join('');
-
-  // If only one option, auto-select it
-  if (currentTiers.length === 1) {
-    selectTier(0);
+  // Photos + video together = bundles
+  if (choices.includes('photos') && choices.includes('video')) {
+    setsToShow.push('both');
+  } else {
+    if (choices.includes('photos')) setsToShow.push('photos');
+    if (choices.includes('video'))  setsToShow.push('video');
   }
+
+  choices.forEach(function(c) {
+    if (c === 'photos' || c === 'video') return; // handled above
+    var s = choiceToSet[c];
+    if (s && setsToShow.indexOf(s) === -1) setsToShow.push(s);
+  });
+
+  if (!setsToShow.length) setsToShow = ['other'];
+
+  // Combine all tiers from each set, tagging with a group header
+  currentTiers = [];
+  var sections = [];
+  setsToShow.forEach(function(setKey) {
+    var tiers = TIERS[setKey] || [];
+    if (!tiers.length) return;
+    var startIdx = currentTiers.length;
+    tiers.forEach(function(t) { currentTiers.push(Object.assign({}, t, { _set: setKey })); });
+    sections.push({ setKey: setKey, startIdx: startIdx, count: tiers.length });
+  });
+
+  // Labels for section headers
+  const setLabels = {
+    photos:'Listing Photos', video:'Listing Video', both:'Photo + Video Bundles',
+    social:'Content Videos', headshots:'Headshots', virtualstaging:'Virtual Staging',
+    specialty:'Specialty', luxury:'Luxury / Architectural', marketing:'Marketing Materials',
+    agentintro:'Agent Intro', twilight:'Twilight Shoot', neighbourhood:'Neighbourhood Shots',
+    floorplans:'Floor Plans', virtual:'Virtual Tour', launch:'Listing Launch',
+    retainer:'Retainer & Bundles', other:'Other Services',
+  };
+
+  // Question / hint
+  const q  = document.getElementById('s2-question');
+  const h  = document.getElementById('s2-hint');
+  const s2q = document.getElementById('s2-quote');
+  if (setsToShow.length === 1) {
+    const labels = {
+      both:          ['Pick your <em>photo + video bundle</em>',       'Photos + video bought separately cost <s style="color:#dc2626">$725</s> — bundles start at $375. <strong>You save up to $350.</strong>'],
+      social:        ['Pick your <em>content package</em>',            'Need just one video, or a full content strategy? Pick what fits.'],
+      headshots:     ['Pick your <em>headshot session</em>',           'Professional headshots and personal brand photography.'],
+      virtualstaging:['Pick your <em>virtual staging package</em>',    'Transform vacant rooms into fully furnished, sale-ready spaces.'],
+      launch:        ['Pick your <em>listing launch package</em>',     'Everything your listing needs from day one — in one bundle.'],
+      specialty:     ['Pick a <em>specialty service</em>',             'Niche solutions for specific situations.'],
+      luxury:        ['The <em>luxury experience</em>',                'Crafted for prestige properties, architects, and builders.'],
+      marketing:     ['Pick your <em>marketing materials</em>',        'Professional print and digital materials to complete your listing.'],
+      agentintro:    ['Pick your <em>agent intro package</em>',        'A short reel that introduces you to every potential client.'],
+      twilight:      ['Pick your <em>twilight package</em>',           'Blue hour and dusk shots that make your listing unforgettable.'],
+      neighbourhood: ['Showcase the <em>neighbourhood</em>',           'Buyers decide on the lifestyle first, then the house.'],
+      floorplans:    ['Add <em>floor plans</em> to your listing',      'Required by many brokerages. Buyers love them.'],
+      retainer:      ['Pick your <em>plan</em>',                       'Monthly, yearly, or a one-time shoot bundle.'],
+    };
+    const lbl = labels[setsToShow[0]];
+    if (lbl) { q.innerHTML = lbl[0]; h.innerHTML = lbl[1]; }
+    else { q.innerHTML = 'Pick <em>your package</em>'; h.textContent = 'Choose the size that fits your listing best.'; }
+  // Update step 2 persuasion quote
+  if (s2q) {
+    var s2quotes = {
+      both:   'The <strong>Pro Bundle ($550)</strong> includes photos + cinematic video and is our most booked package. Realtors who bundle save up to <span class="sq-stat">$175</span> vs booking separately.',
+      social: '<strong>Consistency beats virality.</strong> Realtors who post 3+ times a week grow their following <span class="sq-stat">4.7×</span> faster. A content package keeps you showing up without burning out.',
+      launch: 'Listings with a dedicated property website get <span class="sq-stat">40% more</span> qualified inquiries than those without. The Listing Launch Pro pays for itself on the first showing.',
+      luxury: '<strong>First impressions are permanent.</strong> Buyers of $3M+ properties research online for an average of <span class="sq-stat">6 months</span> before inquiring. Your media is your first meeting.',
+    };
+    var q2txt = s2quotes[setsToShow.length === 1 ? setsToShow[0] : 'both'] || '<strong>The right package makes the difference.</strong> Choose the option that best fits your listing and budget &#8212; we deliver within 48 hours of your shoot.';
+    s2q.innerHTML = q2txt;
+  }
+  } else {
+    q.innerHTML = 'Pick <em>your packages</em>';
+    h.textContent = 'Select one option from each service you chose.';
+  }
+
+  // Special retainer toggle
+  if (setsToShow.length === 1 && setsToShow[0] === 'retainer') {
+    grid.innerHTML =
+      '<div style="display:flex;gap:0;background:var(--cream-dark,#f0ece2);border:1px solid var(--border);border-radius:10px;padding:4px;width:fit-content;margin-bottom:20px">'
+      + '<button onclick="switchRetainerTab(&quot;monthly&quot;)" id="rt-monthly" style="padding:8px 18px;border-radius:7px;border:none;font-family:inherit;font-size:.78rem;font-weight:600;cursor:pointer;transition:.15s;background:var(--teal);color:#fff">Monthly</button>'
+      + '<button onclick="switchRetainerTab(&quot;yearly&quot;)"  id="rt-yearly"  style="padding:8px 18px;border-radius:7px;border:none;font-family:inherit;font-size:.78rem;font-weight:600;cursor:pointer;transition:.15s;background:transparent;color:var(--muted)">Yearly <span style="font-size:.6rem;background:#dcfce7;color:#15803d;padding:1px 5px;border-radius:8px;margin-left:3px">Save 15%</span></button>'
+      + '<button onclick="switchRetainerTab(&quot;onetime&quot;)" id="rt-onetime" style="padding:8px 18px;border-radius:7px;border:none;font-family:inherit;font-size:.78rem;font-weight:600;cursor:pointer;transition:.15s;background:transparent;color:var(--muted)">One-Time Bundle</button>'
+      + '</div>'
+      + '<div id="rt-cards"></div>';
+    switchRetainerTab('monthly');
+    return;
+  }
+
+  // Render all sections with headers if multiple
+  var html2 = '';
+  sections.forEach(function(sec) {
+    var tiers = currentTiers.slice(sec.startIdx, sec.startIdx + sec.count);
+    if (setsToShow.length > 1) {
+      html2 += '<div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:18px 0 8px">' + (setLabels[sec.setKey] || sec.setKey) + '</div>';
+    }
+    html2 += '<div class="tier-grid" style="margin-bottom:8px">';
+    tiers.forEach(function(t) {
+      var globalIdx = currentTiers.indexOf(t);
+      var badge = t.featured ? '<div class="tier-badge">★ Most Popular</div>' : '';
+      var inc   = t.includes.map(function(x){ return '<li>' + x + '</li>'; }).join('');
+      html2 += '<div class="tier-card' + (t.featured ? ' featured' : '') + '" onclick="selectTier(' + globalIdx + ')">'
+        + badge
+        + '<div class="tier-name">' + t.name + '</div>'
+        + '<div class="tier-price">$' + t.price.toLocaleString('en-CA') + '</div>'
+        + '<ul class="tier-includes">' + inc + '</ul>'
+        + '</div>';
+    });
+    html2 += '</div>';
+  });
+  grid.innerHTML = html2;
+
+  // Auto-select if only one total option
+  if (currentTiers.length === 1) selectTier(0);
 }
 
+
 function selectTier(idx) {
-  document.querySelectorAll('.tier-card').forEach(function(c){ c.classList.remove('selected'); });
   var cards = document.querySelectorAll('.tier-card');
-  if (cards[idx]) cards[idx].classList.add('selected');
-  selectedTierIdx = idx;
-  document.getElementById('btn2').disabled = false;
+  if (selectedTierIdx === idx) {
+    // Deselect
+    if (cards[idx]) cards[idx].classList.remove('selected');
+    selectedTierIdx = null;
+    document.getElementById('btn2').disabled = true;
+  } else {
+    // Select new
+    document.querySelectorAll('.tier-card').forEach(function(c){ c.classList.remove('selected'); });
+    if (cards[idx]) cards[idx].classList.add('selected');
+    selectedTierIdx = idx;
+    document.getElementById('btn2').disabled = false;
+  }
+  updateStickyTotal();
 }
 
 // ── STEP 3 ──
 function buildAddons() {
-  const grid = document.getElementById('addon-grid');
+  var grid = document.getElementById('addon-grid');
   selectedAddons = [];
 
-  // Filter out addons already covered by the main selection
-  var relevantAddons = ADDONS.filter(function(a) {
-    if (selectedTierIdx !== null && currentTiers[selectedTierIdx]) {
-      var tierName = currentTiers[selectedTierIdx].name.toLowerCase();
-      // Hide drone if already included in selected tier
-      if ((tierName.includes('drone') || tierName.includes('signature') || tierName.includes('launch — pro') || tierName.includes('launch — premium')) && a.name === 'Drone Photo / Video') return false;
-      if (tierName.includes('headshot') && a.name === 'Headshot / Agent Branding') return false;
-      if (tierName.includes('floor plan') && a.name === 'Floor Plans') return false;
-    }
+  // Filter out addons already included in selected tier
+  var tierName = '';
+  if (selectedTierIdx !== null && currentTiers[selectedTierIdx]) {
+    tierName = currentTiers[selectedTierIdx].name.toLowerCase();
+  }
+  currentAddons = ADDONS.filter(function(a) {
+    if ((tierName.includes('drone') || tierName.includes('signature') || tierName.includes('launch')) && a.name === 'Drone Photo / Video') return false;
+    if (tierName.includes('headshot') && a.name === 'Headshot / Agent Branding') return false;
+    if (tierName.includes('floor plan') && a.name === 'Floor Plans') return false;
     return true;
   });
 
-  currentAddons = relevantAddons;
+  if (!currentAddons.length) {
+    grid.innerHTML = '<div style="font-size:.82rem;color:var(--muted);padding:8px 0">No add-ons available for this selection.</div>';
+    return;
+  }
 
-  // Drone gets a featured callout at the top
-  var droneHTML = '';
-  var nonDrone  = [];
-  relevantAddons.forEach(function(a, i) {
+  grid.innerHTML = currentAddons.map(function(a, i) {
     if (a.pinned) {
-      droneHTML = '<div class="addon-pill" onclick="toggleAddon(this,' + i + ')" style="grid-column:1/-1;border-color:var(--teal-light);background:var(--teal-pale)">'
+      return '<div class="addon-pill" onclick="showAddonPopup(event,' + i + ')" style="grid-column:1/-1;border-color:var(--teal-light);background:var(--teal-pale)">'
         + '<div style="display:flex;align-items:center;gap:10px;width:100%">'
-        + '<span style="font-size:1.4rem">🚁</span>'
+        + '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="flex-shrink:0;color:var(--teal)"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0112 2a8 8 0 018 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>'
         + '<div style="flex:1"><div class="ap-name" style="font-size:.88rem">' + a.name + '</div>'
         + '<div style="font-size:.72rem;color:var(--teal-mid)">Add aerial photos or video to any shoot — most booked add-on</div></div>'
         + '<div class="ap-price" style="font-size:1rem">$' + a.price + '</div>'
         + '</div></div>';
+    }
+    return '<div class="addon-pill" onclick="showAddonPopup(event,' + i + ')">'
+      + '<div><div class="ap-name">' + a.name + '</div>' + (a.note ? '<div style="font-size:.7rem;color:var(--muted)">' + a.note + '</div>' : '') + '</div>'
+      + '<div style="display:flex;align-items:center;gap:6px">'
+      + '<div class="ap-price">$' + a.price + '</div>'
+      + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--muted);flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+      + '</div></div>';
+  }).join('');
+}
+
+
+function showAddonPopup(e, idx) {
+  e.stopPropagation();
+  // Remove existing popup
+  var existing = document.getElementById('addon-detail-popup');
+  if (existing) { existing.remove(); return; }
+
+  var a = currentAddons[idx];
+  if (!a) return;
+
+  var pill = e.currentTarget;
+  var alreadyAdded = selectedAddons.some(function(s){ return s.name === a.name; });
+
+  var popup = document.createElement('div');
+  popup.id = 'addon-detail-popup';
+  popup.className = 'addon-popup';
+  popup.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">'
+    + '<div class="ap-popup-name">' + a.name + '</div>'
+    + '<span id="adp-close" style="cursor:pointer;color:var(--muted);font-size:1.1rem;line-height:1;padding:0 2px">&#215;</span>'
+    + '</div>'
+    + '<div class="ap-popup-desc">' + (a.desc || 'No description available.') + '</div>'
+    + '<div class="ap-popup-price">$' + a.price + (a.note ? ' <span style="font-size:.72rem;font-weight:400;color:var(--muted)">· ' + a.note + '</span>' : '') + '</div>'
+    + '<div class="ap-popup-btns">'
+    + '<button class="ap-popup-add' + (alreadyAdded ? ' added' : '') + '" id="adp-add">' + (alreadyAdded ? '✓ Added' : '+ Add to quote') + '</button>'
+    + '<button class="ap-popup-cancel" id="adp-cancel">Close</button>'
+    + '</div>';
+
+  // Position popup above/below the pill
+  var rect = pill.getBoundingClientRect();
+  var top  = rect.bottom + 8;
+  if (top + 260 > window.innerHeight) top = rect.top - 268;
+  popup.style.top  = top + 'px';
+  popup.style.left = Math.min(Math.max(rect.left, 10), window.innerWidth - 320) + 'px';
+  document.body.appendChild(popup);
+
+  document.getElementById('adp-close').addEventListener('click', function(ev) { ev.stopPropagation(); popup.remove(); });
+  document.getElementById('adp-cancel').addEventListener('click', function(ev) { ev.stopPropagation(); popup.remove(); });
+  document.getElementById('adp-add').addEventListener('click', function(ev) {
+    ev.stopPropagation();
+    var isAdded = selectedAddons.some(function(s){ return s.name === a.name; });
+    if (isAdded) {
+      selectedAddons = selectedAddons.filter(function(s){ return s.name !== a.name; });
+      pill.classList.remove('selected');
+      this.textContent = '+ Add to quote';
+      this.classList.remove('added');
+      updateStickyTotal();
     } else {
-      nonDrone.push({ addon:a, idx:i });
+      selectedAddons.push({ name: a.name, price: a.price });
+      pill.classList.add('selected');
+      this.textContent = '✓ Added';
+      this.classList.add('added');
+      updateStickyTotal();
     }
   });
-  grid.innerHTML = droneHTML + nonDrone.map(function(item) {
-    var a = item.addon; var i = item.idx;
-    return '<div class="addon-pill" onclick="toggleAddon(this,' + i + ')">'
-      + '<div><div class="ap-name">' + a.name + '</div>' + (a.note ? '<div style="font-size:.7rem;color:var(--muted)">' + a.note + '</div>' : '') + '</div>'
-      + '<div class="ap-price">$' + a.price + '</div>'
-      + '</div>';
-  }).join('');
+
+  // Close on outside click
+  setTimeout(function() {
+    document.addEventListener('click', function handler(ev) {
+      if (!popup.contains(ev.target)) {
+        popup.remove();
+        document.removeEventListener('click', handler);
+      }
+    });
+  }, 10);
 }
 
 function toggleAddon(pill, idx) {
@@ -1058,75 +1351,66 @@ function toggleAddon(pill, idx) {
   }
 }
 
-// ── STEP 5: Summary ──
+// ── STEP 5 ──
 function buildSummary() {
-  var name      = document.getElementById('ci-name').value.trim();
-  var brokerage = document.getElementById('ci-brokerage').value.trim();
-  var address   = document.getElementById('ci-address').value.trim();
+  const name      = document.getElementById('ci-name').value.trim();
+  const brokerage = document.getElementById('ci-brokerage').value.trim();
+  const address   = document.getElementById('ci-address').value.trim();
 
-  var items = [];
-  if (selectedTierIdx !== null && currentTiers[selectedTierIdx]) {
-    items.push(currentTiers[selectedTierIdx]);
-  }
+  let items = [];
+  if (selectedTierIdx !== null && currentTiers[selectedTierIdx]) items.push(currentTiers[selectedTierIdx]);
   items = items.concat(selectedAddons);
+  const subtotal = items.reduce((s,i) => s + Number(i.price), 0);
+  const hst      = Math.round(subtotal * 0.13);
+  const total    = subtotal + hst;
 
-  var total = items.reduce(function(s,i){ return s + i.price; }, 0);
-  var hst   = (total * 0.13).toFixed(2);
-  var grand = (total * 1.13).toFixed(2);
-
-  var box = document.getElementById('summary-box');
+  const box = document.getElementById('summary-box');
   box.innerHTML = '<div class="summary-client">' + name + (brokerage ? ' · ' + brokerage : '') + '</div>'
     + (address ? '<div style="font-size:.78rem;color:rgba(255,255,255,.5);margin-bottom:14px">📍 ' + address + '</div>' : '')
     + '<div class="summary-items">'
-    + items.map(function(i){ return '<div class="summary-item"><span>' + i.name + '</span><span class="si-price">$' + i.price.toLocaleString('en-CA') + '</span></div>'; }).join('')
+    + items.map(i => '<div class="summary-item"><span>' + i.name + '</span><span class="si-price">$' + Number(i.price).toLocaleString('en-CA') + '</span></div>').join('')
+    + '<div class="summary-item" style="opacity:.6"><span>HST (13%)</span><span class="si-price">$' + hst.toLocaleString('en-CA') + '</span></div>'
     + '</div>'
-    + '<div class="summary-total" style="margin-top:12px">'
-    + '<div><div class="st-label">Subtotal</div><div style="font-size:.78rem;color:rgba(255,255,255,.45)">HST $' + hst + '</div></div>'
-    + '<span class="st-value">$' + parseFloat(grand).toLocaleString('en-CA', {minimumFractionDigits:2}) + '</span>'
-    + '</div>';
+    + '<div class="summary-total"><span class="st-label">Total incl. HST</span><span class="st-value">$' + total.toLocaleString('en-CA') + '</span></div>'
+    + '<div style="font-size:.68rem;color:rgba(255,255,255,.35);margin-top:10px;text-align:right">⚡ 2026 pricing — rates increase May 1</div>';
 }
 
 // ── SEND ──
 function sendToTracker() {
-  var name      = document.getElementById('ci-name').value.trim();
-  var brokerage = document.getElementById('ci-brokerage').value.trim();
-  var email     = document.getElementById('ci-email').value.trim();
-  var phone     = document.getElementById('ci-phone').value.trim();
-  var address   = document.getElementById('ci-address').value.trim();
+  const name      = document.getElementById('ci-name').value.trim();
+  const brokerage = document.getElementById('ci-brokerage').value.trim();
+  const email     = document.getElementById('ci-email').value.trim();
+  const phone     = document.getElementById('ci-phone').value.trim();
+  const address   = document.getElementById('ci-address').value.trim();
 
-  var lineItems = [];
-  if (selectedTierIdx !== null && currentTiers[selectedTierIdx]) {
-    var t = currentTiers[selectedTierIdx];
-    lineItems.push({ id:'li_0', desc:t.name, qty:1, price:t.price });
-  }
-  selectedAddons.forEach(function(a,i){
-    lineItems.push({ id:'li_' + (i+1), desc:a.name, qty:1, price:a.price });
-  });
-
-  var sub   = lineItems.reduce(function(s,l){ return s + l.price; }, 0);
-  var tax   = sub * 0.13;
-  var total = sub + tax;
+  let lineItems = [];
+  if (selectedTierIdx !== null && currentTiers[selectedTierIdx]) { var t = currentTiers[selectedTierIdx]; lineItems.push({ id:'li_' + Date.now(), desc:t.name, qty:1, price:Number(t.price) }); }
+  selectedAddons.forEach((a,i) => lineItems.push({ id:'li_' + (Date.now()+i+1), desc:a.name, qty:1, price:Number(a.price) }));
+  const sub = lineItems.reduce((s,l) => s + Number(l.price), 0);
+  const tax = Math.round(sub * 0.13);
 
   localStorage.setItem('reel_estate_pending_quote', JSON.stringify({
     id:'pq_' + Date.now(), fromPricing:true,
-    client:name, brokerage:brokerage, email:email, phone:phone, address:address,
-    lineItems:lineItems, subtotal:sub, useTax:true, tax:tax, total:total,
-    remaining:total, deposit:0, createdAt:new Date().toISOString(),
+    client:name, brokerage, email, phone, address,
+    lineItems, subtotal:sub, useTax:true, tax:tax, total:sub+tax, remaining:sub+tax, deposit:0,
+    createdAt:new Date().toISOString(),
   }));
 
   document.getElementById('step5').classList.remove('active');
   document.getElementById('success-screen').style.display = 'block';
   document.getElementById('success-name').textContent = name;
   document.getElementById('progress-row').style.display = 'none';
-  window.scrollTo({ top: document.getElementById('booking').offsetTop - 20, behavior:'smooth' });
+  window.scrollTo({top: document.getElementById('booking').offsetTop - 20, behavior:'smooth'});
 }
 
 function resetFlow() {
-  choices = []; selectedTierIdx = null; currentTiers = []; selectedAddons = [];
-  document.querySelectorAll('.choice-card').forEach(function(c){ c.classList.remove('selected'); });
-  ['ci-name','ci-brokerage','ci-email','ci-phone','ci-address'].forEach(function(id){
-    document.getElementById(id).value = '';
-  });
+  choices = []; selectedTierIdx = null; currentTiers = []; currentAddons = []; selectedAddons = [];
+  document.querySelectorAll('.choice-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('ci-name').value = '';
+  document.getElementById('ci-brokerage').value = '';
+  document.getElementById('ci-email').value = '';
+  document.getElementById('ci-phone').value = '';
+  document.getElementById('ci-address').value = '';
   document.getElementById('success-screen').style.display = 'none';
   document.getElementById('progress-row').style.display = 'flex';
   document.getElementById('step5').classList.remove('active');
@@ -1134,7 +1418,63 @@ function resetFlow() {
   document.getElementById('step1').classList.add('active');
   document.getElementById('btn1').disabled = true;
   updateProgress(1);
-  window.scrollTo({ top: document.getElementById('booking').offsetTop - 20, behavior:'smooth' });
+  window.scrollTo({top: document.getElementById('booking').offsetTop - 20, behavior:'smooth'});
+}
+
+
+// ── STICKY TOTAL ──
+function updateStickyTotal() {
+  var items = [];
+  if (selectedTierIdx !== null && currentTiers[selectedTierIdx]) {
+    items.push(currentTiers[selectedTierIdx]);
+  }
+  items = items.concat(selectedAddons);
+  var sub   = items.reduce(function(s,i){ return s + Number(i.price); }, 0);
+  var hst   = Math.round(sub * 0.13);
+  var total = sub + hst;
+  var bar   = document.getElementById('sticky-total');
+  var amtEl = document.getElementById('st-amount');
+  var itmEl = document.getElementById('st-items');
+  var hstEl = document.getElementById('st-hst');
+  if (!bar) return;
+  if (sub > 0) {
+    bar.classList.add('visible');
+    amtEl.textContent = '$' + sub.toLocaleString('en-CA');
+    hstEl.textContent = '+ $' + hst.toLocaleString('en-CA') + ' HST = $' + total.toLocaleString('en-CA') + ' total';
+    var count = items.length;
+    itmEl.textContent = count + ' item' + (count !== 1 ? 's' : '') + ' selected';
+  } else {
+    bar.classList.remove('visible');
+  }
+}
+
+function switchRetainerTab(tab) {
+  ['monthly','yearly','onetime'].forEach(function(t) {
+    var btn = document.getElementById('rt-' + t);
+    if (!btn) return;
+    btn.style.background = t === tab ? 'var(--teal)' : 'transparent';
+    btn.style.color      = t === tab ? '#fff' : 'var(--muted)';
+  });
+  var cards = document.getElementById('rt-cards');
+  if (!cards) return;
+  var tagMap = { monthly:'monthly', yearly:'yearly', onetime:'onetime' };
+  var filtered = currentTiers.filter(function(t){ return t.tag === tagMap[tab]; });
+  selectedTierIdx = null;
+  document.getElementById('btn2').disabled = true;
+  updateStickyTotal();
+  var suffix = tab === 'monthly' ? '/mo' : tab === 'yearly' ? '/yr' : '';
+  cards.innerHTML = '<div class="tier-grid">' + filtered.map(function(t) {
+    var globalIdx = currentTiers.indexOf(t);
+    var badge = t.featured ? '<div class="tier-badge">★ Most Popular</div>' : '';
+    var inc   = t.includes.map(function(x){ return '<li>' + x + '</li>'; }).join('');
+    var displayName = t.name.replace(' (Monthly)','').replace(' (Yearly)','');
+    return '<div class="tier-card' + (t.featured ? ' featured' : '') + '" onclick="selectTier(' + globalIdx + ')">'
+      + badge
+      + '<div class="tier-name">' + displayName + '</div>'
+      + '<div class="tier-price">$' + t.price.toLocaleString('en-CA') + '<span style="font-size:.75rem;font-weight:400">' + suffix + '</span></div>'
+      + '<ul class="tier-includes">' + inc + '</ul>'
+      + '</div>';
+  }).join('') + '</div>';
 }
 
 function showFullMenu() {
@@ -1156,26 +1496,31 @@ setInterval(function() {
   var el = document.getElementById('proof-ticker');
   if (el) {
     el.style.opacity = '0';
-    setTimeout(function() {
-      el.textContent = proofMessages[proofIdx];
-      el.style.opacity = '1';
-    }, 400);
+    setTimeout(function() { el.textContent = proofMessages[proofIdx]; el.style.opacity = '1'; }, 400);
   }
 }, 4000);
-
-// Transition style for ticker
 (function() {
   var el = document.getElementById('proof-ticker');
   if (el) el.style.transition = 'opacity .4s ease';
 })();
-
-// ── SLOT COUNTER — updates based on day of week ──
 (function() {
-  var slots = [3, 4, 2, 5, 3, 2, 1]; // Sun-Sat
-  var day = new Date().getDay();
+  var slots = [3,4,2,5,3,2,1];
   var el = document.getElementById('slots-text');
-  if (el) el.textContent = 'Only ' + slots[day] + ' shoot slot' + (slots[day] === 1 ? '' : 's') + ' left this week';
+  if (el) { var d = new Date().getDay(); el.textContent = 'Only ' + slots[d] + ' shoot slot' + (slots[d]===1?'':'s') + ' left this week'; }
 })();
 </script>
+<!-- STICKY TOTAL BAR -->
+<div class="sticky-total" id="sticky-total">
+  <div>
+    <div class="st-items" id="st-items">0 items selected</div>
+    <div class="st-amount" id="st-amount">$0</div>
+    <div class="st-hst" id="st-hst"></div>
+  </div>
+  <button class="st-cta" onclick="goStep(currentStep < 5 ? currentStep + 1 : 5)">
+    Continue →
+  </button>
+</div>
+
+
 </body>
 </html>

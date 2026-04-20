@@ -610,6 +610,11 @@ label { font-size: .8rem; font-weight: 600; color: var(--text2); text-transform:
 /* event colour themes */
 .cal-ev-followup  { background: #dbeafe; color: #1d4ed8; }
 .cal-ev-shoot     { background: #e0f2fe; color: #0369a1; }
+.cal-draggable    { cursor: grab; user-select: none; }
+.cal-draggable:active { cursor: grabbing; }
+.cal-draggable .cal-ev-edit-hint { display:none; font-size:.6rem; opacity:.6; margin-left:2px; }
+.cal-draggable:hover .cal-ev-edit-hint { display:inline; }
+.cal-drop-target  { background: var(--teal-pale, #e8f5f0) !important; outline: 2px dashed var(--teal, #1a4d3e); outline-offset: -2px; }
 .cal-ev-meeting   { background: #dcfce7; color: #15803d; }
 .cal-ev-personal  { background: #ede9fe; color: #6d28d9; }
 .cal-ev-reminder  { background: #fef9c3; color: #b45309; }
@@ -779,6 +784,80 @@ label { font-size: .8rem; font-weight: 600; color: var(--text2); text-transform:
 </style>
 </head>
 <body>
+
+<!-- ── LOGIN GATE ── -->
+<div id="login-gate" style="
+  position:fixed;inset:0;z-index:99999;
+  background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;
+">
+  <div style="
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:40px 36px;
+    max-width:380px;
+    width:90%;
+    text-align:center;
+    box-shadow:0 20px 60px rgba(0,0,0,.15);
+  ">
+    <div style="font-size:2.2rem;margin-bottom:10px">🎬</div>
+    <div style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:var(--text);margin-bottom:4px">Reel Estate Media</div>
+    <div style="font-size:.72rem;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:28px">Business Dashboard</div>
+
+    <div style="text-align:left;margin-bottom:16px">
+      <label style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);display:block;margin-bottom:6px">Password</label>
+      <input
+        id="login-pw"
+        type="password"
+        placeholder="Enter your password"
+        onkeydown="if(event.key==='Enter')attemptLogin()"
+        style="
+          width:100%;
+          border:1.5px solid var(--border);
+          border-radius:8px;
+          padding:11px 14px;
+          font-family:inherit;
+          font-size:.88rem;
+          color:var(--text);
+          background:var(--bg);
+          outline:none;
+          transition:.15s;
+        "
+      >
+    </div>
+
+    <div id="login-error" style="
+      display:none;
+      color:#dc2626;
+      font-size:.75rem;
+      margin-bottom:12px;
+      text-align:left;
+    ">Incorrect password. Please try again.</div>
+
+    <button onclick="attemptLogin()" style="
+      width:100%;
+      padding:12px;
+      background:var(--teal);
+      color:#fff;
+      border:none;
+      border-radius:8px;
+      font-family:inherit;
+      font-size:.82rem;
+      font-weight:600;
+      letter-spacing:.06em;
+      cursor:pointer;
+      transition:.15s;
+    ">Unlock Dashboard</button>
+
+    <div style="margin-top:20px;font-size:.68rem;color:var(--text3)">
+      Reel Estate Media · Internal use only
+    </div>
+  </div>
+</div>
+
+
 
 <div class="app">
   <!-- TOP BAR -->
@@ -990,29 +1069,7 @@ label { font-size: .8rem; font-weight: 600; color: var(--text2); text-transform:
           <button type="button" class="method-chip" data-method="Text" onclick="selectMethod(this)">Text</button>
         </div>
       </div>
-      <div class="form-field">
-        <label>Date Contacted</label>
-        <input class="input" id="f-date" type="datetime-local">
-      </div>
-      <div class="form-field">
-        <label>Status</label>
-        <select class="select" id="f-status">
-          <option>Not Contacted</option>
-          <option selected>Contacted</option>
-          <option>They Called Me</option>
-          <option>Replied</option>
-          <option>No Response</option>
-          <option>Meeting Booked</option>
-          <option>Shoot Booked</option>
-          <option>Payment Received</option>
-          <option>Closed</option>
-          <option>Dead</option>
-        </select>
-      </div>
-      <div class="form-field">
-        <label>Next Follow-Up Date</label>
-        <input class="input" id="f-followup" type="date">
-      </div>
+
       <!-- MEETINGS LOG -->
       <div class="form-field full">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
@@ -1539,12 +1596,10 @@ function renderCalendar() {
   updateStats();
   const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   const DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-
   document.getElementById('cal-month-label').textContent = MONTHS[calMonth] + ' ' + calYear;
-
   const grid = document.getElementById('cal-grid');
 
-  // Build events map: date string -> array of event objects
+  // Build events map
   const eventsMap = {};
   function addEvent(dateStr, ev) {
     if (!dateStr) return;
@@ -1554,20 +1609,15 @@ function renderCalendar() {
 
   leads.forEach(l => {
     const name = l.name || 'Unknown';
-    if (l.nextFollowUp)  addEvent(l.nextFollowUp,  { type:'followup',  label: name, id: l.id });
-    // Shoot entries (array)
+    if (l.nextFollowUp) addEvent(l.nextFollowUp, { type:'followup', label: name, id: l.id, field:'nextFollowUp' });
     (l.shoots || []).forEach(s => {
-      if (s.date) addEvent(s.date, { type:'shoot', label: name + (s.type ? ' · ' + s.type : '') + (s.time ? ' @ ' + s.time : ''), id: l.id });
+      if (s.date) addEvent(s.date, { type:'shoot', label: name + (s.type ? ' · ' + s.type : '') + (s.time ? ' @ ' + s.time : ''), id: l.id, shootId: s.id, date: s.date });
     });
-    // Fallback: old single shootDate
-    if (!(l.shoots && l.shoots.length) && l.shootDate) addEvent(l.shootDate, { type:'shoot', label: name + (l.shootType ? ' · ' + l.shootType : ''), id: l.id });
+    if (!(l.shoots && l.shoots.length) && l.shootDate) addEvent(l.shootDate, { type:'shoot', label: name + (l.shootType ? ' · ' + l.shootType : ''), id: l.id, date: l.shootDate });
     if (l.dateContacted) addEvent(l.dateContacted.slice(0,10), { type:'contacted', label: name, id: l.id });
-    // Dedicated meeting date field
-    // Meeting entries (array)
     (l.meetings || []).forEach(m => {
-      if (m.date) addEvent(m.date, { type:'meeting', label: name + ' — Meeting' + (m.time ? ' @ ' + m.time : ''), id: l.id });
+      if (m.date) addEvent(m.date, { type:'meeting', label: name + ' — Meeting' + (m.time ? ' @ ' + m.time : ''), id: l.id, meetingId: m.id, date: m.date });
     });
-    // Fallback: Meeting Booked with no meetings array yet
     if (l.status === 'Meeting Booked' && !(l.meetings && l.meetings.length)) {
       const d = l.nextFollowUp;
       if (d) {
@@ -1580,66 +1630,279 @@ function renderCalendar() {
       addEvent(l.shootDate, { type:'payment', label: name, id: l.id });
     }
   });
-  // Custom calendar events (standalone)
+
   (calEvents || []).forEach(ev => {
-    const cls = ev.type || 'other';
-    addEvent(ev.date, { type: cls, label: ev.title, calId: ev.id, custom: true });
+    addEvent(ev.date, { type: ev.type || 'other', label: ev.title, calId: ev.id, custom: true, date: ev.date });
   });
 
-  // First day of month and total days
-  const firstDay   = new Date(calYear, calMonth, 1).getDay(); // 0=Sun
-  const daysInMonth= new Date(calYear, calMonth + 1, 0).getDate();
-  const daysInPrev = new Date(calYear, calMonth, 0).getDate();
-  const todayStr   = today();
+  const firstDay    = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const daysInPrev  = new Date(calYear, calMonth, 0).getDate();
+  const todayStr    = today();
 
-  let html = '';
+  let calHtml = '';
+  DAYS.forEach(d => { calHtml += `<div class="cal-day-header">${d}</div>`; });
 
-  // Day headers
-  DAYS.forEach(d => { html += `<div class="cal-day-header">${d}</div>`; });
-
-  // Leading cells from previous month
+  // Leading cells
   for (let i = 0; i < firstDay; i++) {
     const d = daysInPrev - firstDay + 1 + i;
-    html += `<div class="cal-cell other-month"><div class="cal-date-num" style="color:var(--text3)">${d}</div></div>`;
+    calHtml += `<div class="cal-cell other-month"><div class="cal-date-num" style="color:var(--text3)">${d}</div></div>`;
   }
 
   // Current month cells
   for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr  = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-    const isToday  = dateStr === todayStr;
-    const dayEvents= eventsMap[dateStr] || [];
-
-    const MAX_SHOW = 3;
-    const shown    = dayEvents.slice(0, MAX_SHOW);
-    const overflow = dayEvents.length - MAX_SHOW;
+    const dateStr   = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    const isToday   = dateStr === todayStr;
+    const dayEvents = eventsMap[dateStr] || [];
+    const MAX_SHOW  = 3;
+    const shown     = dayEvents.slice(0, MAX_SHOW);
+    const overflow  = dayEvents.length - MAX_SHOW;
 
     const evHtml = shown.map(ev => {
       const cls = { followup:'cal-ev-followup', shoot:'cal-ev-shoot', meeting:'cal-ev-meeting', contacted:'cal-ev-contacted', payment:'cal-ev-payment', personal:'cal-ev-meeting', reminder:'cal-ev-followup', other:'cal-ev-contacted' }[ev.type] || 'cal-ev-followup';
       const dotColor = { followup:'#3b82f6', shoot:'#0284c7', meeting:'#22c55e', contacted:'#f97316', payment:'#15803d', personal:'#8b5cf6', reminder:'#f59e0b', other:'#6b7280' }[ev.type] || '#3b82f6';
-      const clickFn = ev.custom ? `openCalEventEdit('${ev.calId}')` : `openEditModal('${ev.id}')`;
-      return `<div class="cal-event ${cls}" onclick="event.stopPropagation();${clickFn}" title="${esc(ev.label)}">
+
+      // Build data attrs for drag
+      const dataAttrs = `data-type="${ev.type}" data-date="${dateStr}" data-id="${ev.id||''}" data-shoot-id="${ev.shootId||''}" data-meeting-id="${ev.meetingId||''}" data-cal-id="${ev.calId||''}" data-custom="${ev.custom||false}" data-field="${ev.field||''}" data-label="${esc(ev.label)}"`;
+
+      return `<div class="cal-event ${cls} cal-draggable" draggable="true" ${dataAttrs}
+        onclick="event.stopPropagation();calEventClick(this)"
+        ondragstart="calDragStart(event,this)"
+        title="${esc(ev.label)} — click to edit">
         <span class="cal-event-dot" style="background:${dotColor}"></span>
         <span class="cal-event-label">${esc(ev.label)}</span>
+        <span class="cal-ev-edit-hint">✎</span>
       </div>`;
-    }).join('');;
+    }).join('');
 
     const moreHtml = overflow > 0 ? `<div class="cal-more">+${overflow} more</div>` : '';
 
-    html += `<div class="cal-cell${isToday?' today':''}" onclick="openCalEventModal('${dateStr}')" title="Add event on ${dateStr}">
+    calHtml += `<div class="cal-cell${isToday?' today':''}"
+      data-date="${dateStr}"
+      onclick="openCalEventModal('${dateStr}')"
+      ondragover="calDragOver(event,this)"
+      ondragleave="calDragLeave(event,this)"
+      ondrop="calDrop(event,this)">
       <div class="cal-date-num">${d}</div>
       ${evHtml}${moreHtml}
     </div>`;
   }
 
-  // Trailing cells to complete the grid
-  const totalCells = firstDay + daysInMonth;
+  // Trailing cells
+  const totalCells  = firstDay + daysInMonth;
   const trailingDays = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
   for (let d = 1; d <= trailingDays; d++) {
-    html += `<div class="cal-cell other-month"><div class="cal-date-num" style="color:var(--text3)">${d}</div></div>`;
+    calHtml += `<div class="cal-cell other-month"><div class="cal-date-num" style="color:var(--text3)">${d}</div></div>`;
   }
 
-  grid.innerHTML = html;
+  grid.innerHTML = calHtml;
 }
+
+/* ── CALENDAR DRAG & DROP ── */
+let calDragData = null;
+
+function calDragStart(e, el) {
+  calDragData = {
+    type:      el.dataset.type,
+    date:      el.dataset.date,
+    id:        el.dataset.id,
+    shootId:   el.dataset.shootId,
+    meetingId: el.dataset.meetingId,
+    calId:     el.dataset.calId,
+    custom:    el.dataset.custom === 'true',
+    field:     el.dataset.field,
+    label:     el.dataset.label,
+  };
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', JSON.stringify(calDragData));
+  el.style.opacity = '0.4';
+  setTimeout(() => el.style.opacity = '', 0);
+}
+
+function calDragOver(e, cell) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  cell.classList.add('cal-drop-target');
+}
+
+function calDragLeave(e, cell) {
+  cell.classList.remove('cal-drop-target');
+}
+
+function calDrop(e, cell) {
+  e.preventDefault();
+  e.stopPropagation();
+  cell.classList.remove('cal-drop-target');
+  const newDate = cell.dataset.date;
+  if (!calDragData || !newDate || newDate === calDragData.date) return;
+
+  const d = calDragData;
+
+  if (d.custom) {
+    // Custom calendar event
+    const ev = calEvents.find(ce => ce.id === d.calId);
+    if (ev) { ev.date = newDate; saveCalEvents(); }
+
+  } else if (d.type === 'shoot') {
+    const lead = leads.find(l => l.id === d.id);
+    if (lead) {
+      const shoot = (lead.shoots || []).find(s => s.id === d.shootId);
+      if (shoot) {
+        shoot.date = newDate;
+        lead.interactions = lead.interactions || [];
+        lead.interactions.unshift({ id: genId(), datetime: nowLocal(), type:'Note', note: 'Shoot rescheduled to ' + newDate + ' (dragged on calendar)' });
+      } else if (lead.shootDate === d.date) {
+        lead.shootDate = newDate;
+      }
+      saveLeads(); renderLeads();
+    }
+
+  } else if (d.type === 'meeting') {
+    const lead = leads.find(l => l.id === d.id);
+    if (lead) {
+      const meeting = (lead.meetings || []).find(m => m.id === d.meetingId);
+      if (meeting) {
+        meeting.date = newDate;
+        lead.interactions = lead.interactions || [];
+        lead.interactions.unshift({ id: genId(), datetime: nowLocal(), type:'Note', note: 'Meeting rescheduled to ' + newDate + ' (dragged on calendar)' });
+      }
+      saveLeads(); renderLeads();
+    }
+
+  } else if (d.type === 'followup') {
+    const lead = leads.find(l => l.id === d.id);
+    if (lead) {
+      lead.nextFollowUp = newDate;
+      lead.interactions = lead.interactions || [];
+      lead.interactions.unshift({ id: genId(), datetime: nowLocal(), type:'Note', note: 'Follow-up rescheduled to ' + newDate + ' (dragged on calendar)' });
+      saveLeads(); renderLeads();
+    }
+
+  } else if (d.type === 'contacted') {
+    const lead = leads.find(l => l.id === d.id);
+    if (lead) {
+      lead.dateContacted = newDate;
+      saveLeads(); renderLeads();
+    }
+  }
+
+  calDragData = null;
+  renderCalendar();
+  showToast('Event moved to ' + newDate + ' ✓');
+}
+
+/* ── CALENDAR EVENT CLICK (edit) ── */
+function calEventClick(el) {
+  const type    = el.dataset.type;
+  const id      = el.dataset.id;
+  const shootId = el.dataset.shootId;
+  const meetingId = el.dataset.meetingId;
+  const calId   = el.dataset.calId;
+  const custom  = el.dataset.custom === 'true';
+  const date    = el.dataset.date;
+  const label   = el.dataset.label;
+
+  if (custom) {
+    openCalEventEdit(calId);
+    return;
+  }
+
+  if (type === 'shoot') {
+    showShootPopup({ clientX: el.getBoundingClientRect().left, clientY: el.getBoundingClientRect().bottom, stopPropagation: ()=>{} }, id, shootId, label, date);
+    return;
+  }
+
+  if (type === 'meeting') {
+    showMeetingPopup(el, id, meetingId, label, date);
+    return;
+  }
+
+  if (type === 'followup') {
+    showFollowupPopup(el, id, label, date);
+    return;
+  }
+
+  // fallback — open lead
+  openEditModal(id);
+}
+
+/* ── MEETING POPUP ── */
+function showMeetingPopup(el, leadId, meetingId, label, date) {
+  const existing = document.getElementById('cal-event-popup');
+  if (existing) { existing.remove(); return; }
+  const rect = el.getBoundingClientRect();
+  const popup = document.createElement('div');
+  popup.id = 'cal-event-popup';
+  popup.style.cssText = 'position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;box-shadow:0 8px 32px rgba(0,0,0,.18);min-width:220px;';
+  popup.innerHTML =
+    '<div style="font-size:.78rem;font-weight:600;color:var(--text);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">'
+    + '<span>📅 ' + esc(label) + '</span>'
+    + '<span id="cep-close-m" style="cursor:pointer;color:var(--text3);font-size:1rem">&#215;</span>'
+    + '</div>'
+    + '<div style="display:flex;flex-direction:column;gap:6px">'
+    + '<button id="cep-open" style="background:var(--teal);color:#fff;border:none;border-radius:6px;padding:8px 12px;font-size:.78rem;font-weight:600;cursor:pointer;text-align:left">✏️ Open Lead</button>'
+    + '<button id="cep-delete" style="background:none;border:1px solid #dc2626;color:#dc2626;border-radius:6px;padding:8px 12px;font-size:.78rem;font-weight:600;cursor:pointer;text-align:left">🗑 Remove Meeting</button>'
+    + '</div>';
+  popup.style.left = Math.min(rect.left, window.innerWidth - 250) + 'px';
+  popup.style.top  = Math.min(rect.bottom + 4, window.innerHeight - 160) + 'px';
+  document.body.appendChild(popup);
+  document.getElementById('cep-close-m').addEventListener('click', function(e2) { e2.stopPropagation(); popup.remove(); });
+  document.getElementById('cep-open').addEventListener('click', function(e) { e.stopPropagation(); popup.remove(); openEditModal(leadId); });
+  document.getElementById('cep-delete').addEventListener('click', function(e) {
+    e.stopPropagation(); popup.remove();
+    const lead = leads.find(l => l.id === leadId);
+    if (!lead) return;
+    if (!confirm('Remove this meeting from ' + (lead.name||'lead') + '?')) return;
+    lead.meetings = (lead.meetings||[]).filter(m => m.id !== meetingId && m.date !== date);
+    saveLeads(); renderLeads(); renderCalendar();
+    showToast('Meeting removed ✓');
+  });
+}
+
+/* ── FOLLOW-UP POPUP ── */
+function showFollowupPopup(el, leadId, label, date) {
+  const existing = document.getElementById('cal-event-popup');
+  if (existing) { existing.remove(); return; }
+  const rect = el.getBoundingClientRect();
+  const lead = leads.find(l => l.id === leadId);
+  const popup = document.createElement('div');
+  popup.id = 'cal-event-popup';
+  popup.style.cssText = 'position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;box-shadow:0 8px 32px rgba(0,0,0,.18);min-width:240px;';
+  popup.innerHTML =
+    '<div style="font-size:.78rem;font-weight:600;color:var(--text);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">'
+    + '<span>🔔 Follow-up: ' + esc(label) + '</span>'
+    + '<span id="cep-close-f" style="cursor:pointer;color:var(--text3);font-size:1rem">&#215;</span>'
+    + '</div>'
+    + '<div style="margin-bottom:10px">'
+    + '<label style="font-size:.68rem;color:var(--text3);display:block;margin-bottom:4px">Reschedule to</label>'
+    + '<input type="date" id="cep-new-date" value="' + date + '" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:.82rem;background:var(--bg);color:var(--text)">'
+    + '</div>'
+    + '<div style="display:flex;flex-direction:column;gap:6px">'
+    + '<button id="cep-reschedule" style="background:var(--teal);color:#fff;border:none;border-radius:6px;padding:8px 12px;font-size:.78rem;font-weight:600;cursor:pointer;text-align:left">✓ Save New Date</button>'
+    + '<button id="cep-done" style="background:none;border:1px solid #22c55e;color:#15803d;border-radius:6px;padding:8px 12px;font-size:.78rem;font-weight:600;cursor:pointer;text-align:left">✅ Mark Done</button>'
+    + '<button id="cep-open" style="background:none;border:1px solid var(--border);color:var(--text2);border-radius:6px;padding:8px 12px;font-size:.78rem;cursor:pointer;text-align:left">✏️ Open Lead</button>'
+    + '</div>';
+  popup.style.left = Math.min(rect.left, window.innerWidth - 270) + 'px';
+  popup.style.top  = Math.min(rect.bottom + 4, window.innerHeight - 220) + 'px';
+  document.body.appendChild(popup);
+  document.getElementById('cep-close-f').addEventListener('click', function(e2) { e2.stopPropagation(); popup.remove(); });
+  document.getElementById('cep-reschedule').addEventListener('click', function(e) {
+    e.stopPropagation();
+    const newDate = document.getElementById('cep-new-date').value;
+    if (!newDate || !lead) return;
+    lead.nextFollowUp = newDate;
+    saveLeads(); renderLeads(); renderCalendar(); popup.remove();
+    showToast('Follow-up rescheduled ✓');
+  });
+  document.getElementById('cep-done').addEventListener('click', function(e) {
+    e.stopPropagation(); popup.remove();
+    confirmFollowUpDone(leadId);
+  });
+  document.getElementById('cep-open').addEventListener('click', function(e) {
+    e.stopPropagation(); popup.remove(); openEditModal(leadId);
+  });
+}
+
 
 /* ============================================================
    LEAD CRUD
@@ -1666,9 +1929,6 @@ function openEditModal(id) {
   document.getElementById('f-ig').value       = l.ig || '';
   document.getElementById('f-phone').value    = l.phone || '';
   document.getElementById('f-email').value    = l.email || '';
-  document.getElementById('f-date').value     = l.dateContacted || today();
-  document.getElementById('f-status').value   = l.status || 'Contacted';
-  document.getElementById('f-followup').value    = l.nextFollowUp  || '';
   currentEditMeetings = JSON.parse(JSON.stringify(l.meetings || []));
   currentEditShoots   = JSON.parse(JSON.stringify(l.shoots   || []));
   renderMeetingsList();
@@ -1704,9 +1964,9 @@ function saveLead() {
     phone:        document.getElementById('f-phone').value.trim(),
     email:        document.getElementById('f-email').value.trim(),
     method:       selectedMethod,
-    dateContacted:document.getElementById('f-date').value || nowLocal(),
-    status:       document.getElementById('f-status').value,
-    nextFollowUp: document.getElementById('f-followup').value,
+    dateContacted: nowLocal(),
+    status:       'Contacted',
+    nextFollowUp: '',
     meetings: currentEditMeetings.slice(),
     shoots:   currentEditShoots.slice(),
     notes:        document.getElementById('f-notes').value.trim(),
@@ -1729,9 +1989,6 @@ function deleteLead(id) {
 }
 function resetLeadForm() {
   ['f-name','f-brokerage','f-ig','f-phone','f-email','f-notes'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('f-date').value      = today();
-  document.getElementById('f-status').value    = 'Contacted';
-  document.getElementById('f-followup').value  = '';
   currentEditMeetings = [];
   currentEditShoots   = [];
   document.getElementById('meeting-new-entry').style.display = 'none';
@@ -1900,8 +2157,6 @@ function useExtracted() {
   document.getElementById('f-ig').value        = document.getElementById('e-ig').value;
   document.getElementById('f-phone').value     = document.getElementById('e-phone').value;
   document.getElementById('f-notes').value     = document.getElementById('e-notes').value;
-  document.getElementById('f-date').value      = today();
-  document.getElementById('f-status').value    = 'Contacted';
   closeModal('import-modal');
   editingId = null;
   document.getElementById('modal-title').textContent = 'Add Lead';
@@ -2061,10 +2316,11 @@ const CATALOGUE = {
     { name: 'Commercial Photo + Video',desc: 'Full commercial production',   price: 650 },
   ],
   onlocation: [
-    { name: 'Starter Presence — 5 Reels',   desc: '1 shoot day · 5 polished reels · light strategy (hooks + structure)',                                              price: 1250 },
-    { name: 'Consistent Brand — 10 Reels',  desc: '1 shoot day · 10 reels · better storytelling + variations',                                                        price: 2000 },
-    { name: 'Content Machine — 20 Reels',   desc: '1–2 shoot days · 20 reels · hook variations, multiple angles, deeper coverage',                                    price: 3500 },
-    { name: 'Market Dominance — 30 Reels',  desc: '2 shoot days or 1 structured full day · 30 reels · strategic planning + content categories (daily posting ready)', price: 5500 },
+    { name: 'Single Content Video',          desc: '1 content video up to 30 sec · talking head, tips, or market update · 60 sec version +$50',           price: 200  },
+    { name: 'Starter — 5 Videos',            desc: '5 content videos up to 30 sec · basic hook + structure strategy · 60 sec version +$25/video',         price: 750  },
+    { name: 'Consistent — 10 Videos',        desc: '10 content videos up to 30 sec · storytelling + variations · 60 sec version +$20/video',              price: 1200 },
+    { name: 'Content Machine — 20 Videos',   desc: '20 content videos up to 30 sec · multi-angle + hook variations · 60 sec version +$15/video',          price: 2200 },
+    { name: 'Market Dominance — 30 Videos',  desc: '30 content videos up to 30 sec · full strategy + content categories · 60 sec version +$10/video',     price: 3000 },
   ],
   virtualstaging: [
     { name: '3D Virtual Staging — Starter', desc: '3 rooms digitally furnished · perfect for condos',              price: 225,  includes: '3 rooms &bull; 2 style options &bull; 48hr delivery' },
@@ -2564,7 +2820,6 @@ function buildInvoiceHTML(q) {
     + "  document.body.setAttribute('fonts-loaded','1');"
     + "});"
     + "<\/script>";
-
   return "<!DOCTYPE html>"
     + "<html><head><meta charset=\"UTF-8\">"
     + "<meta name=\"viewport\" content=\"width=816\">"
@@ -3609,6 +3864,65 @@ function saveCalEvent() {
   showToast((editingCalEventId ? 'Event updated' : 'Event added') + ' ✓');
 }
 
+function showShootPopup(e, leadId, shootId, label, date) {
+  e.stopPropagation();
+  const existing = document.getElementById('shoot-cal-popup');
+  if (existing) { existing.remove(); return; }
+
+  const popup = document.createElement('div');
+  popup.id = 'shoot-cal-popup';
+  popup.style.cssText = 'position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;box-shadow:0 8px 32px rgba(0,0,0,.18);min-width:220px;';
+  popup.innerHTML =
+    '<div style="font-size:.78rem;font-weight:600;color:var(--text);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">'
+    + '<span>📷 ' + esc(label) + '</span>'
+    + '<span id="scp-close-x" style="cursor:pointer;color:var(--text3);font-size:1rem;padding:0 2px">&#215;</span>'
+    + '</div>'
+    + '<div style="display:flex;flex-direction:column;gap:6px">'
+    + '<button id="scp-open" style="background:var(--teal);color:#fff;border:none;border-radius:6px;padding:8px 12px;font-size:.78rem;font-weight:600;cursor:pointer;text-align:left">✏️ Open Lead</button>'
+    + '<button id="scp-delete" style="background:none;border:1px solid #dc2626;color:#dc2626;border-radius:6px;padding:8px 12px;font-size:.78rem;font-weight:600;cursor:pointer;text-align:left">🗑 Remove Shoot</button>'
+    + '</div>';
+
+  popup.style.left = Math.min(e.clientX, window.innerWidth - 260) + 'px';
+  popup.style.top  = Math.min(e.clientY + 8, window.innerHeight - 160) + 'px';
+  document.body.appendChild(popup);
+
+  document.getElementById('scp-close-x').addEventListener('click', function(ev2) { ev2.stopPropagation(); popup.remove(); });
+  document.getElementById('scp-open').addEventListener('click', function(ev) {
+    ev.stopPropagation();
+    popup.remove();
+    openEditModal(leadId);
+  });
+
+  document.getElementById('scp-delete').addEventListener('click', function(ev) {
+    ev.stopPropagation();
+    popup.remove();
+    deleteShootFromCalendar(leadId, shootId, date);
+  });
+}
+
+function deleteShootFromCalendar(leadId, shootId, date) {
+  const lead = leads.find(l => l.id === leadId);
+  if (!lead) { showToast('Lead not found'); return; }
+  if (!confirm('Remove this shoot from ' + (lead.name || 'this lead') + '?')) return;
+
+  const before = (lead.shoots || []).length;
+
+  // Try by shootId first
+  if (shootId && shootId !== 'undefined' && shootId !== '') {
+    lead.shoots = (lead.shoots || []).filter(s => s.id !== shootId);
+  }
+
+  // If nothing changed, fall back to date match
+  if (lead.shoots.length === before) {
+    lead.shoots = (lead.shoots || []).filter(s => s.date !== date);
+  }
+
+  saveLeads();
+  renderLeads();
+  renderCalendar();
+  showToast('Shoot removed ✓');
+}
+
 function deleteCalEvent(id) {
   if (!confirm('Delete this event?')) return;
   calEvents = calEvents.filter(e => e.id !== id);
@@ -3967,6 +4281,46 @@ document.addEventListener('paste', e => {
     }
   }
 });
+
+/* ── LOGIN GATE ── */
+(function() {
+  var PW_HASH = 'fb971d6591d6cfc05c8b9e088db5f92cea6057749bc9753625790fbac35bb415';
+  var SESSION_KEY = 'rem_auth_session';
+
+  async function hashString(str) {
+    var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+  }
+
+  window.attemptLogin = async function() {
+    var val  = document.getElementById('login-pw').value;
+    var hash = await hashString(val);
+    var errEl = document.getElementById('login-error');
+    var pwEl  = document.getElementById('login-pw');
+    if (hash === PW_HASH) {
+      sessionStorage.setItem(SESSION_KEY, '1');
+      document.getElementById('login-gate').style.display = 'none';
+      pwEl.value = '';
+    } else {
+      errEl.style.display = 'block';
+      pwEl.value = '';
+      pwEl.style.borderColor = '#dc2626';
+      pwEl.focus();
+      setTimeout(function(){ pwEl.style.borderColor = ''; }, 1500);
+    }
+  };
+
+  if (sessionStorage.getItem(SESSION_KEY) === '1') {
+    var gate = document.getElementById('login-gate');
+    if (gate) gate.style.display = 'none';
+  } else {
+    setTimeout(function(){
+      var el = document.getElementById('login-pw');
+      if (el) el.focus();
+    }, 150);
+  }
+})();
+
 </script>
 
 <!-- QUOTE BUILDER MODAL -->
