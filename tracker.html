@@ -940,25 +940,32 @@ label { font-size: .8rem; font-weight: 600; color: var(--text2); text-transform:
           <input class="input-search" id="search-input" placeholder="Search name, brokerage, @handle, phone…" oninput="renderLeads()">
         </div>
         <select class="filter-select" id="status-filter" onchange="renderLeads()">
-          <option value="">All Status</option>
-          <option value="Not Contacted">Not Contacted</option>
-          <option value="Contacted">Contacted</option>
-          <option value="They Called Me">They Called Me</option>
-          <option value="Replied">Replied</option>
-          <option value="No Response">No Response</option>
-          <option value="Meeting Booked">Meeting Booked</option>
-          <option value="Shoot Booked">Shoot Booked</option>
-          <option value="Payment Received">Payment Received</option>
-          <option value="Closed">Closed</option>
-          <option value="Dead">Dead</option>
+          <option value="">All Statuses</option>
+          <optgroup label="Prospecting">
+            <option>New Lead</option><option>Contacted</option><option>They Reached Out</option>
+          </optgroup>
+          <optgroup label="Engaged">
+            <option>Replied</option><option>In Conversation</option><option>Quote Sent</option>
+          </optgroup>
+          <optgroup label="Booked">
+            <option>Meeting Booked</option><option>Shoot Booked</option><option>Deposit Paid</option>
+          </optgroup>
+          <optgroup label="Completed">
+            <option>Delivered</option><option>Closed — Won</option>
+          </optgroup>
+          <optgroup label="Lost">
+            <option>No Response</option><option>Ghosted</option><option>Cancelled</option><option>Not Interested</option><option>Dead</option>
+          </optgroup>
         </select>
         <div class="data-row">
           <button class="btn btn-ghost btn-sm" onclick="exportCSV()">CSV</button>
-          <button class="btn btn-ghost btn-sm" onclick="exportJSON()">JSON</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportJSON()">Export JSON</button>
           <label class="btn btn-ghost btn-sm" style="cursor:pointer">
             Import JSON
             <input type="file" accept=".json" style="display:none" onchange="importJSON(this)">
           </label>
+          <div style="flex:1"></div>
+          <button class="btn btn-ghost btn-sm" style="color:#22c55e;border-color:#22c55e" onclick="syncAllToCloud()" id="sync-all-btn">☁ Sync All</button>
         </div>
       </div>
 
@@ -1068,6 +1075,30 @@ label { font-size: .8rem; font-weight: 600; color: var(--text2); text-transform:
           <button type="button" class="method-chip" data-method="Call" onclick="selectMethod(this)">Call</button>
           <button type="button" class="method-chip" data-method="Text" onclick="selectMethod(this)">Text</button>
         </div>
+      </div>
+      <div class="form-field">
+        <label>Referral Source</label>
+        <input class="input" id="f-referral" placeholder="Agent name, Google, Instagram…" type="text">
+      </div>
+      <div class="form-field">
+        <label>Pipeline Stage</label>
+        <select class="select" id="f-stage">
+          <option value="new">New Lead</option>
+          <option value="contacted">Contacted</option>
+          <option value="quoted">Quoted</option>
+          <option value="booked">Booked</option>
+          <option value="completed">Completed</option>
+          <option value="lost">Lost</option>
+        </select>
+      </div>
+
+      <!-- PROPERTIES (multi-property support) -->
+      <div class="form-field full" id="properties-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <label>Properties</label>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="addPropertyEntry()">+ Add Property</button>
+        </div>
+        <div id="properties-list" style="margin-bottom:8px"></div>
       </div>
 
       <!-- MEETINGS LOG -->
@@ -1214,6 +1245,12 @@ label { font-size: .8rem; font-weight: 600; color: var(--text2); text-transform:
       </button>
       <button class="btn btn-ghost btn-sm" id="gen-profile-btn" style="display:none;color:#7c3aed;border-color:#c4b5fd" onclick="generateProfilePage(editingId)">
         🌐 Profile Page
+      </button>
+      <button class="btn btn-ghost btn-sm" id="btn-confirm-email" style="display:none;color:#0284c7;border-color:#93c5fd" onclick="generateConfirmationEmail(editingId)">
+        📧 Send Confirmation
+      </button>
+      <button class="btn btn-ghost btn-sm" id="btn-review-req" style="display:none;color:#15803d;border-color:#86efac" onclick="sendReviewRequest(editingId)">
+        ⭐ Request Review
       </button>
       <button class="btn btn-primary btn-lg" id="save-lead-btn" onclick="saveLead()">Add Lead</button>
     </div>
@@ -1442,6 +1479,48 @@ function showSyncStatus(msg, ok) {
   setTimeout(function(){ el.style.opacity = '0'; }, 2000);
 }
 
+async function syncAllToCloud() {
+  var btn = document.getElementById('sync-all-btn');
+  if (btn) { btn.textContent = '☁ Syncing…'; btn.disabled = true; }
+  try {
+    for (var i = 0; i < leads.length; i++)           { await saveLeadToDB(leads[i]); }
+    for (var j = 0; j < quotes.length; j++)          { await saveQuoteToDB(quotes[j]); }
+    for (var k = 0; k < (calEvents||[]).length; k++) { await saveCalEventToDB(calEvents[k]); }
+    showSyncStatus('✓ All synced', true);
+    showToast('✓ Synced — ' + leads.length + ' leads · ' + quotes.length + ' quotes');
+  } catch(e) {
+    showToast('Sync failed — check your connection');
+  }
+  if (btn) { btn.textContent = '☁ Sync All'; btn.disabled = false; }
+}
+
+// ── AUTO SYNC ──
+// Pull latest from Supabase and re-render silently
+async function autoSync() {
+  try {
+    var prevLeadCount  = leads.length;
+    var prevQuoteCount = quotes.length;
+
+    await loadLeadsFromDB();
+    await loadQuotesFromDB();
+    await loadCalEventsFromDB();
+
+    // Only re-render if something changed
+    if (leads.length !== prevLeadCount || quotes.length !== prevQuoteCount) {
+      renderLeads();
+      renderCalendar();
+      updateStats();
+      showSyncStatus('↓ Updated', true);
+    }
+  } catch(e) { /* silent fail */ }
+}
+
+// Run auto-sync on load (after a short delay to let initial render finish)
+setTimeout(function() { autoSync(); }, 1500);
+
+// Then poll every 30 seconds
+setInterval(function() { autoSync(); }, 30000);
+
 /* ============================================================
    DATA MODEL & STORAGE
    ============================================================ */
@@ -1453,14 +1532,50 @@ let currentView = 'list';
 let dragSrcId = null;
 let statusModalLeadId = null;
 
-const STATUSES = ['Not Contacted','Contacted','They Called Me','Replied','No Response','Meeting Booked','Shoot Booked','Payment Received','Closed','Dead'];
+const STATUSES = [
+  'New Lead',
+  'Contacted',
+  'They Reached Out',
+  'Replied',
+  'In Conversation',
+  'Quote Sent',
+  'Meeting Booked',
+  'Shoot Booked',
+  'Deposit Paid',
+  'Delivered',
+  'Closed — Won',
+  'No Response',
+  'Ghosted',
+  'Cancelled',
+  'Not Interested',
+  'Dead',
+];
+
+const STATUS_META = {
+  'New Lead':        { group:'prospecting', color:'#6366f1', bg:'#ede9fe' },
+  'Contacted':       { group:'prospecting', color:'#0284c7', bg:'#e0f2fe' },
+  'They Reached Out':{ group:'prospecting', color:'#0891b2', bg:'#cffafe' },
+  'Replied':         { group:'engaged',     color:'#059669', bg:'#d1fae5' },
+  'In Conversation': { group:'engaged',     color:'#0d9488', bg:'#ccfbf1' },
+  'Quote Sent':      { group:'engaged',     color:'#7c3aed', bg:'#ede9fe' },
+  'Meeting Booked':  { group:'booked',      color:'#d97706', bg:'#fef3c7' },
+  'Shoot Booked':    { group:'booked',      color:'#ea580c', bg:'#ffedd5' },
+  'Deposit Paid':    { group:'booked',      color:'#16a34a', bg:'#dcfce7' },
+  'Delivered':       { group:'completed',   color:'#15803d', bg:'#dcfce7' },
+  'Closed — Won':    { group:'completed',   color:'#166534', bg:'#bbf7d0' },
+  'No Response':     { group:'lost',        color:'#9ca3af', bg:'#f3f4f6' },
+  'Ghosted':         { group:'lost',        color:'#6b7280', bg:'#f3f4f6' },
+  'Cancelled':       { group:'lost',        color:'#dc2626', bg:'#fee2e2' },
+  'Not Interested':  { group:'lost',        color:'#b91c1c', bg:'#fee2e2' },
+  'Dead':            { group:'lost',        color:'#7f1d1d', bg:'#fecaca' },
+};
+
 const KANBAN_COLS = [
-  { id: 'notcontacted', label: 'Leads Found',     statuses: ['Not Contacted'] },
-  { id: 'contacted',    label: 'Contacted',        statuses: ['Contacted', 'They Called Me'] },
-  { id: 'engaged',      label: 'Engaged',          statuses: ['Replied', 'No Response'] },
-  { id: 'meeting',      label: 'Meeting Booked',   statuses: ['Meeting Booked'] },
-  { id: 'shoot',        label: 'Shoot Booked',     statuses: ['Shoot Booked'] },
-  { id: 'closed',       label: 'Closed / Dead',    statuses: ['Closed', 'Dead'] },
+  { id: 'prospecting', label: 'Prospecting', statuses: ['New Lead','Contacted','They Reached Out'] },
+  { id: 'engaged',     label: 'Engaged',     statuses: ['Replied','In Conversation','Quote Sent'] },
+  { id: 'booked',      label: 'Booked',      statuses: ['Meeting Booked','Shoot Booked','Deposit Paid'] },
+  { id: 'completed',   label: 'Completed',   statuses: ['Delivered','Closed — Won'] },
+  { id: 'lost',        label: 'Lost',        statuses: ['No Response','Ghosted','Cancelled','Not Interested','Dead'] },
 ];
 
 function statusToKanban(status) {
@@ -1486,7 +1601,10 @@ function saveLeads() {
   showSyncStatus('✓ Saved', true);
 }
 function genId() { return 'l_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
-function today() { return new Date().toISOString().slice(0,10); }
+function today() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
 
 /* ============================================================
    STATS
@@ -1495,9 +1613,9 @@ function updateStats() {
   const t = today();
   document.getElementById('stat-total').textContent    = leads.length;
   document.getElementById('stat-today').textContent    = leads.filter(l => l.dateContacted === t).length;
-  document.getElementById('stat-meetings').textContent = leads.filter(l => l.status === 'Meeting Booked').length;
+  document.getElementById('stat-meetings').textContent = leads.filter(l => ['Meeting Booked','Shoot Booked','Deposit Paid'].includes(l.status)).length;
   document.getElementById('stat-shoots').textContent   = leads.filter(l => l.status === 'Shoot Booked').length;
-  document.getElementById('stat-closed').textContent   = leads.filter(l => l.status === 'Closed').length;
+  document.getElementById('stat-closed').textContent   = leads.filter(l => l.status === 'Closed — Won').length;
 
   // Revenue: sum of deposits paid across all leads with payment info
   // Revenue = sum of all deposits paid across quotes
@@ -1505,7 +1623,7 @@ function updateStats() {
   const revEl = document.getElementById('stat-revenue');
   if (revEl) revEl.textContent = '$' + (totalRevenue >= 1000 ? (totalRevenue/1000).toFixed(1)+'k' : totalRevenue.toFixed(0));
 
-  const due = leads.filter(l => l.nextFollowUp && l.nextFollowUp <= t && !['Closed','Dead'].includes(l.status));
+  const due = leads.filter(l => l.nextFollowUp && l.nextFollowUp <= t && !['Closed — Won','Dead','No Response','Ghosted','Cancelled','Not Interested'].includes(l.status));
   document.getElementById('stat-followup').textContent = due.length;
 
   // followup banner
@@ -1545,19 +1663,12 @@ function updateStats() {
    BADGE
    ============================================================ */
 function badgeClass(status) {
-  const map = {
-    'Not Contacted':    'notcontacted',
-    'Contacted':        'contacted',
-    'They Called Me':   'theycalledme',
-    'Replied':          'replied',
-    'No Response':      'noresponse',
-    'Meeting Booked':   'meetingbooked',
-    'Shoot Booked':     'shootbooked',
-    'Payment Received': 'paymentreceived',
-    'Closed':           'closed',
-    'Dead':             'dead',
-  };
-  return 'badge badge-' + (map[status] || 'notcontacted');
+  // Return inline style string instead of class for full color support
+  return 'badge badge-dynamic';
+}
+function badgeStyle(status) {
+  var m = STATUS_META[status] || { color:'#6b7280', bg:'#f3f4f6' };
+  return 'display:inline-block;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700;background:' + m.bg + ';color:' + m.color + ';white-space:nowrap';
 }
 
 /* ============================================================
@@ -1612,7 +1723,12 @@ function renderListView() {
               <td class="td-mono col-hide-sm">${l.ig ? `<a href="https://instagram.com/${l.ig.replace('@','')}" target="_blank" style="color:var(--text2);text-decoration:none" onclick="event.stopPropagation()" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text2)'">${esc(l.ig)}</a>` : '—'}</td>
               <td class="td-mono col-hide-sm">${l.phone ? `<a href="tel:${l.phone}" style="color:var(--text2);text-decoration:none" onclick="event.stopPropagation()">${esc(l.phone)}</a>` : '—'}</td>
               <td class="col-hide-md" style="font-size:.78rem">${l.email ? `<a href="mailto:${esc(l.email)}" style="color:var(--text2);text-decoration:none;font-family:var(--mono)" onclick="event.stopPropagation()" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text2)'">${esc(l.email)}</a>` : '—'}</td>
-              <td><span class="${badgeClass(l.status)}">${esc(l.status)}</span></td>
+              <td>
+                <select onchange="quickChangeStatus('${l.id}',this.value)" onclick="event.stopPropagation()"
+                  style="font-size:.72rem;border:1px solid var(--border);border-radius:6px;padding:3px 6px;background:var(--surface);color:var(--text);cursor:pointer;max-width:130px">
+                  ${STATUSES.map(s => '<option value="'+s+'"'+(s===l.status?' selected':'')+'>'+s+'</option>').join('')}
+                </select>
+              </td>
               <td class="td-mono col-hide-md" style="font-size:.78rem">${l.dateContacted||'—'}</td>
               <td class="td-mono col-hide-md" style="font-size:.78rem">${l.nextFollowUp ? `<span style="color:${l.nextFollowUp <= today() ? '#dc2626':'var(--text2)'}">${l.nextFollowUp}</span>` : '—'}</td>
               <td class="td-mono col-hide-md" style="font-size:.78rem">${(()=>{ const s=(l.shoots||[]).filter(x=>x.date).sort((a,b)=>a.date>b.date?1:-1); return s.length ? `<span style="color:#0284c7;font-weight:600">${s[0].date}${s[0].type?' · '+s[0].type:''}</span>` : (l.shootDate ? `<span style="color:#0284c7;font-weight:600">${l.shootDate}</span>` : '—'); })()}</td>
@@ -1657,10 +1773,14 @@ function renderKanban() {
               ${l.phone ? `<div class="kc-tag">${esc(l.phone)}</div>` : ''}
               ${(()=>{ const s=(l.shoots||[]).filter(x=>x.date).sort((a,b)=>a.date>b.date?1:-1); const d=s.length?s[0].date:l.shootDate; return d ? `<div class="kc-tag" style="color:#0284c7">📷 ${d}</div>` : ''; })()}
               ${l.shootType ? `<div class="kc-tag" style="color:#0284c7">${esc(l.shootType)}</div>` : ''}
-              <span class="${badgeClass(l.status)}" style="font-size:.65rem;padding:2px 6px">${esc(l.status)}</span>
+              <span style="${badgeStyle(l.status)}">${esc(l.status)}</span>
             </div>
             <div style="display:flex;gap:4px;margin-top:8px">
-              <button class="btn btn-ghost btn-sm" style="flex:1;font-size:.75rem" onclick="openEditModal('${l.id}')">Edit</button>
+              <select onchange="quickChangeStatus('${l.id}',this.value)" onclick="event.stopPropagation()"
+                style="flex:1;font-size:.68rem;border:1px solid var(--border);border-radius:6px;padding:3px 4px;background:var(--surface);color:var(--text);cursor:pointer">
+                ${STATUSES.map(s => '<option value="'+s+'"'+(s===l.status?' selected':'')+'>'+s+'</option>').join('')}
+              </select>
+              <button class="btn btn-ghost btn-sm" style="font-size:.75rem;padding:4px 8px" onclick="openEditModal('${l.id}')">✏️</button>
             </div>
           </div>`).join('')}
         ${colLeads.length === 0 ? `<div style="text-align:center;padding:24px 0;color:var(--text3);font-size:.8rem">Drop here</div>` : ''}
@@ -2030,6 +2150,8 @@ function openAddModal() {
   document.getElementById('lead-quotes-section').style.display = 'none';
   document.getElementById('open-quote-from-lead-btn').style.display = 'none';
   document.getElementById('gen-profile-btn').style.display = 'none';
+  document.getElementById('btn-confirm-email').style.display = 'none';
+  document.getElementById('btn-review-req').style.display = 'none';
   document.getElementById('lead-dossier-section').style.display = 'none';
   document.getElementById('lead-bundle-section').style.display = 'none';
   if (document.getElementById('quote-modal')) document.getElementById('quote-modal').__leadId = null;
@@ -2044,10 +2166,14 @@ function openEditModal(id) {
   document.getElementById('f-ig').value       = l.ig || '';
   document.getElementById('f-phone').value    = l.phone || '';
   document.getElementById('f-email').value    = l.email || '';
+  document.getElementById('f-referral').value = l.referral || '';
+  document.getElementById('f-stage').value    = l.stage || 'new';
   currentEditMeetings = JSON.parse(JSON.stringify(l.meetings || []));
   currentEditShoots   = JSON.parse(JSON.stringify(l.shoots   || []));
+  currentEditProperties = JSON.parse(JSON.stringify(l.properties || []));
   renderMeetingsList();
   renderShootsList();
+  renderPropertiesList();
 
   document.getElementById('f-notes').value    = l.notes || '';
   currentEditInteractions = JSON.parse(JSON.stringify((l.interactions)||[]));
@@ -2061,6 +2187,8 @@ function openEditModal(id) {
   document.getElementById('lead-quotes-section').style.display = 'block';
   document.getElementById('open-quote-from-lead-btn').style.display = 'inline-flex';
   document.getElementById('gen-profile-btn').style.display = 'inline-flex';
+  document.getElementById('btn-confirm-email').style.display = 'inline-flex';
+  document.getElementById('btn-review-req').style.display = 'inline-flex';
   renderLeadQuotesPanel(id);
   document.getElementById('lead-dossier-section').style.display = 'block';
   renderLeadDossier(id);
@@ -2069,6 +2197,22 @@ function openEditModal(id) {
   renderLeadBundlePanel(id);
   openModal('lead-modal');
 }
+
+function quickChangeStatus(leadId, newStatus) {
+  var lead = leads.find(function(l){ return l.id === leadId; });
+  if (!lead) return;
+  var old = lead.status;
+  lead.status = newStatus;
+  lead.interactions = lead.interactions || [];
+  lead.interactions.unshift({
+    id: genId(), datetime: nowLocal(), type: 'Status',
+    note: 'Status changed: ' + (old||'—') + ' → ' + newStatus
+  });
+  saveLeads();
+  renderLeads();
+  showToast('Status updated: ' + newStatus);
+}
+
 function saveLead() {
   const name = document.getElementById('f-name').value.trim();
   if (!name) { document.getElementById('f-name').focus(); showToast('Please enter a name.'); return; }
@@ -2079,11 +2223,14 @@ function saveLead() {
     phone:        document.getElementById('f-phone').value.trim(),
     email:        document.getElementById('f-email').value.trim(),
     method:       selectedMethod,
+    referral:     document.getElementById('f-referral').value.trim(),
+    stage:        document.getElementById('f-stage').value,
     dateContacted: nowLocal(),
     status:       'Contacted',
     nextFollowUp: '',
     meetings: currentEditMeetings.slice(),
     shoots:   currentEditShoots.slice(),
+    properties: currentEditProperties.slice(),
     notes:        document.getElementById('f-notes').value.trim(),
     interactions: currentEditInteractions.slice(),
   };
@@ -2103,13 +2250,16 @@ function deleteLead(id) {
   saveLeads(); renderLeads(); showToast('Lead deleted');
 }
 function resetLeadForm() {
-  ['f-name','f-brokerage','f-ig','f-phone','f-email','f-notes'].forEach(id => document.getElementById(id).value = '');
+  ['f-name','f-brokerage','f-ig','f-phone','f-email','f-notes','f-referral'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-stage').value = 'new';
   currentEditMeetings = [];
   currentEditShoots   = [];
+  currentEditProperties = [];
   document.getElementById('meeting-new-entry').style.display = 'none';
   document.getElementById('shoot-new-entry').style.display = 'none';
   currentEditInteractions = [];
   renderInteractionLog();
+  renderPropertiesList();
   document.getElementById('interaction-new-entry').style.display = 'none';
   setSelectedMethod('IG DM');
 }
@@ -2132,7 +2282,7 @@ function openStatusModal(id) {
   list.innerHTML = STATUSES.map(s => `
     <button class="btn ${s === lead.status ? 'btn-primary' : 'btn-ghost'}" style="justify-content:flex-start;width:100%"
       onclick="quickSetStatus('${s}')">
-      <span class="${badgeClass(s)}">${esc(s)}</span>
+      <span style="${badgeStyle(s)}">${esc(s)}</span>
     </button>`).join('');
   openModal('status-modal');
 }
@@ -2302,8 +2452,21 @@ function exportCSV() {
   showToast('CSV exported ✓');
 }
 function exportJSON() {
-  downloadFile(JSON.stringify(leads, null, 2), 'reel-estate-leads.json', 'application/json');
-  showToast('JSON exported ✓');
+  const now     = new Date();
+  const dateStr = now.getFullYear() + '-'
+    + String(now.getMonth()+1).padStart(2,'0') + '-'
+    + String(now.getDate()).padStart(2,'0');
+  const timeStr = String(now.getHours()).padStart(2,'0') + ''
+    + String(now.getMinutes()).padStart(2,'0');
+  const filename = 'rem-export-' + dateStr + '-' + timeStr + '.json';
+  const payload  = {
+    exportedAt: now.toLocaleString('en-CA', { dateStyle:'full', timeStyle:'short' }),
+    leads:      leads,
+    quotes:     quotes,
+    calEvents:  calEvents,
+  };
+  downloadFile(JSON.stringify(payload, null, 2), filename, 'application/json');
+  showToast('Exported ' + leads.length + ' leads · ' + filename);
 }
 function importJSON(input) {
   const file = input.files[0];
@@ -2311,7 +2474,11 @@ function importJSON(input) {
   const reader = new FileReader();
   reader.onload = e => {
     try {
-      const data = JSON.parse(e.target.result);
+      let data = JSON.parse(e.target.result);
+      // Handle new export format with leads/quotes/calEvents keys
+      if (data && data.leads && Array.isArray(data.leads)) {
+        data = data.leads;
+      }
       if (!Array.isArray(data)) throw new Error('Invalid format');
       const count = data.length;
       // merge: avoid duplicate IDs
@@ -2400,19 +2567,15 @@ const CATALOGUE = {
     { name: 'Drone Photo / Video',             desc: '',                            price: 75  },
     { name: 'Agent On-Camera Intro',           desc: '',                            price: 100 },
     { name: 'Instagram Reel Edit',             desc: '',                            price: 75  },
-    { name: 'Reels from Existing Photos',      desc: 'No shoot needed — edit only', price: 150 },
     { name: 'Twilight Edit',                   desc: '',                            price: 40  },
     { name: 'Floor Plans',                     desc: '',                            price: 100 },
     { name: 'Virtual Staging',                 desc: 'per image',                   price: 35  },
     { name: 'Virtual Tour (Matterport 3D)',    desc: 'Interactive 3D walkthrough',  price: 200 },
-    { name: 'Property Feature Sheet',          desc: 'Digital one-pager',           price: 75  },
-    { name: 'Property Brochure',               desc: 'Print-ready design',          price: 125 },
     { name: 'Rush Delivery (Next Day)',        desc: '',                            price: 75  },
     { name: 'Same-Day Rush',                   desc: 'Emergency booking',           price: 150 },
     { name: 'Headshot / Agent Branding',       desc: '30 min session',              price: 150 },
     { name: 'Property Website',                desc: 'Single listing site',         price: 125 },
     { name: 'Social Media Content Pack',       desc: 'Carousel + stories cuts',     price: 100 },
-    { name: 'Google Business Content Pack',    desc: 'Clips for Google + ads',      price: 200 },
     { name: 'Colour Correction / Redelivery',  desc: '',                            price: 50  },
     { name: 'Travel Fee',                      desc: 'Outside service area',        price: 50  },
     { name: 'Cancellation / Reschedule Fee',   desc: '',                            price: 75  },
@@ -2463,6 +2626,11 @@ const CATALOGUE = {
     { name: 'Agent Pro (Monthly)',      desc: '4 listings/month · recurring', price: 1600, includes: 'Priority booking &bull; Premium photos &bull; Cinematic video &bull; Drone &bull; Same editor &bull; Free reschedule/mo' },
     { name: 'Team Package (Monthly)',   desc: '8 listings/month · recurring', price: 2800, includes: 'Priority 24hr booking &bull; Full production &bull; Dedicated editor &bull; Monthly recap &bull; Free reschedule/mo' },
   ],
+  yearly: [
+    { name: 'Agent Starter (Yearly)',  desc: '2 listings/month · annual commitment', price: 9180,  includes: '$765/mo &bull; Save $1,620/yr &bull; Priority booking &bull; Same editor' },
+    { name: 'Agent Pro (Yearly)',      desc: '4 listings/month · annual commitment', price: 16320, includes: '$1,360/mo &bull; Save $2,880/yr &bull; Premium photos &bull; Cinematic + Drone' },
+    { name: 'Team Package (Yearly)',   desc: '8 listings/month · annual commitment', price: 28560, includes: '$2,380/mo &bull; Save $5,040/yr &bull; Full production &bull; Dedicated editor' },
+  ],
   sessionbundles: [
     { name: 'Starter Bundle (2 Shoots)',  desc: '2 shoots · use within 90 days', price: 1100, includes: 'Standard photos &bull; Basic reel &bull; No priority perks' },
     { name: 'Pro Bundle (4 Shoots)',      desc: '4 shoots · use within 90 days', price: 2100, includes: 'Premium photos &bull; Cinematic video &bull; Drone per shoot' },
@@ -2512,6 +2680,7 @@ function renderPackageButtons() {
     luxury:          'pkg-luxury',
     marketing:       'pkg-marketing',
     monthly:         'pkg-monthly',
+    yearly:          'pkg-yearly',
     sessionbundles:  'pkg-sessionbundles',
   };
   Object.entries(groups).forEach(function(entry) {
@@ -2870,6 +3039,7 @@ function renderQuotesList() {
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Save Image
         </button>
+        ${q.remaining > 0 ? `<button class="btn btn-sm" style="background:#635bff;color:#fff;border:none" onclick="event.stopPropagation();generateStripeLink('${q.id}')" title="Copy Stripe deposit link">💳 Deposit Link</button>` : ''}
         <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteQuote('${q.id}')" title="Delete">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
         </button>
@@ -3253,6 +3423,7 @@ function openQuoteForLead(leadId) {
    ============================================================ */
 let currentEditMeetings = [];
 let currentEditShoots   = [];
+let currentEditProperties = [];
 
 let editingMeetingId = null;
 
@@ -3507,6 +3678,7 @@ function renderShootsList() {
       + '<button onclick="editShootEntry(\'' + s.id + '\')" style="background:none;border:1px solid var(--border);border-radius:5px;cursor:pointer;color:var(--text2);font-size:.72rem;padding:3px 8px">✏️ Edit</button>'
       + (nextSt ? '<button onclick="advanceShootStatus(\'' + s.id + '\')" style="background:none;border:1px solid ' + nextSt.color + ';border-radius:5px;cursor:pointer;color:' + nextSt.color + ';font-size:.72rem;padding:3px 8px;font-weight:600">→ Mark ' + nextSt.label + '</button>' : '')
       + '<button onclick="useShootInInvoice(\'' + s.id + '\')" style="background:var(--teal);color:#fff;border:none;border-radius:5px;padding:3px 8px;font-size:.72rem;font-weight:600;cursor:pointer">📄 Invoice</button>'
+      + '<button onclick="addToGoogleCalendar(editingId,\'' + s.id + '\')" style="background:#4285f4;color:#fff;border:none;border-radius:5px;padding:3px 8px;font-size:.72rem;font-weight:600;cursor:pointer">📅 Google Cal</button>'
       + (s.driveLink ? '<button onclick="sendDeliveryEmail(\'' + s.id + '\')" style="background:#1d4ed8;color:#fff;border:none;border-radius:5px;padding:3px 8px;font-size:.72rem;font-weight:600;cursor:pointer">📧 Send Delivery</button>' : '')
       + (s.driveLink ? '<button onclick="copyPortalLink(\'' + s.id + '\')" style="background:#7c3aed;color:#fff;border:none;border-radius:5px;padding:3px 8px;font-size:.72rem;font-weight:600;cursor:pointer">🔗 Copy Portal Link</button>' : '')
       + '<button onclick="deleteShootEntry(\'' + s.id + '\')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:1rem;padding:3px 4px;margin-left:auto">×</button>'
@@ -3588,6 +3760,211 @@ function statBox(icon, val, label) {
     + '</div>';
 }
 
+
+
+/* ============================================================
+   FEATURE 9: PROPERTIES (multi-property per client)
+   ============================================================ */
+function addPropertyEntry() {
+  var addr = prompt('Enter property address:');
+  if (!addr || !addr.trim()) return;
+  currentEditProperties.push({ id: genId(), address: addr.trim(), addedAt: nowLocal() });
+  renderPropertiesList();
+}
+function removeProperty(id) {
+  currentEditProperties = currentEditProperties.filter(function(p){ return p.id !== id; });
+  renderPropertiesList();
+}
+function renderPropertiesList() {
+  var wrap = document.getElementById('properties-list');
+  if (!wrap) return;
+  if (!currentEditProperties.length) { wrap.innerHTML = '<div style="font-size:.78rem;color:var(--text3);padding:8px 0">No properties added yet</div>'; return; }
+  wrap.innerHTML = currentEditProperties.map(function(p) {
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:6px">'
+      + '<div><div style="font-size:.82rem;font-weight:500">' + esc(p.address) + '</div>'
+      + '<div style="font-size:.68rem;color:var(--text3)">' + (p.addedAt||'').slice(0,10) + '</div></div>'
+      + '<button class="btn btn-ghost btn-sm" onclick="removeProperty(\'' + p.id + '\')" style="color:var(--text3)">✕</button>'
+      + '</div>';
+  }).join('');
+}
+
+/* ============================================================
+   FEATURE 3: FOLLOW-UP REMINDERS
+   ============================================================ */
+function checkFollowUpReminders() {
+  var now = new Date();
+  var overdue = [];
+  leads.forEach(function(l) {
+    if (!l.nextFollowUp) return;
+    var fuDate = new Date(l.nextFollowUp);
+    if (fuDate <= now && l.status !== 'Completed' && l.status !== 'Lost') {
+      overdue.push(l);
+    }
+  });
+  // Also check quotes older than 48hrs with no deposit
+  quotes.forEach(function(q) {
+    if (q.deposit > 0 || !q.createdAt) return;
+    var created = new Date(q.createdAt);
+    var hoursOld = (now - created) / (1000*60*60);
+    if (hoursOld > 48) {
+      var exists = overdue.find(function(o){ return o.id === ('q_' + q.id); });
+      if (!exists) {
+        overdue.push({ id: 'q_' + q.id, name: q.client || 'Unknown', _isQuote: true, _quoteId: q.id, _hoursOld: Math.round(hoursOld) });
+      }
+    }
+  });
+  renderFollowUpBanner(overdue);
+}
+function renderFollowUpBanner(items) {
+  var existing = document.getElementById('followup-banner');
+  if (existing) existing.remove();
+  if (!items.length) return;
+  var banner = document.createElement('div');
+  banner.id = 'followup-banner';
+  banner.style.cssText = 'background:#fef3c7;border:1px solid #f59e0b;border-radius:var(--radius);padding:14px 18px;margin-bottom:16px;';
+  banner.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'
+    + '<span style="font-size:1.1rem">⏰</span>'
+    + '<strong style="font-size:.85rem;color:#92400e">' + items.length + ' follow-up' + (items.length>1?'s':'') + ' need attention</strong>'
+    + '</div>'
+    + items.slice(0,5).map(function(item) {
+      if (item._isQuote) {
+        return '<div style="font-size:.78rem;color:#78350f;padding:4px 0">💰 <strong>' + esc(item.name) + '</strong> — quote sent ' + item._hoursOld + 'hrs ago, no deposit yet '
+          + '<button class="btn btn-ghost btn-sm" onclick="switchPage(\'quotes\');setTimeout(function(){openEditQuote(\'' + item._quoteId + '\')},200)" style="font-size:.7rem;margin-left:4px">Open Quote</button></div>';
+      }
+      return '<div style="font-size:.78rem;color:#78350f;padding:4px 0">📋 <strong>' + esc(item.name) + '</strong> — follow-up overdue '
+        + '<button class="btn btn-ghost btn-sm" onclick="openEditModal(\'' + item.id + '\')" style="font-size:.7rem;margin-left:4px">Open Lead</button></div>';
+    }).join('');
+  var leadsWrap = document.getElementById('leads-wrap');
+  if (leadsWrap) leadsWrap.insertBefore(banner, leadsWrap.firstChild);
+}
+// Check follow-ups on load and every 5 minutes
+setTimeout(checkFollowUpReminders, 1000);
+setInterval(checkFollowUpReminders, 5*60*1000);
+
+/* ============================================================
+   FEATURE 2: STRIPE PAYMENT LINK GENERATION
+   ============================================================ */
+function generateStripeLink(quoteId) {
+  var q = quotes.find(function(x){ return x.id === quoteId; });
+  if (!q) { showToast('Quote not found'); return; }
+  var depositAmt = Math.round((q.total || 0) * 50) ; // 50% in cents
+  if (depositAmt <= 0) { showToast('Quote total is $0'); return; }
+  // Generate a Stripe Payment Link URL (requires Stripe account setup)
+  // For now, generate a prefilled Stripe checkout URL template
+  var desc = encodeURIComponent('Reel Estate Media — Deposit for ' + (q.client || 'Client'));
+  var link = 'https://buy.stripe.com/test_00g?amount=' + depositAmt + '&description=' + desc + '&client_reference_id=' + q.id;
+  // Copy to clipboard
+  navigator.clipboard.writeText(link).then(function() {
+    showToast('Stripe deposit link copied to clipboard ✓');
+  }).catch(function() {
+    prompt('Copy this Stripe link:', link);
+  });
+}
+
+/* ============================================================
+   FEATURE 5: SHOOT CONFIRMATION EMAIL TEMPLATE
+   ============================================================ */
+function generateConfirmationEmail(leadId) {
+  var l = leads.find(function(x){ return x.id === leadId; });
+  if (!l) { showToast('Lead not found'); return; }
+  var upcomingShoots = (l.shoots||[]).filter(function(s){ return s.status === 'scheduled'; });
+  var shoot = upcomingShoots.length ? upcomingShoots[0] : null;
+  var shootDate = shoot ? shoot.date : '___________';
+  var shootTime = shoot ? (shoot.time || 'TBD') : '___________';
+  var shootAddr = shoot ? (shoot.address || '___________') : '___________';
+  var subject = 'Shoot Confirmed — ' + shootDate + ' | Reel Estate Media';
+  var body = 'Hi ' + (l.name||'').split(' ')[0] + ',\n\n'
+    + 'Great news — your shoot is confirmed!\n\n'
+    + '📅 Date: ' + shootDate + '\n'
+    + '🕐 Time: ' + shootTime + '\n'
+    + '📍 Address: ' + shootAddr + '\n\n'
+    + 'PREP CHECKLIST:\n'
+    + '✓ All lights ON (including closets and under cabinets)\n'
+    + '✓ Blinds and curtains open for natural light\n'
+    + '✓ Kitchen and bathroom counters cleared\n'
+    + '✓ Personal items and clutter stored away\n'
+    + '✓ Beds made, pillows fluffed\n'
+    + '✓ Toilet lids down\n'
+    + '✓ Cars out of driveway (for exterior shots)\n'
+    + '✓ Pets secured or off-site\n\n'
+    + 'I\'ll arrive 5 minutes early to walk the property. Delivery within 24–48 hours of the shoot.\n\n'
+    + 'Questions? Reply here or call 416.257.6131.\n\n'
+    + 'Thanks,\nSir Jag\nReel Estate Media\nhello@reelestatemedia.com';
+  var mailto = 'mailto:' + encodeURIComponent(l.email || '') + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  window.open(mailto);
+  showToast('Confirmation email opened ✓');
+}
+
+/* ============================================================
+   FEATURE 6: CLIENT REVIEW / TESTIMONIAL COLLECTION
+   ============================================================ */
+function sendReviewRequest(leadId) {
+  var l = leads.find(function(x){ return x.id === leadId; });
+  if (!l) { showToast('Lead not found'); return; }
+  var googleReviewLink = 'https://g.page/r/YOUR_GOOGLE_PLACE_ID/review'; // Replace with actual Google review link
+  var subject = 'How was your experience? | Reel Estate Media';
+  var body = 'Hi ' + (l.name||'').split(' ')[0] + ',\n\n'
+    + 'Thank you for choosing Reel Estate Media! I hope you and your client love the final media.\n\n'
+    + 'If you have 30 seconds, a quick Google review would mean the world to me:\n'
+    + googleReviewLink + '\n\n'
+    + 'Your feedback helps other Toronto realtors find us and helps me keep improving.\n\n'
+    + 'Thanks again — looking forward to the next one!\n\n'
+    + 'Sir Jag\nReel Estate Media';
+  var mailto = 'mailto:' + encodeURIComponent(l.email || '') + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  window.open(mailto);
+  // Log the interaction
+  l.interactions = l.interactions || [];
+  l.interactions.unshift({ id: genId(), datetime: nowLocal(), type: 'Email', note: 'Review request sent' });
+  saveLeads();
+  showToast('Review request sent ✓');
+}
+
+/* ============================================================
+   FEATURE 7: GOOGLE CALENDAR SYNC
+   ============================================================ */
+function addToGoogleCalendar(leadId, shootId) {
+  var l = leads.find(function(x){ return x.id === leadId; });
+  if (!l) return;
+  var shoot = (l.shoots||[]).find(function(s){ return s.id === shootId; });
+  if (!shoot || !shoot.date) { showToast('No shoot date found'); return; }
+  var startDate = shoot.date.replace(/-/g, '');
+  var startTime = (shoot.time || '10:00').replace(/:/g, '') + '00';
+  // 2 hour event
+  var endHr = parseInt(shoot.time ? shoot.time.split(':')[0] : '10') + 2;
+  var endTime = String(endHr).padStart(2,'0') + (shoot.time ? shoot.time.split(':')[1] : '00') + '00';
+  var title = encodeURIComponent('📸 Shoot — ' + (l.name||'Client') + (shoot.type ? ' (' + shoot.type + ')' : ''));
+  var location = encodeURIComponent(shoot.address || '');
+  var details = encodeURIComponent('Client: ' + (l.name||'') + '\nBrokerage: ' + (l.brokerage||'') + '\nPhone: ' + (l.phone||'') + '\nType: ' + (shoot.type||''));
+  var url = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
+    + '&text=' + title
+    + '&dates=' + startDate + 'T' + startTime + '/' + startDate + 'T' + endTime
+    + '&location=' + location
+    + '&details=' + details;
+  window.open(url, '_blank');
+  showToast('Opening Google Calendar ✓');
+}
+
+/* ============================================================
+   FEATURE 1: EMAIL NOTIFICATION ON NEW QUOTE (via Supabase)
+   ============================================================ */
+function notifyNewQuote(pq) {
+  // Use Supabase Edge Function or webhook to send email notification
+  // This posts to a Supabase Edge Function that sends the notification
+  var payload = {
+    to: 'hello@reelestatemedia.com',
+    subject: '🎯 New quote from ' + (pq.client || 'Unknown') + ' — $' + (pq.total || 0).toFixed(2),
+    client: pq.client || '',
+    email: pq.email || '',
+    phone: pq.phone || '',
+    total: pq.total || 0,
+    services: (pq.lineItems||[]).map(function(li){ return li.desc; }).join(', '),
+  };
+  fetch(SUPABASE_URL + '/functions/v1/notify-new-quote', {
+    method: 'POST',
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  }).catch(function(e){ console.warn('Quote notification failed (non-critical)', e); });
+}
 
 /* ============================================================
    BROKERAGE BOOKING PAGE GENERATOR
@@ -4261,24 +4638,54 @@ renderLeads();
 
 // Check if pricing page sent a pending quote
 (function checkPendingQuote() {
+  // Check localStorage first (same device)
   try {
     const raw = localStorage.getItem('reel_estate_pending_quote');
-    if (!raw) return;
-    const pq = JSON.parse(raw);
-    if (!pq || !pq.fromPricing) return;
-    localStorage.removeItem('reel_estate_pending_quote');
+    if (raw) {
+      const pq = JSON.parse(raw);
+      if (pq && pq.fromPricing) {
+        localStorage.removeItem('reel_estate_pending_quote');
+        if (!window._pendingFromPricing) window._pendingFromPricing = [];
+        window._pendingFromPricing.push(pq);
+        setTimeout(function() { switchPage('quotes'); showPendingQuoteBanner(pq); }, 300);
+        notifyNewQuote(pq);
+        // Mark as processed in Supabase
+        fetch(SUPABASE_URL + '/rest/v1/pending_quotes?id=eq.' + pq.id, {
+          method: 'PATCH',
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ processed: true }),
+        }).catch(function(){});
+        return;
+      }
+    }
+  } catch(e) {}
 
-    // Add to pending quotes list in quotes page
-    if (!window._pendingFromPricing) window._pendingFromPricing = [];
-    window._pendingFromPricing.push(pq);
-
-    // Switch to quotes tab
+  // Check Supabase for unprocessed quotes from other devices
+  fetch(SUPABASE_URL + '/rest/v1/pending_quotes?processed=eq.false&order=created_at.desc&limit=5', {
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY },
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(rows) {
+    if (!rows || !rows.length) return;
+    rows.forEach(function(row) {
+      const pq = row.data;
+      if (!pq) return;
+      if (!window._pendingFromPricing) window._pendingFromPricing = [];
+      window._pendingFromPricing.push(pq);
+      notifyNewQuote(pq);
+      // Mark processed
+      fetch(SUPABASE_URL + '/rest/v1/pending_quotes?id=eq.' + row.id, {
+        method: 'PATCH',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ processed: true }),
+      }).catch(function(){});
+    });
     setTimeout(function() {
       switchPage('quotes');
-      // Show a pending quote banner
-      showPendingQuoteBanner(pq);
-    }, 300);
-  } catch(e) { console.warn('Pending quote load failed', e); }
+      showPendingQuoteBanner(window._pendingFromPricing[0]);
+    }, 400);
+  })
+  .catch(function(e){ console.warn('Supabase pending check failed', e); });
 })();
 
 function showPendingQuoteBanner(pq) {
@@ -4313,6 +4720,7 @@ function showPendingQuoteBanner(pq) {
     + '<div class="form-field"><label>Email</label><input class="input" id="pq-email" value="' + esc(pq.email||'') + '" type="email"></div>'
     + '<div class="form-field"><label>Phone</label><input class="input" id="pq-phone" value="' + esc(pq.phone||'') + '" type="tel"></div>'
     + '<div class="form-field full"><label>Property Address</label><input class="input" id="pq-address" value="' + esc(pq.address||'') + '" type="text"></div>'
+    + (pq.referral ? '<div class="form-field full"><label>Referral Source</label><div style="font-size:.82rem;color:var(--text);padding:6px 0">' + esc(pq.referral) + '</div></div>' : '')
     + '</div>'
     + '<div style="background:var(--surface2);border-radius:8px;padding:12px 14px;margin:12px 0;font-size:.82rem;color:var(--text2)">'
     + '<strong style="color:var(--text)">Services selected:</strong> ' + esc(sub)
@@ -4349,6 +4757,7 @@ function savePendingQuote(pq) {
     email:      (document.getElementById('pq-email')||{}).value     || pq.email    || '',
     phone:      (document.getElementById('pq-phone')||{}).value     || pq.phone    || '',
     address:    (document.getElementById('pq-address')||{}).value   || pq.address  || '',
+    referral:   pq.referral || '',
     lineItems:  pq.lineItems || [],
     subtotal:   pq.subtotal  || 0,
     useTax:     pq.useTax    !== false,
@@ -4563,6 +4972,10 @@ document.addEventListener('paste', e => {
     <div class="qb-section">
       <div class="qb-section-title">Monthly Packages (Recurring) — Click to Add</div>
       <div class="qb-packages" id="pkg-monthly"></div>
+    </div>
+    <div class="qb-section">
+      <div class="qb-section-title">Yearly Packages (Annual · Save 15%) — Click to Add</div>
+      <div class="qb-packages" id="pkg-yearly"></div>
     </div>
     <div class="qb-section">
       <div class="qb-section-title">Session Bundles (One-Time · 90 Day Expiry) — Click to Add</div>
