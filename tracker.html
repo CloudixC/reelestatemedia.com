@@ -1336,6 +1336,112 @@ label { font-size: .8rem; font-weight: 600; color: var(--text2); text-transform:
 </div>
 
 <script>
+
+/* ============================================================
+   SUPABASE SYNC
+   Real-time cross-device storage
+   ============================================================ */
+const SUPABASE_URL = 'https://dgoiormpqixydbijuqoe.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_nz-LREWZbxC0FaN8evKVlQ_ik4PffGj';
+
+async function sbFetch(method, table, body, params) {
+  var url = SUPABASE_URL + '/rest/v1/' + table + (params || '');
+  var opts = {
+    method: method,
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': method === 'POST' ? 'resolution=merge-duplicates' : '',
+    },
+  };
+  if (body) opts.body = JSON.stringify(body);
+  try {
+    var res = await fetch(url, opts);
+    if (!res.ok) {
+      var err = await res.text();
+      console.warn('Supabase error:', err);
+      return null;
+    }
+    var text = await res.text();
+    return text ? JSON.parse(text) : null;
+  } catch(e) {
+    console.warn('Supabase fetch failed:', e);
+    return null;
+  }
+}
+
+// ── LEADS ──
+async function loadLeadsFromDB() {
+  var rows = await sbFetch('GET', 'leads', null, '?order=updated_at.desc');
+  if (rows && rows.length) {
+    leads = rows.map(function(r){ return r.data; });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(leads));
+    console.log('Loaded', leads.length, 'leads from Supabase');
+  } else {
+    // Fall back to localStorage
+    try { leads = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { leads = []; }
+  }
+}
+
+async function saveLeadToDB(lead) {
+  await sbFetch('POST', 'leads', { id: lead.id, data: lead, updated_at: new Date().toISOString() });
+}
+
+async function deleteLeadFromDB(id) {
+  await sbFetch('DELETE', 'leads', null, '?id=eq.' + id);
+}
+
+// ── QUOTES ──
+async function loadQuotesFromDB() {
+  var rows = await sbFetch('GET', 'quotes', null, '?order=updated_at.desc');
+  if (rows && rows.length) {
+    quotes = rows.map(function(r){ return r.data; });
+    localStorage.setItem(QUOTES_KEY, JSON.stringify(quotes));
+    console.log('Loaded', quotes.length, 'quotes from Supabase');
+  } else {
+    try { quotes = JSON.parse(localStorage.getItem(QUOTES_KEY)) || []; } catch { quotes = []; }
+  }
+}
+
+async function saveQuoteToDB(quote) {
+  await sbFetch('POST', 'quotes', { id: quote.id, lead_id: quote.leadId || null, data: quote, updated_at: new Date().toISOString() });
+}
+
+async function deleteQuoteFromDB(id) {
+  await sbFetch('DELETE', 'quotes', null, '?id=eq.' + id);
+}
+
+// ── CAL EVENTS ──
+async function loadCalEventsFromDB() {
+  var rows = await sbFetch('GET', 'cal_events', null, '?order=updated_at.desc');
+  if (rows && rows.length) {
+    calEvents = rows.map(function(r){ return r.data; });
+    localStorage.setItem(CAL_EVENTS_KEY, JSON.stringify(calEvents));
+    console.log('Loaded', calEvents.length, 'cal events from Supabase');
+  } else {
+    try { calEvents = JSON.parse(localStorage.getItem(CAL_EVENTS_KEY)) || []; } catch { calEvents = []; }
+  }
+}
+
+async function saveCalEventToDB(ev) {
+  await sbFetch('POST', 'cal_events', { id: ev.id, data: ev, updated_at: new Date().toISOString() });
+}
+
+async function deleteCalEventFromDB(id) {
+  await sbFetch('DELETE', 'cal_events', null, '?id=eq.' + id);
+}
+
+// ── SYNC STATUS INDICATOR ──
+function showSyncStatus(msg, ok) {
+  var el = document.getElementById('sync-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = ok ? '#22c55e' : '#f59e0b';
+  el.style.opacity = '1';
+  setTimeout(function(){ el.style.opacity = '0'; }, 2000);
+}
+
 /* ============================================================
    DATA MODEL & STORAGE
    ============================================================ */
@@ -1365,10 +1471,19 @@ function statusToKanban(status) {
 }
 
 function loadLeads() {
+  // Sync from Supabase async, start with localStorage for instant render
   try { leads = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { leads = []; }
+  loadLeadsFromDB().then(function(){
+    renderLeads();
+    renderCalendar();
+    updateStats();
+  });
 }
 function saveLeads() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(leads));
+  // Sync all leads to Supabase
+  leads.forEach(function(l){ saveLeadToDB(l); });
+  showSyncStatus('✓ Saved', true);
 }
 function genId() { return 'l_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
 function today() { return new Date().toISOString().slice(0,10); }
@@ -2365,9 +2480,14 @@ let lineItems = []; // {id, desc, qty, price}
 
 function loadQuotes() {
   try { quotes = JSON.parse(localStorage.getItem(QUOTES_KEY)) || []; } catch { quotes = []; }
+  loadQuotesFromDB().then(function(){
+    renderQuotesList();
+  });
 }
 function saveQuotesStorage() {
   localStorage.setItem(QUOTES_KEY, JSON.stringify(quotes));
+  quotes.forEach(function(q){ saveQuoteToDB(q); });
+  showSyncStatus('✓ Saved', true);
 }
 function genQNum() {
   const n = (quotes.length + 1).toString().padStart(4, '0');
@@ -2712,6 +2832,7 @@ function saveQuote() {
 }
 function deleteQuote(id) {
   if (!confirm('Delete this quote?')) return;
+  deleteQuoteFromDB(id);
   quotes = quotes.filter(q => q.id !== id);
   saveQuotesStorage();
   renderQuotesList();
@@ -3808,9 +3929,14 @@ let editingCalEventId = null;
 
 function loadCalEvents() {
   try { calEvents = JSON.parse(localStorage.getItem(CAL_EVENTS_KEY)) || []; } catch { calEvents = []; }
+  loadCalEventsFromDB().then(function(){
+    renderCalendar();
+  });
 }
 function saveCalEvents() {
   localStorage.setItem(CAL_EVENTS_KEY, JSON.stringify(calEvents));
+  calEvents.forEach(function(e){ saveCalEventToDB(e); });
+  showSyncStatus('✓ Saved', true);
 }
 
 function openCalEventModal(prefillDate) {
