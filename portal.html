@@ -410,16 +410,30 @@ function changeCompareA(idx) { compareIdxA = idx; renderCompare(); }
 function changeCompareB(idx) { compareIdxB = idx; renderCompare(); }
 
 function syncPlay() {
-  if (comparePlayerA && comparePlayerA.playVideo) comparePlayerA.playVideo();
-  if (comparePlayerB && comparePlayerB.playVideo) comparePlayerB.playVideo();
+  if (!comparePlayerA || !comparePlayerB) return;
+  // Align both to player A's current time first
+  var t = comparePlayerA.getCurrentTime ? comparePlayerA.getCurrentTime() : 0;
+  comparePlayerB.seekTo(t, true);
+  // Use requestAnimationFrame to fire both as close together as possible
+  requestAnimationFrame(function() {
+    comparePlayerA.playVideo();
+    comparePlayerB.playVideo();
+  });
 }
 function syncPause() {
-  if (comparePlayerA && comparePlayerA.pauseVideo) comparePlayerA.pauseVideo();
-  if (comparePlayerB && comparePlayerB.pauseVideo) comparePlayerB.pauseVideo();
+  requestAnimationFrame(function() {
+    if (comparePlayerA && comparePlayerA.pauseVideo) comparePlayerA.pauseVideo();
+    if (comparePlayerB && comparePlayerB.pauseVideo) comparePlayerB.pauseVideo();
+  });
 }
 function syncRestart() {
-  if (comparePlayerA && comparePlayerA.seekTo) { comparePlayerA.seekTo(0, true); comparePlayerA.pauseVideo(); }
-  if (comparePlayerB && comparePlayerB.seekTo) { comparePlayerB.seekTo(0, true); comparePlayerB.pauseVideo(); }
+  if (!comparePlayerA || !comparePlayerB) return;
+  comparePlayerA.seekTo(0, true);
+  comparePlayerB.seekTo(0, true);
+  requestAnimationFrame(function() {
+    comparePlayerA.pauseVideo();
+    comparePlayerB.pauseVideo();
+  });
 }
 function setAudio(mode) {
   document.querySelectorAll('.audio-btn').forEach(function(b){ b.classList.remove('active'); });
