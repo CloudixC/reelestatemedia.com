@@ -58,8 +58,25 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
 /* NOTES */
 .notes-section { background:#fff; border:1px solid var(--border); border-radius:12px; padding:20px 24px; margin-bottom:24px; }
 .notes-list { margin-bottom:16px; }
-.note-item { padding:10px 14px; border-radius:8px; background:var(--teal-pale); border-left:3px solid var(--teal-light); margin-bottom:8px; font-size:.83rem; line-height:1.5; }
-.note-item-meta { font-size:.7rem; color:var(--muted); margin-top:4px; }
+.note-item { padding:10px 14px; border-radius:8px; background:var(--teal-pale); border-left:3px solid var(--teal-light); margin-bottom:8px; font-size:.83rem; line-height:1.5; position:relative; }
+.note-item.admin-reply { background:#fef9c3; border-left-color:var(--gold); }
+.note-item .note-from { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
+.note-item .note-from.from-client { color:var(--teal); }
+.note-item .note-from.from-admin { color:#b45309; }
+.note-item-meta { font-size:.7rem; color:var(--muted); margin-top:4px; display:flex; align-items:center; gap:8px; }
+.note-delete { background:none; border:none; color:var(--muted); cursor:pointer; font-size:.75rem; padding:2px 4px; opacity:.5; transition:.15s; }
+.note-delete:hover { opacity:1; color:#dc2626; }
+
+/* ADMIN LOGIN */
+.admin-bar { background:var(--gold); padding:8px 16px; border-radius:8px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; }
+.admin-bar span { font-size:.78rem; font-weight:700; color:var(--ink); }
+.admin-bar button { background:var(--teal); color:#fff; border:none; border-radius:6px; padding:4px 12px; font-size:.72rem; font-weight:600; cursor:pointer; font-family:inherit; }
+.admin-login-btn { background:none; border:1px solid var(--border); border-radius:6px; padding:4px 12px; font-size:.72rem; color:var(--muted); cursor:pointer; font-family:inherit; margin-top:8px; }
+.admin-login-btn:hover { border-color:var(--teal); color:var(--teal); }
+.admin-gate { background:var(--cream); border:1px solid var(--border); border-radius:10px; padding:16px 20px; margin-bottom:16px; text-align:center; }
+.admin-gate input { padding:8px 12px; border:1px solid var(--border); border-radius:6px; font-size:.85rem; font-family:inherit; margin-right:6px; outline:none; }
+.admin-gate input:focus { border-color:var(--teal); }
+.admin-gate .admin-submit { padding:8px 16px; background:var(--teal); color:#fff; border:none; border-radius:6px; font-size:.82rem; font-weight:600; cursor:pointer; font-family:inherit; }
 .note-timestamp { display:inline-block; background:var(--teal); color:#fff; font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:4px; cursor:pointer; margin-right:6px; font-family:'Barlow Condensed',sans-serif; letter-spacing:.04em; }
 .note-timestamp:hover { background:var(--teal-mid); }
 .desktop-tip { background:var(--teal-pale); border:1px solid var(--border); border-radius:8px; padding:10px 14px; font-size:.78rem; color:var(--muted); margin-top:12px; text-align:center; line-height:1.5; }
@@ -175,14 +192,25 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
 
     <!-- NOTES -->
     <div class="section-title">Notes & Requests</div>
+    <div id="admin-bar" class="admin-bar" style="display:none">
+      <span>🔑 Admin Mode — Reel Estate Media</span>
+      <button onclick="logoutAdmin()">Log Out</button>
+    </div>
     <div class="notes-section">
-      <div class="notes-list" id="notes-list">
-        <div style="font-size:.8rem;color:var(--muted);padding:8px 0">No notes yet. Leave a note below if you need any adjustments.</div>
-      </div>
+      <div class="notes-list" id="notes-list"></div>
       <textarea class="note-input" id="note-input" placeholder="Pause the video and leave a note — the timestamp will be saved automatically."></textarea>
-      <div style="display:flex;align-items:center;gap:12px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
         <button class="btn-note" id="note-btn" onclick="submitNote()">Send Note</button>
         <div class="note-success" id="note-success">✓ Note sent!</div>
+      </div>
+      <div id="admin-login-area" style="margin-top:12px;text-align:right">
+        <button class="admin-login-btn" id="admin-login-toggle" onclick="showAdminLogin()">🔒 Admin</button>
+      </div>
+      <div id="admin-gate" class="admin-gate" style="display:none">
+        <div style="font-size:.8rem;font-weight:600;margin-bottom:8px;color:var(--ink)">Admin Login</div>
+        <input type="password" id="admin-pw" placeholder="Password" onkeydown="if(event.key==='Enter')loginAdmin()">
+        <button class="admin-submit" onclick="loginAdmin()">Login</button>
+        <div id="admin-error" style="display:none;color:#dc2626;font-size:.75rem;margin-top:6px">Incorrect password</div>
       </div>
     </div>
 
@@ -198,6 +226,12 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
 
 <script>
 var NOTES_KEY_PREFIX = 'rem_portal_notes_';
+var ADMIN_HASH_KEY = 'rem_portal_admin_hash';
+var ADMIN_SESSION_KEY = 'rem_portal_admin_session';
+// Default admin password hash (SHA-256 of "reelmedia") — you can change this
+var DEFAULT_ADMIN_HASH = '1dbb38a3aae7bdf38a75b6591b0618ad2b90e669f2af7f6cd3b7e7b49b73a6d6';
+var isAdmin = false;
+
 var STATUS_INFO = {
   scheduled:{ label:'Scheduled', emoji:'📅', color:'#0284c7', bg:'#e0f2fe' },
   shot:      { label:'Shot',      emoji:'📸', color:'#7c3aed', bg:'#ede9fe' },
@@ -223,6 +257,12 @@ function init() {
     var json = decodeURIComponent(escape(atob(hash)));
     portalData = JSON.parse(json);
     if (!portalData || !portalData.key) { showError(); return; }
+    // Check existing admin session
+    if (sessionStorage.getItem(ADMIN_SESSION_KEY) === portalData.key) {
+      isAdmin = true;
+      document.getElementById('admin-bar').style.display = 'flex';
+      document.getElementById('admin-login-area').style.display = 'none';
+    }
     render();
   } catch(e) { showError(); }
 }
@@ -273,6 +313,51 @@ function ensureYtApi(cb) {
   window.onYouTubeIframeAPIReady = function() { ytApiLoaded = true; cb(); };
 }
 
+/* == ADMIN == */
+async function hashStr(str) {
+  var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+}
+
+function showAdminLogin() {
+  document.getElementById('admin-gate').style.display = 'block';
+  document.getElementById('admin-login-toggle').style.display = 'none';
+  document.getElementById('admin-pw').focus();
+}
+
+async function loginAdmin() {
+  var pw = document.getElementById('admin-pw').value;
+  var hash = await hashStr(pw);
+  // Check stored hash or use default
+  var storedHash = localStorage.getItem(ADMIN_HASH_KEY);
+  var validHash = storedHash || DEFAULT_ADMIN_HASH;
+  if (hash === validHash) {
+    isAdmin = true;
+    sessionStorage.setItem(ADMIN_SESSION_KEY, portalData.key);
+    document.getElementById('admin-gate').style.display = 'none';
+    document.getElementById('admin-bar').style.display = 'flex';
+    document.getElementById('admin-login-area').style.display = 'none';
+    document.getElementById('admin-error').style.display = 'none';
+    document.getElementById('note-btn').textContent = 'Reply as Admin';
+    renderNotes();
+  } else {
+    document.getElementById('admin-error').style.display = 'block';
+    document.getElementById('admin-pw').value = '';
+    document.getElementById('admin-pw').focus();
+  }
+}
+
+function logoutAdmin() {
+  isAdmin = false;
+  sessionStorage.removeItem(ADMIN_SESSION_KEY);
+  document.getElementById('admin-bar').style.display = 'none';
+  document.getElementById('admin-login-area').style.display = 'block';
+  document.getElementById('admin-login-toggle').style.display = 'inline-block';
+  document.getElementById('note-btn').textContent = 'Send Note';
+  renderNotes();
+}
+
+/* == VIDEO LOADING == */
 function loadVideo(url, versionIdx) {
   compareMode = false;
   currentVersionIdx = versionIdx;
@@ -329,6 +414,7 @@ function loadVideo(url, versionIdx) {
     + '<div style="text-align:center;margin-top:12px">' + compareBtn + buttonsHtml + '</div>';
 
   if (isVideoPortal) document.getElementById('note-input').placeholder = 'Pause the video and leave a note \u2014 the timestamp will be saved automatically.';
+  if (isAdmin) document.getElementById('note-btn').textContent = 'Reply as Admin';
   renderNotes();
 }
 
@@ -411,10 +497,8 @@ function changeCompareB(idx) { compareIdxB = idx; renderCompare(); }
 
 function syncPlay() {
   if (!comparePlayerA || !comparePlayerB) return;
-  // Align both to player A's current time first
   var t = comparePlayerA.getCurrentTime ? comparePlayerA.getCurrentTime() : 0;
   comparePlayerB.seekTo(t, true);
-  // Use requestAnimationFrame to fire both as close together as possible
   requestAnimationFrame(function() {
     comparePlayerA.playVideo();
     comparePlayerB.playVideo();
@@ -474,7 +558,7 @@ function render() {
   }
 }
 
-/* == NOTES (per version) == */
+/* == NOTES (per version, with admin replies and delete) == */
 function renderNotes() {
   var key = getNotesKey(currentVersionIdx);
   var notes = [];
@@ -493,13 +577,31 @@ function renderNotes() {
     list.innerHTML = '<div style="font-size:.8rem;color:var(--muted);padding:8px 0">No notes yet for ' + escHtml(vLabel || 'this version') + '. ' + (isVideoPortal ? 'Pause the video and leave feedback below.' : 'Leave a note below if you need any adjustments.') + '</div>';
     return;
   }
-  list.innerHTML = notes.map(function(n) {
+  list.innerHTML = notes.map(function(n, idx) {
+    var isAdminNote = n.from === 'admin';
+    var cls = isAdminNote ? 'note-item admin-reply' : 'note-item';
+    var fromHtml = isAdminNote
+      ? '<div class="note-from from-admin">Reel Estate Media</div>'
+      : '<div class="note-from from-client">' + escHtml(portalData.client || 'Client') + '</div>';
     var tsHtml = '';
     if (n.videoTime !== undefined && n.videoTime !== null) {
       tsHtml = '<span class="note-timestamp" onclick="seekTo(' + n.videoTime + ')" title="Jump to this moment">▶ ' + formatTime(n.videoTime) + '</span>';
     }
-    return '<div class="note-item">' + tsHtml + escHtml(n.text) + '<div class="note-item-meta">' + (n.date || '') + '</div></div>';
+    // Delete button: client can delete their own, admin can delete any
+    var canDelete = isAdmin || !isAdminNote;
+    var delHtml = canDelete ? '<button class="note-delete" onclick="deleteNote(' + idx + ')" title="Delete note">🗑</button>' : '';
+    return '<div class="' + cls + '">' + fromHtml + tsHtml + escHtml(n.text) + '<div class="note-item-meta"><span>' + (n.date || '') + '</span>' + delHtml + '</div></div>';
   }).join('');
+}
+
+function deleteNote(idx) {
+  if (!confirm('Delete this note?')) return;
+  var key = getNotesKey(currentVersionIdx);
+  var notes = [];
+  try { notes = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
+  notes.splice(idx, 1);
+  localStorage.setItem(key, JSON.stringify(notes));
+  renderNotes();
 }
 
 function submitNote() {
@@ -520,12 +622,14 @@ function submitNote() {
     text: text,
     date: new Date().toLocaleDateString('en-CA', { year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' }),
     videoTime: videoTime,
-    version: vLabel
+    version: vLabel,
+    from: isAdmin ? 'admin' : 'client'
   });
   localStorage.setItem(key, JSON.stringify(notes));
   input.value = '';
   renderNotes();
   var s = document.getElementById('note-success');
+  s.textContent = isAdmin ? '✓ Reply sent!' : '✓ Note sent!';
   s.style.display = 'block';
   setTimeout(function(){ s.style.display = 'none'; }, 3000);
 }
