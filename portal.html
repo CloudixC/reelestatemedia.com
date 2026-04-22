@@ -17,7 +17,7 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
 /* HEADER */
 .header { background:var(--teal); padding:24px 40px; position:relative; overflow:hidden; }
 .header::after { content:"REM"; position:absolute; right:-10px; top:50%; transform:translateY(-50%); font-family:'Playfair Display',serif; font-size:8rem; font-weight:900; color:rgba(255,255,255,.04); pointer-events:none; }
-.header-inner { max-width:820px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; position:relative; z-index:1; }
+.header-inner { max-width:1100px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; position:relative; z-index:1; }
 .header-left { display:flex; align-items:center; gap:16px; }
 .logo { width:52px; height:52px; border-radius:5px; border:1px solid rgba(255,255,255,.2); }
 .brand { font-family:'Playfair Display',serif; font-size:1.2rem; font-weight:900; color:#fff; }
@@ -28,7 +28,7 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
 .gold-rule { height:3px; background:linear-gradient(90deg,var(--gold),var(--gold-light) 50%,transparent); }
 
 /* MAIN */
-.main { max-width:820px; margin:0 auto; padding:32px 24px 64px; }
+.main { max-width:1100px; margin:0 auto; padding:32px 24px 64px; }
 
 /* SHOOT CARD */
 .shoot-card { background:var(--cream); border-radius:14px; padding:28px 32px; margin-bottom:24px; box-shadow:0 4px 24px rgba(0,0,0,.08); }
@@ -86,6 +86,18 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
 
 @media(max-width:600px) {
   .compare-grid { grid-template-columns:1fr; }
+  /* Fullscreen compare on mobile */
+  .drive-box.compare-active {
+    position:fixed; top:0; left:0; right:0; bottom:0; z-index:9999;
+    background:#000; border:none; border-radius:0; margin:0; padding:8px;
+    display:flex; flex-direction:column; justify-content:center;
+    overflow-y:auto;
+  }
+  .drive-box.compare-active .compare-grid { gap:6px; }
+  .drive-box.compare-active .video-wrapper { border-radius:6px; margin-bottom:4px; }
+  .drive-box.compare-active .compare-label { color:#999; }
+  .drive-box.compare-active .compare-playback button { padding:6px 14px; font-size:.75rem; }
+  .drive-box.compare-active .audio-controls .audio-btn { padding:4px 8px; font-size:.7rem; }
 }
 .note-input { width:100%; border:1px solid var(--border); border-radius:8px; padding:10px 14px; font-family:'Barlow',sans-serif; font-size:.85rem; resize:vertical; min-height:80px; outline:none; transition:.15s; }
 .note-input:focus { border-color:var(--teal); box-shadow:0 0 0 3px rgba(26,77,62,.07); }
@@ -98,7 +110,7 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
 /* FOOTER */
 .footer { background:var(--teal); padding:18px 40px; position:relative; }
 .footer::before { content:""; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--gold),var(--gold-light),var(--gold)); }
-.footer-inner { max-width:820px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; }
+.footer-inner { max-width:1100px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; }
 .footer-copy { font-family:'Playfair Display',serif; font-style:italic; font-size:.8rem; color:rgba(255,255,255,.6); }
 .footer-tag { font-family:'Barlow Condensed',sans-serif; font-size:.6rem; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); }
 
@@ -332,11 +344,13 @@ function enterCompareMode() {
   compareMode = true; ytPlayer = null; comparePlayerA = null; comparePlayerB = null;
   compareIdxA = versions.length - 2;
   compareIdxB = versions.length - 1;
+  document.getElementById('drive-box').classList.add('compare-active');
   renderCompare();
 }
 
 function exitCompareMode() {
   compareMode = false; comparePlayerA = null; comparePlayerB = null;
+  document.getElementById('drive-box').classList.remove('compare-active');
   var versions = getVersions();
   loadVideo(versions[versions.length - 1].url, versions.length - 1);
 }
