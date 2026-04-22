@@ -207,12 +207,13 @@ function render() {
     var openMatch = d.drive.match(/drive\.google\.com\/open\?id=([\w-]+)/);
 
     if (fileMatch || openMatch) {
-      // Google Drive video file — embed player + download link
+      // Google Drive video file — native player with fullscreen
       var fileId = fileMatch ? fileMatch[1] : openMatch[1];
+      var streamUrl = 'https://drive.google.com/uc?export=download&id=' + fileId;
       var driveBox = document.getElementById('drive-box');
-      driveBox.innerHTML = '<div class="video-wrapper"><iframe src="https://drive.google.com/file/d/' + fileId + '/preview" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>'
-        + '<div style="text-align:center">'
-        + '<a href="https://drive.google.com/uc?export=download&id=' + fileId + '" class="btn-download" target="_blank">⬇ Download</a> '
+      driveBox.innerHTML = '<div class="video-wrapper"><video id="portal-video" controls playsinline controlsList="nodownload" style="background:#000"><source src="' + streamUrl + '" type="video/mp4">Your browser does not support video playback.</video></div>'
+        + '<div style="text-align:center;margin-top:12px">'
+        + '<a href="' + streamUrl + '" class="btn-download" target="_blank">⬇ Download</a> '
         + '<a href="' + escHtml(d.drive) + '" class="btn-download" target="_blank" style="background:var(--teal-mid)">↗ Open in Drive</a>'
         + '</div>';
     } else {
