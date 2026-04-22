@@ -68,6 +68,25 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
 .version-selector label { font-size:.8rem; font-weight:600; color:var(--muted); white-space:nowrap; }
 .version-selector select { flex:1; padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-family:'Barlow',sans-serif; font-size:.85rem; background:#fff; color:var(--ink); cursor:pointer; outline:none; }
 .version-selector select:focus { border-color:var(--teal); box-shadow:0 0 0 3px rgba(26,77,62,.07); }
+
+/* COMPARISON MODE */
+.compare-bar { display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+.compare-bar .btn-compare { padding:7px 14px; border-radius:8px; font-family:'Barlow',sans-serif; font-size:.8rem; font-weight:600; cursor:pointer; transition:.15s; border:1px solid var(--teal); background:none; color:var(--teal); }
+.compare-bar .btn-compare.active { background:var(--teal); color:#fff; }
+.compare-bar .btn-compare:hover { background:var(--teal-mid); color:#fff; }
+.compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+.compare-grid .compare-col { text-align:center; }
+.compare-grid .compare-label { font-size:.75rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:.06em; }
+.compare-grid .video-wrapper { margin-bottom:8px; }
+.audio-controls { display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+.audio-controls .audio-btn { padding:5px 12px; border-radius:6px; font-size:.75rem; font-weight:600; cursor:pointer; border:1px solid var(--border); background:#fff; color:var(--ink); font-family:'Barlow',sans-serif; transition:.15s; }
+.audio-controls .audio-btn.active { background:var(--teal); color:#fff; border-color:var(--teal); }
+.compare-playback { display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:12px; }
+.compare-playback button { padding:8px 18px; border-radius:8px; font-size:.82rem; font-weight:700; cursor:pointer; border:none; font-family:'Barlow',sans-serif; }
+
+@media(max-width:600px) {
+  .compare-grid { grid-template-columns:1fr; }
+}
 .note-input { width:100%; border:1px solid var(--border); border-radius:8px; padding:10px 14px; font-family:'Barlow',sans-serif; font-size:.85rem; resize:vertical; min-height:80px; outline:none; transition:.15s; }
 .note-input:focus { border-color:var(--teal); box-shadow:0 0 0 3px rgba(26,77,62,.07); }
 .note-input::placeholder { color:#b0c4bc; }
@@ -166,25 +185,30 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
 </div>
 
 <script>
-const NOTES_KEY_PREFIX = 'rem_portal_notes_';
-const STATUS_INFO = {
+var NOTES_KEY_PREFIX = 'rem_portal_notes_';
+var STATUS_INFO = {
   scheduled:{ label:'Scheduled', emoji:'📅', color:'#0284c7', bg:'#e0f2fe' },
   shot:      { label:'Shot',      emoji:'📸', color:'#7c3aed', bg:'#ede9fe' },
   editing:   { label:'Editing',   emoji:'✂️',  color:'#b45309', bg:'#fef9c3' },
   delivered: { label:'Delivered', emoji:'✅', color:'#15803d', bg:'#dcfce7' },
 };
 
-let portalData = null;
-let ytPlayer = null;
-let isVideoPortal = false;
-let currentVersionUrl = '';
-let ytApiLoaded = false;
+var portalData = null;
+var ytPlayer = null;
+var isVideoPortal = false;
+var currentVersionIdx = -1;
+var ytApiLoaded = false;
+var compareMode = false;
+var comparePlayerA = null;
+var comparePlayerB = null;
+var compareIdxA = -1;
+var compareIdxB = -1;
 
 function init() {
-  const hash = window.location.hash.slice(1);
+  var hash = window.location.hash.slice(1);
   if (!hash) { showError(); return; }
   try {
-    const json = decodeURIComponent(escape(atob(hash)));
+    var json = decodeURIComponent(escape(atob(hash)));
     portalData = JSON.parse(json);
     if (!portalData || !portalData.key) { showError(); return; }
     render();
@@ -211,139 +235,234 @@ function seekTo(seconds) {
 
 function getVersions() {
   var d = portalData;
-  // Use versions array if available, otherwise fall back to single drive link
-  if (d.versions && d.versions.length) {
-    return d.versions.slice();
-  }
-  if (d.drive) {
-    return [{ url: d.drive, label: 'Version 1' }];
-  }
+  if (d.versions && d.versions.length) return d.versions.slice();
+  if (d.drive) return [{ url: d.drive, label: 'Version 1' }];
   return [];
 }
 
-function loadVideo(url) {
-  currentVersionUrl = url;
+function getNotesKey(versionIdx) {
+  var versions = getVersions();
+  if (versionIdx >= 0 && versionIdx < versions.length) {
+    return NOTES_KEY_PREFIX + portalData.key + '_v' + versionIdx;
+  }
+  return NOTES_KEY_PREFIX + portalData.key;
+}
+
+function getYtId(url) {
+  var m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/);
+  return m ? m[1] : null;
+}
+
+function ensureYtApi(cb) {
+  if (ytApiLoaded) { cb(); return; }
+  var tag = document.createElement('script');
+  tag.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(tag);
+  window.onYouTubeIframeAPIReady = function() { ytApiLoaded = true; cb(); };
+}
+
+function loadVideo(url, versionIdx) {
+  compareMode = false;
+  currentVersionIdx = versionIdx;
   ytPlayer = null;
   var driveBox = document.getElementById('drive-box');
+  var ytId = getYtId(url);
   var fileMatch = url.match(/drive\.google\.com\/file\/d\/([\w-]+)/);
   var openMatch = url.match(/drive\.google\.com\/open\?id=([\w-]+)/);
-  var ytMatch   = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/);
   var vmMatch   = url.match(/vimeo\.com\/(\d+)/);
-
-  // Build version selector if multiple versions
   var versions = getVersions();
+
   var selectorHtml = '';
   if (versions.length > 1) {
-    // Reverse so latest is first
     var opts = versions.slice().reverse().map(function(v, ri) {
-      var origIdx = versions.length - 1 - ri;
-      var isLatest = origIdx === versions.length - 1;
-      var selected = v.url === url ? ' selected' : '';
-      return '<option value="' + origIdx + '"' + selected + '>' + escHtml(v.label) + (isLatest ? ' (latest)' : '') + '</option>';
+      var oi = versions.length - 1 - ri;
+      var sel = oi === versionIdx ? ' selected' : '';
+      var ltag = oi === versions.length - 1 ? ' (latest)' : '';
+      return '<option value="' + oi + '"' + sel + '>' + escHtml(v.label) + ltag + '</option>';
     }).join('');
-    selectorHtml = '<div class="version-selector"><label>🎬 Version:</label><select onchange="switchVersion(this.value)">' + opts + '</select></div>';
+    selectorHtml = '<div class="version-selector"><label>🎬 Version:</label><select onchange="switchVersion(parseInt(this.value))">' + opts + '</select></div>';
   }
 
+  var compareBtn = versions.length > 1 ? '<button class="btn-compare" onclick="enterCompareMode()">⚖️ Compare Versions</button> ' : '';
   var playerHtml = '';
   var buttonsHtml = '';
 
-  if (ytMatch) {
+  if (ytId) {
     isVideoPortal = true;
     playerHtml = '<div class="video-wrapper"><div id="yt-player"></div></div>';
     buttonsHtml = '<a href="' + escHtml(url) + '" class="btn-download" target="_blank">↗ Open on YouTube</a>';
-    // Load or re-init YouTube player
-    if (!ytApiLoaded) {
-      var tag = document.createElement('script');
-      tag.src = 'https://www.youtube.com/iframe_api';
-      document.head.appendChild(tag);
-      window.onYouTubeIframeAPIReady = function() {
-        ytApiLoaded = true;
-        ytPlayer = new YT.Player('yt-player', {
-          videoId: ytMatch[1],
-          playerVars: { rel: 0, fs: 1, vq: 'hd1080' },
-          width: '100%',
-          height: '100%',
-        });
-      };
-    } else {
-      // API already loaded — just create new player after DOM update
+    ensureYtApi(function() {
       setTimeout(function() {
         ytPlayer = new YT.Player('yt-player', {
-          videoId: ytMatch[1],
-          playerVars: { rel: 0, fs: 1, vq: 'hd1080' },
-          width: '100%',
-          height: '100%',
+          videoId: ytId, playerVars: { rel: 0, fs: 1, vq: 'hd1080' }, width: '100%', height: '100%',
         });
       }, 50);
-    }
+    });
   } else if (vmMatch) {
     isVideoPortal = true;
     playerHtml = '<div class="video-wrapper"><iframe src="https://player.vimeo.com/video/' + vmMatch[1] + '?title=0&byline=0&portrait=0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>';
     buttonsHtml = '<a href="' + escHtml(url) + '" class="btn-download" target="_blank">↗ Open on Vimeo</a>';
   } else if (fileMatch || openMatch) {
     isVideoPortal = true;
-    var fileId = fileMatch ? fileMatch[1] : openMatch[1];
-    playerHtml = '<div class="video-wrapper"><iframe src="https://drive.google.com/file/d/' + fileId + '/preview" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>';
-    buttonsHtml = '<a href="https://drive.google.com/uc?export=download&id=' + fileId + '" class="btn-download" target="_blank">⬇ Download</a> '
-      + '<a href="' + escHtml(url) + '" class="btn-download" target="_blank" style="background:var(--teal-mid)">↗ Open in Drive</a>';
+    var fid = fileMatch ? fileMatch[1] : openMatch[1];
+    playerHtml = '<div class="video-wrapper"><iframe src="https://drive.google.com/file/d/' + fid + '/preview" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>';
+    buttonsHtml = '<a href="https://drive.google.com/uc?export=download&id=' + fid + '" class="btn-download" target="_blank">⬇ Download</a> <a href="' + escHtml(url) + '" class="btn-download" target="_blank" style="background:var(--teal-mid)">↗ Open in Drive</a>';
   } else {
-    // Regular folder link
-    driveBox.innerHTML = '<div class="drive-box-icon">📁</div><div class="drive-box-title">Your listing media is ready</div>'
-      + '<div class="drive-box-sub">Click below to open your Google Drive folder.</div>'
-      + '<a href="' + escHtml(url) + '" target="_blank" class="btn-drive">Open Drive Folder</a>';
-    return;
+    driveBox.innerHTML = '<div class="drive-box-icon">📁</div><div class="drive-box-title">Your listing media is ready</div><div class="drive-box-sub">Click below to open your Google Drive folder.</div><a href="' + escHtml(url) + '" target="_blank" class="btn-drive">Open Drive Folder</a>';
+    renderNotes(); return;
   }
 
   driveBox.innerHTML = selectorHtml + playerHtml
     + '<div class="desktop-tip">💡 <strong>For the best experience, review on a desktop</strong> so you can change the video quality to maximum.</div>'
-    + '<div style="text-align:center;margin-top:12px">' + buttonsHtml + '</div>';
+    + '<div style="text-align:center;margin-top:12px">' + compareBtn + buttonsHtml + '</div>';
+
+  if (isVideoPortal) document.getElementById('note-input').placeholder = 'Pause the video and leave a note \u2014 the timestamp will be saved automatically.';
+  renderNotes();
 }
 
 function switchVersion(idx) {
   var versions = getVersions();
-  var v = versions[parseInt(idx)];
-  if (v) loadVideo(v.url);
+  if (versions[idx]) loadVideo(versions[idx].url, idx);
 }
 
+/* == COMPARE MODE == */
+function enterCompareMode() {
+  var versions = getVersions();
+  if (versions.length < 2) return;
+  compareMode = true; ytPlayer = null; comparePlayerA = null; comparePlayerB = null;
+  compareIdxA = versions.length - 2;
+  compareIdxB = versions.length - 1;
+  renderCompare();
+}
+
+function exitCompareMode() {
+  compareMode = false; comparePlayerA = null; comparePlayerB = null;
+  var versions = getVersions();
+  loadVideo(versions[versions.length - 1].url, versions.length - 1);
+}
+
+function renderCompare() {
+  var versions = getVersions();
+  var driveBox = document.getElementById('drive-box');
+  function buildSel(name, selIdx) {
+    return versions.slice().reverse().map(function(v, ri) {
+      var oi = versions.length - 1 - ri;
+      var sel = oi === selIdx ? ' selected' : '';
+      var ltag = oi === versions.length - 1 ? ' (latest)' : '';
+      return '<option value="' + oi + '"' + sel + '>' + escHtml(v.label) + ltag + '</option>';
+    }).join('');
+  }
+  var ytIdA = getYtId(versions[compareIdxA].url);
+  var ytIdB = getYtId(versions[compareIdxB].url);
+
+  var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+    + '<span style="font-weight:700;font-size:.85rem">⚖️ Compare Versions</span>'
+    + '<button onclick="exitCompareMode()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 12px;font-size:.78rem;cursor:pointer;font-family:inherit">✕ Exit</button></div>';
+
+  html += '<div class="compare-grid">'
+    + '<div class="compare-col"><div class="compare-label"><select onchange="changeCompareA(parseInt(this.value))" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:.78rem;font-family:inherit">' + buildSel('A', compareIdxA) + '</select></div><div class="video-wrapper"><div id="cmp-player-a"></div></div></div>'
+    + '<div class="compare-col"><div class="compare-label"><select onchange="changeCompareB(parseInt(this.value))" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:.78rem;font-family:inherit">' + buildSel('B', compareIdxB) + '</select></div><div class="video-wrapper"><div id="cmp-player-b"></div></div></div></div>';
+
+  if (ytIdA && ytIdB) {
+    html += '<div class="compare-playback">'
+      + '<button onclick="syncPlay()" style="background:var(--teal);color:#fff">▶ Play Both</button>'
+      + '<button onclick="syncPause()" style="background:var(--teal-mid);color:#fff">⏸ Pause Both</button>'
+      + '<button onclick="syncRestart()" style="background:#6b7280;color:#fff">⏮ Restart</button></div>';
+    html += '<div class="audio-controls"><span style="font-size:.75rem;font-weight:600;color:var(--muted)">Audio:</span>'
+      + '<button class="audio-btn active" id="audio-a" onclick="setAudio(\'a\')">🔊 ' + escHtml(versions[compareIdxA].label) + '</button>'
+      + '<button class="audio-btn" id="audio-b" onclick="setAudio(\'b\')">🔊 ' + escHtml(versions[compareIdxB].label) + '</button>'
+      + '<button class="audio-btn" id="audio-both" onclick="setAudio(\'both\')">🔊 Both</button>'
+      + '<button class="audio-btn" id="audio-mute" onclick="setAudio(\'mute\')">🔇 Mute</button></div>';
+  }
+  driveBox.innerHTML = html;
+
+  if (ytIdA && ytIdB) {
+    ensureYtApi(function() {
+      setTimeout(function() {
+        comparePlayerA = new YT.Player('cmp-player-a', {
+          videoId: ytIdA, playerVars: { rel:0,fs:1,vq:'hd1080' }, width:'100%', height:'100%',
+          events: { onReady: function(e){ e.target.setVolume(100); } }
+        });
+        comparePlayerB = new YT.Player('cmp-player-b', {
+          videoId: ytIdB, playerVars: { rel:0,fs:1,vq:'hd1080' }, width:'100%', height:'100%',
+          events: { onReady: function(e){ e.target.setVolume(0); } }
+        });
+      }, 50);
+    });
+  }
+}
+
+function changeCompareA(idx) { compareIdxA = idx; renderCompare(); }
+function changeCompareB(idx) { compareIdxB = idx; renderCompare(); }
+
+function syncPlay() {
+  if (comparePlayerA && comparePlayerA.playVideo) comparePlayerA.playVideo();
+  if (comparePlayerB && comparePlayerB.playVideo) comparePlayerB.playVideo();
+}
+function syncPause() {
+  if (comparePlayerA && comparePlayerA.pauseVideo) comparePlayerA.pauseVideo();
+  if (comparePlayerB && comparePlayerB.pauseVideo) comparePlayerB.pauseVideo();
+}
+function syncRestart() {
+  if (comparePlayerA && comparePlayerA.seekTo) { comparePlayerA.seekTo(0, true); comparePlayerA.pauseVideo(); }
+  if (comparePlayerB && comparePlayerB.seekTo) { comparePlayerB.seekTo(0, true); comparePlayerB.pauseVideo(); }
+}
+function setAudio(mode) {
+  document.querySelectorAll('.audio-btn').forEach(function(b){ b.classList.remove('active'); });
+  var el = document.getElementById('audio-' + mode);
+  if (el) el.classList.add('active');
+  if (!comparePlayerA || !comparePlayerB) return;
+  switch(mode) {
+    case 'a':    comparePlayerA.unMute(); comparePlayerA.setVolume(100); comparePlayerB.mute(); break;
+    case 'b':    comparePlayerA.mute(); comparePlayerB.unMute(); comparePlayerB.setVolume(100); break;
+    case 'both': comparePlayerA.unMute(); comparePlayerA.setVolume(100); comparePlayerB.unMute(); comparePlayerB.setVolume(100); break;
+    case 'mute': comparePlayerA.mute(); comparePlayerB.mute(); break;
+  }
+}
+
+/* == RENDER == */
 function render() {
-  const d = portalData;
-  document.title = (d.client || 'Client') + ' — Reel Estate Media Portal';
+  var d = portalData;
+  document.title = (d.client || 'Client') + ' \u2014 Reel Estate Media Portal';
   document.getElementById('portal-content').style.display = 'block';
   document.getElementById('p-client').textContent = d.client || 'Your Listing';
-
-  const typeAddress = [d.type, d.address].filter(Boolean).join(' · ');
+  var typeAddress = [d.type, d.address].filter(Boolean).join(' \u00b7 ');
   document.getElementById('p-type-address').textContent = typeAddress;
 
-  // Meta row
-  const meta = [];
+  var meta = [];
   if (d.date) meta.push('<div class="shoot-meta-item">📅 <strong>' + d.date + (d.time ? ' @ ' + d.time : '') + '</strong></div>');
   if (d.status) {
-    const st = STATUS_INFO[d.status] || STATUS_INFO.delivered;
+    var st = STATUS_INFO[d.status] || STATUS_INFO.delivered;
     meta.push('<div class="shoot-meta-item"><span class="status-chip" style="background:' + st.bg + ';color:' + st.color + '">' + st.emoji + ' ' + st.label + '</span></div>');
   }
   document.getElementById('p-meta').innerHTML = meta.join('');
 
-  // Load video — default to latest version
   var versions = getVersions();
   if (versions.length) {
-    loadVideo(versions[versions.length - 1].url);
+    loadVideo(versions[versions.length - 1].url, versions.length - 1);
   } else {
     document.getElementById('drive-box').innerHTML = '<div class="drive-box-icon">⏳</div><div class="drive-box-title">Files coming soon</div><div class="drive-box-sub">Your media is still being prepared. Check back shortly or contact us if you have questions.</div>';
+    renderNotes();
   }
-
-  if (isVideoPortal) {
-    document.getElementById('note-input').placeholder = 'Pause the video and leave a note — the timestamp will be saved automatically.';
-  }
-
-  renderNotes();
 }
 
+/* == NOTES (per version) == */
 function renderNotes() {
-  const key   = NOTES_KEY_PREFIX + portalData.key;
-  const notes = JSON.parse(localStorage.getItem(key) || '[]');
-  const list  = document.getElementById('notes-list');
+  var key = getNotesKey(currentVersionIdx);
+  var notes = [];
+  try { notes = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
+
+  var legacyKey = NOTES_KEY_PREFIX + portalData.key;
+  var legacyNotes = [];
+  try { legacyNotes = JSON.parse(localStorage.getItem(legacyKey) || '[]'); } catch(e) {}
+  if (currentVersionIdx === 0 && !notes.length && legacyNotes.length) notes = legacyNotes;
+
+  var list = document.getElementById('notes-list');
+  var versions = getVersions();
+  var vLabel = versions[currentVersionIdx] ? versions[currentVersionIdx].label : '';
+
   if (!notes.length) {
-    list.innerHTML = '<div style="font-size:.8rem;color:var(--muted);padding:8px 0">No notes yet.' + (isVideoPortal ? ' Pause the video and leave feedback below.' : ' Leave a note below if you need any adjustments.') + '</div>';
+    list.innerHTML = '<div style="font-size:.8rem;color:var(--muted);padding:8px 0">No notes yet for ' + escHtml(vLabel || 'this version') + '. ' + (isVideoPortal ? 'Pause the video and leave feedback below.' : 'Leave a note below if you need any adjustments.') + '</div>';
     return;
   }
   list.innerHTML = notes.map(function(n) {
@@ -351,43 +470,36 @@ function renderNotes() {
     if (n.videoTime !== undefined && n.videoTime !== null) {
       tsHtml = '<span class="note-timestamp" onclick="seekTo(' + n.videoTime + ')" title="Jump to this moment">▶ ' + formatTime(n.videoTime) + '</span>';
     }
-    var verHtml = n.version ? '<span style="font-size:.68rem;color:#7c3aed;font-weight:600;margin-left:4px">(' + escHtml(n.version) + ')</span>' : '';
-    return '<div class="note-item">' + tsHtml + escHtml(n.text) + verHtml + '<div class="note-item-meta">' + n.date + '</div></div>';
+    return '<div class="note-item">' + tsHtml + escHtml(n.text) + '<div class="note-item-meta">' + (n.date || '') + '</div></div>';
   }).join('');
 }
 
 function submitNote() {
-  const input = document.getElementById('note-input');
-  const text  = input.value.trim();
+  var input = document.getElementById('note-input');
+  var text = input.value.trim();
   if (!text) return;
-  const key   = NOTES_KEY_PREFIX + portalData.key;
-  const notes = JSON.parse(localStorage.getItem(key) || '[]');
+  var key = getNotesKey(currentVersionIdx);
+  var notes = [];
+  try { notes = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
 
-  // Capture video timestamp if available
   var videoTime = null;
-  if (ytPlayer && ytPlayer.getCurrentTime) {
-    videoTime = ytPlayer.getCurrentTime();
-  }
+  if (ytPlayer && ytPlayer.getCurrentTime) videoTime = ytPlayer.getCurrentTime();
 
-  // Find current version label
-  var versionLabel = '';
   var versions = getVersions();
-  for (var i = 0; i < versions.length; i++) {
-    if (versions[i].url === currentVersionUrl) { versionLabel = versions[i].label; break; }
-  }
+  var vLabel = versions[currentVersionIdx] ? versions[currentVersionIdx].label : '';
 
   notes.push({
     text: text,
     date: new Date().toLocaleDateString('en-CA', { year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' }),
     videoTime: videoTime,
-    version: versionLabel
+    version: vLabel
   });
   localStorage.setItem(key, JSON.stringify(notes));
   input.value = '';
   renderNotes();
-  const s = document.getElementById('note-success');
+  var s = document.getElementById('note-success');
   s.style.display = 'block';
-  setTimeout(function() { s.style.display = 'none'; }, 3000);
+  setTimeout(function(){ s.style.display = 'none'; }, 3000);
 }
 
 function escHtml(s) {
