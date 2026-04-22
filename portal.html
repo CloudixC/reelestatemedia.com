@@ -64,6 +64,10 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
 .note-timestamp:hover { background:var(--teal-mid); }
 .desktop-tip { background:var(--teal-pale); border:1px solid var(--border); border-radius:8px; padding:10px 14px; font-size:.78rem; color:var(--muted); margin-top:12px; text-align:center; line-height:1.5; }
 .desktop-tip strong { color:var(--ink); }
+.version-selector { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.version-selector label { font-size:.8rem; font-weight:600; color:var(--muted); white-space:nowrap; }
+.version-selector select { flex:1; padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-family:'Barlow',sans-serif; font-size:.85rem; background:#fff; color:var(--ink); cursor:pointer; outline:none; }
+.version-selector select:focus { border-color:var(--teal); box-shadow:0 0 0 3px rgba(26,77,62,.07); }
 .note-input { width:100%; border:1px solid var(--border); border-radius:8px; padding:10px 14px; font-family:'Barlow',sans-serif; font-size:.85rem; resize:vertical; min-height:80px; outline:none; transition:.15s; }
 .note-input:focus { border-color:var(--teal); box-shadow:0 0 0 3px rgba(26,77,62,.07); }
 .note-input::placeholder { color:#b0c4bc; }
@@ -173,6 +177,8 @@ const STATUS_INFO = {
 let portalData = null;
 let ytPlayer = null;
 let isVideoPortal = false;
+let currentVersionUrl = '';
+let ytApiLoaded = false;
 
 function init() {
   const hash = window.location.hash.slice(1);
@@ -203,6 +209,102 @@ function seekTo(seconds) {
   }
 }
 
+function getVersions() {
+  var d = portalData;
+  // Use versions array if available, otherwise fall back to single drive link
+  if (d.versions && d.versions.length) {
+    return d.versions.slice();
+  }
+  if (d.drive) {
+    return [{ url: d.drive, label: 'Version 1' }];
+  }
+  return [];
+}
+
+function loadVideo(url) {
+  currentVersionUrl = url;
+  ytPlayer = null;
+  var driveBox = document.getElementById('drive-box');
+  var fileMatch = url.match(/drive\.google\.com\/file\/d\/([\w-]+)/);
+  var openMatch = url.match(/drive\.google\.com\/open\?id=([\w-]+)/);
+  var ytMatch   = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/);
+  var vmMatch   = url.match(/vimeo\.com\/(\d+)/);
+
+  // Build version selector if multiple versions
+  var versions = getVersions();
+  var selectorHtml = '';
+  if (versions.length > 1) {
+    // Reverse so latest is first
+    var opts = versions.slice().reverse().map(function(v, ri) {
+      var origIdx = versions.length - 1 - ri;
+      var isLatest = origIdx === versions.length - 1;
+      var selected = v.url === url ? ' selected' : '';
+      return '<option value="' + origIdx + '"' + selected + '>' + escHtml(v.label) + (isLatest ? ' (latest)' : '') + '</option>';
+    }).join('');
+    selectorHtml = '<div class="version-selector"><label>🎬 Version:</label><select onchange="switchVersion(this.value)">' + opts + '</select></div>';
+  }
+
+  var playerHtml = '';
+  var buttonsHtml = '';
+
+  if (ytMatch) {
+    isVideoPortal = true;
+    playerHtml = '<div class="video-wrapper"><div id="yt-player"></div></div>';
+    buttonsHtml = '<a href="' + escHtml(url) + '" class="btn-download" target="_blank">↗ Open on YouTube</a>';
+    // Load or re-init YouTube player
+    if (!ytApiLoaded) {
+      var tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(tag);
+      window.onYouTubeIframeAPIReady = function() {
+        ytApiLoaded = true;
+        ytPlayer = new YT.Player('yt-player', {
+          videoId: ytMatch[1],
+          playerVars: { rel: 0, fs: 1, vq: 'hd1080' },
+          width: '100%',
+          height: '100%',
+        });
+      };
+    } else {
+      // API already loaded — just create new player after DOM update
+      setTimeout(function() {
+        ytPlayer = new YT.Player('yt-player', {
+          videoId: ytMatch[1],
+          playerVars: { rel: 0, fs: 1, vq: 'hd1080' },
+          width: '100%',
+          height: '100%',
+        });
+      }, 50);
+    }
+  } else if (vmMatch) {
+    isVideoPortal = true;
+    playerHtml = '<div class="video-wrapper"><iframe src="https://player.vimeo.com/video/' + vmMatch[1] + '?title=0&byline=0&portrait=0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>';
+    buttonsHtml = '<a href="' + escHtml(url) + '" class="btn-download" target="_blank">↗ Open on Vimeo</a>';
+  } else if (fileMatch || openMatch) {
+    isVideoPortal = true;
+    var fileId = fileMatch ? fileMatch[1] : openMatch[1];
+    playerHtml = '<div class="video-wrapper"><iframe src="https://drive.google.com/file/d/' + fileId + '/preview" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>';
+    buttonsHtml = '<a href="https://drive.google.com/uc?export=download&id=' + fileId + '" class="btn-download" target="_blank">⬇ Download</a> '
+      + '<a href="' + escHtml(url) + '" class="btn-download" target="_blank" style="background:var(--teal-mid)">↗ Open in Drive</a>';
+  } else {
+    // Regular folder link
+    driveBox.innerHTML = '<div class="drive-box-icon">📁</div><div class="drive-box-title">Your listing media is ready</div>'
+      + '<div class="drive-box-sub">Click below to open your Google Drive folder.</div>'
+      + '<a href="' + escHtml(url) + '" target="_blank" class="btn-drive">Open Drive Folder</a>';
+    return;
+  }
+
+  driveBox.innerHTML = selectorHtml + playerHtml
+    + '<div class="desktop-tip">💡 <strong>For the best experience, review on a desktop</strong> so you can change the video quality to maximum.</div>'
+    + '<div style="text-align:center;margin-top:12px">' + buttonsHtml + '</div>';
+}
+
+function switchVersion(idx) {
+  var versions = getVersions();
+  var v = versions[parseInt(idx)];
+  if (v) loadVideo(v.url);
+}
+
 function render() {
   const d = portalData;
   document.title = (d.client || 'Client') + ' — Reel Estate Media Portal';
@@ -221,59 +323,14 @@ function render() {
   }
   document.getElementById('p-meta').innerHTML = meta.join('');
 
-  // Smart media display
-  if (d.drive) {
-    var fileMatch = d.drive.match(/drive\.google\.com\/file\/d\/([\w-]+)/);
-    var openMatch = d.drive.match(/drive\.google\.com\/open\?id=([\w-]+)/);
-    var ytMatch   = d.drive.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/);
-    var vmMatch   = d.drive.match(/vimeo\.com\/(\d+)/);
-
-    if (ytMatch) {
-      isVideoPortal = true;
-      var driveBox = document.getElementById('drive-box');
-      driveBox.innerHTML = '<div class="video-wrapper"><div id="yt-player"></div></div>'
-        + '<div class="desktop-tip">💡 <strong>For the best experience, review on a desktop</strong> so you can change the video quality to maximum.</div>'
-        + '<div style="text-align:center;margin-top:12px">'
-        + '<a href="' + escHtml(d.drive) + '" class="btn-download" target="_blank">↗ Open on YouTube</a>'
-        + '</div>';
-      // Load YouTube IFrame API
-      var tag = document.createElement('script');
-      tag.src = 'https://www.youtube.com/iframe_api';
-      document.head.appendChild(tag);
-      window.onYouTubeIframeAPIReady = function() {
-        ytPlayer = new YT.Player('yt-player', {
-          videoId: ytMatch[1],
-          playerVars: { rel: 0, fs: 1, vq: 'hd1080' },
-          width: '100%',
-          height: '100%',
-        });
-      };
-    } else if (vmMatch) {
-      isVideoPortal = true;
-      var driveBox = document.getElementById('drive-box');
-      driveBox.innerHTML = '<div class="video-wrapper"><iframe id="vimeo-player" src="https://player.vimeo.com/video/' + vmMatch[1] + '?title=0&byline=0&portrait=0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>'
-        + '<div class="desktop-tip">💡 <strong>For the best experience, review on a desktop</strong> so you can change the video quality to maximum.</div>'
-        + '<div style="text-align:center;margin-top:12px">'
-        + '<a href="' + escHtml(d.drive) + '" class="btn-download" target="_blank">↗ Open on Vimeo</a>'
-        + '</div>';
-    } else if (fileMatch || openMatch) {
-      isVideoPortal = true;
-      var fileId = fileMatch ? fileMatch[1] : openMatch[1];
-      var driveBox = document.getElementById('drive-box');
-      driveBox.innerHTML = '<div class="video-wrapper"><iframe src="https://drive.google.com/file/d/' + fileId + '/preview" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>'
-        + '<div class="desktop-tip">💡 <strong>For the best experience, review on a desktop</strong> so you can change the video quality to maximum.</div>'
-        + '<div style="text-align:center;margin-top:12px">'
-        + '<a href="https://drive.google.com/uc?export=download&id=' + fileId + '" class="btn-download" target="_blank">⬇ Download</a> '
-        + '<a href="' + escHtml(d.drive) + '" class="btn-download" target="_blank" style="background:var(--teal-mid)">↗ Open in Drive</a>'
-        + '</div>';
-    } else {
-      document.getElementById('drive-link').href = d.drive;
-    }
+  // Load video — default to latest version
+  var versions = getVersions();
+  if (versions.length) {
+    loadVideo(versions[versions.length - 1].url);
   } else {
     document.getElementById('drive-box').innerHTML = '<div class="drive-box-icon">⏳</div><div class="drive-box-title">Files coming soon</div><div class="drive-box-sub">Your media is still being prepared. Check back shortly or contact us if you have questions.</div>';
   }
 
-  // Update notes section title for video reviews
   if (isVideoPortal) {
     document.getElementById('note-input').placeholder = 'Pause the video and leave a note — the timestamp will be saved automatically.';
   }
@@ -294,7 +351,8 @@ function renderNotes() {
     if (n.videoTime !== undefined && n.videoTime !== null) {
       tsHtml = '<span class="note-timestamp" onclick="seekTo(' + n.videoTime + ')" title="Jump to this moment">▶ ' + formatTime(n.videoTime) + '</span>';
     }
-    return '<div class="note-item">' + tsHtml + escHtml(n.text) + '<div class="note-item-meta">' + n.date + '</div></div>';
+    var verHtml = n.version ? '<span style="font-size:.68rem;color:#7c3aed;font-weight:600;margin-left:4px">(' + escHtml(n.version) + ')</span>' : '';
+    return '<div class="note-item">' + tsHtml + escHtml(n.text) + verHtml + '<div class="note-item-meta">' + n.date + '</div></div>';
   }).join('');
 }
 
@@ -311,10 +369,18 @@ function submitNote() {
     videoTime = ytPlayer.getCurrentTime();
   }
 
+  // Find current version label
+  var versionLabel = '';
+  var versions = getVersions();
+  for (var i = 0; i < versions.length; i++) {
+    if (versions[i].url === currentVersionUrl) { versionLabel = versions[i].label; break; }
+  }
+
   notes.push({
     text: text,
     date: new Date().toLocaleDateString('en-CA', { year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' }),
-    videoTime: videoTime
+    videoTime: videoTime,
+    version: versionLabel
   });
   localStorage.setItem(key, JSON.stringify(notes));
   input.value = '';

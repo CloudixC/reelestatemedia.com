@@ -1277,8 +1277,12 @@ label { font-size: .8rem; font-weight: 600; color: var(--text2); text-transform:
             </div>
           </div>
           <div class="form-field" style="margin-bottom:8px">
-            <label>Google Drive Folder Link</label>
-            <input class="input" id="new-shoot-drive" type="url" placeholder="https://drive.google.com/drive/folders/…">
+            <label>Video / Media Versions</label>
+            <div id="shoot-versions-list" style="margin-bottom:6px"></div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input class="input" id="new-version-url" type="url" placeholder="Paste YouTube, Vimeo, or Google Drive link…" style="flex:1">
+              <button type="button" class="btn btn-ghost btn-sm" onclick="addShootVersion()" style="white-space:nowrap">+ Add Version</button>
+            </div>
           </div>
           <div style="display:flex;gap:8px;align-items:center">
             <button type="button" class="btn btn-primary btn-sm" id="shoot-save-btn" onclick="saveShootEntry()">Save Shoot</button>
@@ -3599,34 +3603,76 @@ const SHOOT_STATUSES = {
   delivered:  { label:'Delivered', emoji:'✅', color:'#15803d', bg:'#dcfce7' },
 };
 
+let _editShootVersions = [];
+
 function addShootEntry() {
   editingShootId = null;
+  _editShootVersions = [];
   document.getElementById('shoot-new-entry').style.display = 'block';
   document.getElementById('new-shoot-date').value    = '';
   document.getElementById('new-shoot-time').value    = '';
   document.getElementById('new-shoot-type').value    = '';
   document.getElementById('new-shoot-address').value = '';
   document.getElementById('new-shoot-status').value  = 'scheduled';
-  document.getElementById('new-shoot-drive').value   = '';
+  document.getElementById('new-version-url').value   = '';
   document.getElementById('shoot-save-btn').textContent = 'Save Shoot';
+  renderShootVersionsList();
   document.getElementById('new-shoot-date').focus();
 }
 function editShootEntry(id) {
   const s = currentEditShoots.find(x => x.id === id);
   if (!s) return;
   editingShootId = id;
+  // Migrate old single driveLink to versions array if needed
+  if (s.driveLink && (!s.versions || !s.versions.length)) {
+    s.versions = [{ url: s.driveLink, label: 'Version 1', added: s.date || nowLocal() }];
+  }
+  _editShootVersions = (s.versions || []).slice();
   document.getElementById('shoot-new-entry').style.display = 'block';
   document.getElementById('new-shoot-date').value    = s.date    || '';
   document.getElementById('new-shoot-time').value    = s.time    || '';
   document.getElementById('new-shoot-type').value    = s.type    || '';
   document.getElementById('new-shoot-address').value = s.address || '';
   document.getElementById('new-shoot-status').value  = s.status  || 'scheduled';
-  document.getElementById('new-shoot-drive').value   = s.driveLink || '';
+  document.getElementById('new-version-url').value   = '';
   document.getElementById('shoot-save-btn').textContent = 'Update Shoot';
+  renderShootVersionsList();
   document.getElementById('new-shoot-date').focus();
+}
+function addShootVersion() {
+  var url = document.getElementById('new-version-url').value.trim();
+  if (!url) { showToast('Paste a link first'); return; }
+  var num = _editShootVersions.length + 1;
+  _editShootVersions.push({ url: url, label: 'Version ' + num, added: nowLocal() });
+  document.getElementById('new-version-url').value = '';
+  renderShootVersionsList();
+}
+function removeShootVersion(idx) {
+  _editShootVersions.splice(idx, 1);
+  // Re-label
+  _editShootVersions.forEach(function(v, i) { v.label = 'Version ' + (i + 1); });
+  renderShootVersionsList();
+}
+function renderShootVersionsList() {
+  var el = document.getElementById('shoot-versions-list');
+  if (!_editShootVersions.length) {
+    el.innerHTML = '<div style="font-size:.75rem;color:var(--text3);padding:4px 0">No versions added yet.</div>';
+    return;
+  }
+  // Show latest first
+  el.innerHTML = _editShootVersions.slice().reverse().map(function(v, ri) {
+    var i = _editShootVersions.length - 1 - ri;
+    var isLatest = i === _editShootVersions.length - 1;
+    return '<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;background:' + (isLatest ? '#ede9fe' : 'var(--surface2)') + ';border-radius:6px;margin-bottom:4px;font-size:.75rem">'
+      + '<span style="font-weight:600;color:' + (isLatest ? '#7c3aed' : 'var(--text2)') + '">' + esc(v.label) + (isLatest ? ' (latest)' : '') + '</span>'
+      + '<a href="' + esc(v.url) + '" target="_blank" style="color:#0284c7;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(v.url) + '</a>'
+      + '<button onclick="removeShootVersion(' + i + ')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:.9rem">×</button>'
+      + '</div>';
+  }).join('');
 }
 function cancelShootEntry() {
   editingShootId = null;
+  _editShootVersions = [];
   document.getElementById('shoot-new-entry').style.display = 'none';
 }
 function saveShootEntry() {
@@ -3635,13 +3681,14 @@ function saveShootEntry() {
   const type      = document.getElementById('new-shoot-type').value;
   const address   = document.getElementById('new-shoot-address').value.trim();
   const status    = document.getElementById('new-shoot-status').value || 'scheduled';
-  const driveLink = document.getElementById('new-shoot-drive').value.trim();
   if (!date) { showToast('Please pick a shoot date'); return; }
+  // Use latest version URL as driveLink for backward compatibility
+  var driveLink = _editShootVersions.length ? _editShootVersions[_editShootVersions.length - 1].url : '';
   if (editingShootId) {
     const s = currentEditShoots.find(x => x.id === editingShootId);
-    if (s) { s.date = date; s.time = time; s.type = type; s.address = address; s.status = status; s.driveLink = driveLink; }
+    if (s) { s.date = date; s.time = time; s.type = type; s.address = address; s.status = status; s.driveLink = driveLink; s.versions = _editShootVersions.slice(); s.portalUrl = ''; }
   } else {
-    const newShoot = { id: genId(), date, time, type, address, status, driveLink, portalKey: genId() };
+    const newShoot = { id: genId(), date, time, type, address, status, driveLink, versions: _editShootVersions.slice(), portalKey: genId() };
     currentEditShoots.push(newShoot);
     const timeStr = time ? ' @ ' + time : '';
     const typeStr = type ? ' — ' + type : '';
@@ -3650,6 +3697,7 @@ function saveShootEntry() {
     renderInteractionLog();
   }
   editingShootId = null;
+  _editShootVersions = [];
   document.getElementById('shoot-new-entry').style.display = 'none';
   renderShootsList();
 }
@@ -3698,6 +3746,10 @@ function sendDeliveryEmail(shootId) {
   showToast('Gmail opened — files delivered ✓');
 }
 function getPortalUrl(shoot) {
+  var versions = shoot.versions || [];
+  if (!versions.length && shoot.driveLink) {
+    versions = [{ url: shoot.driveLink, label: 'Version 1' }];
+  }
   const data = {
     key:     shoot.portalKey || shoot.id,
     client:  document.getElementById('f-name').value || '',
@@ -3706,20 +3758,20 @@ function getPortalUrl(shoot) {
     type:    shoot.type,
     address: shoot.address,
     drive:   shoot.driveLink || '',
+    versions: versions,
     biz:     'Reel Estate Media',
     contact: 'hello@reelestatemedia.com',
     status:  shoot.status || 'delivered',
   };
   const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-  // Live URL — works once deployed to reelestatemedia.com via GitHub Pages
   const base = 'https://reelestatemedia.com/portal.html';
   return base + '#' + encoded;
 }
 function copyPortalLink(shootId) {
   const s = currentEditShoots.find(x => x.id === shootId);
   if (!s) return;
-  if (!s.driveLink) { showToast('Add a Google Drive link first'); return; }
-  // Use saved link if it exists, otherwise generate and save
+  var hasMedia = s.driveLink || (s.versions && s.versions.length);
+  if (!hasMedia) { showToast('Add a video link first'); return; }
   if (!s.portalUrl) {
     s.portalUrl = getPortalUrl(s);
     renderShootsList();
@@ -3733,7 +3785,8 @@ function copyPortalLink(shootId) {
 function regeneratePortalLink(shootId) {
   const s = currentEditShoots.find(x => x.id === shootId);
   if (!s) return;
-  if (!s.driveLink) { showToast('Add a Google Drive link first'); return; }
+  var hasMedia = s.driveLink || (s.versions && s.versions.length);
+  if (!hasMedia) { showToast('Add a video link first'); return; }
   s.portalUrl = getPortalUrl(s);
   renderShootsList();
   navigator.clipboard.writeText(s.portalUrl)
@@ -3785,15 +3838,15 @@ function renderShootsList() {
       + '</div>'
       + '<div style="margin-bottom:6px">' + pipeline + '</div>'
       + (s.address   ? '<div style="font-size:.75rem;color:var(--text2);margin-bottom:4px">📍 ' + esc(s.address) + '</div>' : '')
-      + (s.driveLink ? '<div style="font-size:.73rem;margin-bottom:4px"><a href="' + esc(s.driveLink) + '" target="_blank" style="color:#0284c7">📁 View Drive Folder</a></div>' : '')
+      + ((s.versions && s.versions.length) ? '<div style="font-size:.73rem;margin-bottom:4px;color:#7c3aed;font-weight:600">🎬 ' + s.versions.length + ' version' + (s.versions.length > 1 ? 's' : '') + ' · <a href="' + esc(s.versions[s.versions.length-1].url) + '" target="_blank" style="color:#0284c7;font-weight:400">Latest: ' + esc(s.versions[s.versions.length-1].label) + '</a></div>' : (s.driveLink ? '<div style="font-size:.73rem;margin-bottom:4px"><a href="' + esc(s.driveLink) + '" target="_blank" style="color:#0284c7">📁 View Drive Folder</a></div>' : ''))
       + (s.portalUrl ? '<div style="font-size:.7rem;margin-bottom:6px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;display:flex;align-items:center;gap:6px"><span style="color:#7c3aed;font-weight:600">🔗 Portal:</span><input type="text" value="' + esc(s.portalUrl) + '" readonly onclick="this.select()" style="flex:1;border:none;background:none;font-size:.7rem;color:var(--text2);font-family:var(--mono);outline:none;min-width:0"></div>' : '')
       + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">'
       + '<button onclick="editShootEntry(\'' + s.id + '\')" style="background:none;border:1px solid var(--border);border-radius:5px;cursor:pointer;color:var(--text2);font-size:.72rem;padding:3px 8px">✏️ Edit</button>'
       + (nextSt ? '<button onclick="advanceShootStatus(\'' + s.id + '\')" style="background:none;border:1px solid ' + nextSt.color + ';border-radius:5px;cursor:pointer;color:' + nextSt.color + ';font-size:.72rem;padding:3px 8px;font-weight:600">→ Mark ' + nextSt.label + '</button>' : '')
       + '<button onclick="useShootInInvoice(\'' + s.id + '\')" style="background:var(--teal);color:#fff;border:none;border-radius:5px;padding:3px 8px;font-size:.72rem;font-weight:600;cursor:pointer">📄 Invoice</button>'
       + '<button onclick="addToGoogleCalendar(editingId,\'' + s.id + '\')" style="background:#4285f4;color:#fff;border:none;border-radius:5px;padding:3px 8px;font-size:.72rem;font-weight:600;cursor:pointer">📅 Google Cal</button>'
-      + (s.driveLink ? '<button onclick="sendDeliveryEmail(\'' + s.id + '\')" style="background:#1d4ed8;color:#fff;border:none;border-radius:5px;padding:3px 8px;font-size:.72rem;font-weight:600;cursor:pointer">📧 Send Delivery</button>' : '')
-      + (s.driveLink ? '<button onclick="copyPortalLink(\'' + s.id + '\')" style="background:#7c3aed;color:#fff;border:none;border-radius:5px;padding:3px 8px;font-size:.72rem;font-weight:600;cursor:pointer">🔗 ' + (s.portalUrl ? 'Copy Portal Link' : 'Generate Portal Link') + '</button>' : '')
+      + ((s.driveLink || (s.versions && s.versions.length)) ? '<button onclick="sendDeliveryEmail(\'' + s.id + '\')" style="background:#1d4ed8;color:#fff;border:none;border-radius:5px;padding:3px 8px;font-size:.72rem;font-weight:600;cursor:pointer">📧 Send Delivery</button>' : '')
+      + ((s.driveLink || (s.versions && s.versions.length)) ? '<button onclick="copyPortalLink(\'' + s.id + '\')" style="background:#7c3aed;color:#fff;border:none;border-radius:5px;padding:3px 8px;font-size:.72rem;font-weight:600;cursor:pointer">🔗 ' + (s.portalUrl ? 'Copy Portal Link' : 'Generate Portal Link') + '</button>' : '')
       + (s.portalUrl ? '<button onclick="regeneratePortalLink(\'' + s.id + '\')" style="background:none;border:1px solid #7c3aed;border-radius:5px;padding:3px 8px;font-size:.72rem;font-weight:600;cursor:pointer;color:#7c3aed">🔄 Regenerate</button>' : '')
       + '<button onclick="deleteShootEntry(\'' + s.id + '\')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:1rem;padding:3px 4px;margin-left:auto">×</button>'
       + '</div></div>';
