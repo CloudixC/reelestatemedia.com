@@ -792,6 +792,10 @@ label { font-size: .8rem; font-weight: 600; color: var(--text2); text-transform:
   }
   .sticky-add-btn:hover { background: var(--accent-hover); transform: scale(1.05); }
 }
+.shoot-type-chip { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border:1px solid var(--border); border-radius:20px; font-size:.75rem; font-weight:500; cursor:pointer; transition:.15s; user-select:none; }
+.shoot-type-chip:hover { border-color:var(--accent); }
+.shoot-type-chip input { display:none; }
+.shoot-type-chip:has(input:checked) { background:var(--accent); color:#fff; border-color:var(--accent); }
 </style>
 <!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-0FKKYXDVLH"></script>
@@ -1244,21 +1248,18 @@ label { font-size: .8rem; font-weight: 600; color: var(--text2); text-transform:
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
             <div class="form-field" style="margin:0">
               <label>Type</label>
-              <select class="select" id="new-shoot-type">
-                <option value="">— Select —</option>
-                <option>Photography</option>
-                <option>Videography</option>
-                <option>Photo + Video</option>
-                <option>Aerial / Drone</option>
-                <option>Virtual Tour</option>
-                <option>Virtual Staging</option>
-                <option>New Construction</option>
-                <option>Airbnb / STR</option>
-                <option>Commercial</option>
-                <option>Agent Branding</option>
-                <option>Social Content</option>
-                <option>Other</option>
-              </select>
+              <div id="new-shoot-type-wrap" style="display:flex;flex-wrap:wrap;gap:6px">
+                <label class="shoot-type-chip"><input type="checkbox" value="Photography"> Photography</label>
+                <label class="shoot-type-chip"><input type="checkbox" value="Videography"> Videography</label>
+                <label class="shoot-type-chip"><input type="checkbox" value="Aerial / Drone"> Aerial / Drone</label>
+                <label class="shoot-type-chip"><input type="checkbox" value="Virtual Tour"> Virtual Tour</label>
+                <label class="shoot-type-chip"><input type="checkbox" value="Virtual Staging"> Virtual Staging</label>
+                <label class="shoot-type-chip"><input type="checkbox" value="New Construction"> New Construction</label>
+                <label class="shoot-type-chip"><input type="checkbox" value="Airbnb / STR"> Airbnb / STR</label>
+                <label class="shoot-type-chip"><input type="checkbox" value="Commercial"> Commercial</label>
+                <label class="shoot-type-chip"><input type="checkbox" value="Agent Branding"> Agent Branding</label>
+                <label class="shoot-type-chip"><input type="checkbox" value="Social Content"> Social Content</label>
+              </div>
             </div>
             <div class="form-field" style="margin:0">
               <label>Address</label>
@@ -3611,7 +3612,7 @@ function addShootEntry() {
   document.getElementById('shoot-new-entry').style.display = 'block';
   document.getElementById('new-shoot-date').value    = '';
   document.getElementById('new-shoot-time').value    = '';
-  document.getElementById('new-shoot-type').value    = '';
+  document.querySelectorAll('#new-shoot-type-wrap input[type=checkbox]').forEach(function(c){ c.checked = false; });
   document.getElementById('new-shoot-address').value = '';
   document.getElementById('new-shoot-status').value  = 'scheduled';
   document.getElementById('new-version-url').value   = '';
@@ -3631,7 +3632,11 @@ function editShootEntry(id) {
   document.getElementById('shoot-new-entry').style.display = 'block';
   document.getElementById('new-shoot-date').value    = s.date    || '';
   document.getElementById('new-shoot-time').value    = s.time    || '';
-  document.getElementById('new-shoot-type').value    = s.type    || '';
+  // Populate type checkboxes
+  var savedTypes = (s.type || '').split(', ').filter(Boolean);
+  document.querySelectorAll('#new-shoot-type-wrap input[type=checkbox]').forEach(function(c){
+    c.checked = savedTypes.indexOf(c.value) !== -1;
+  });
   document.getElementById('new-shoot-address').value = s.address || '';
   document.getElementById('new-shoot-status').value  = s.status  || 'scheduled';
   document.getElementById('new-version-url').value   = '';
@@ -3678,7 +3683,9 @@ function cancelShootEntry() {
 function saveShootEntry() {
   const date      = document.getElementById('new-shoot-date').value;
   const time      = document.getElementById('new-shoot-time').value;
-  const type      = document.getElementById('new-shoot-type').value;
+  var typeArr = [];
+  document.querySelectorAll('#new-shoot-type-wrap input[type=checkbox]:checked').forEach(function(c){ typeArr.push(c.value); });
+  const type = typeArr.join(', ');
   const address   = document.getElementById('new-shoot-address').value.trim();
   const status    = document.getElementById('new-shoot-status').value || 'scheduled';
   if (!date) { showToast('Please pick a shoot date'); return; }
