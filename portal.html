@@ -163,6 +163,23 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
 .countdown-bar.expired { background:#fee2e2; border-color:#fca5a5; }
 .countdown-bar.expired .cd-label { color:#991b1b; }
 .countdown-bar.expired .cd-timer { color:#dc2626; }
+
+/* TESTIMONIAL */
+.testimonial-box { background:var(--cream); border:2px solid var(--gold); border-radius:12px; padding:24px; margin-bottom:24px; text-align:center; }
+.testimonial-box h3 { font-family:'Playfair Display',serif; font-size:1.1rem; color:var(--ink); margin-bottom:6px; }
+.testimonial-box p { font-size:.82rem; color:var(--muted); margin-bottom:16px; line-height:1.5; }
+.testimonial-stars { display:flex; justify-content:center; gap:6px; margin-bottom:14px; }
+.testimonial-stars button { background:none; border:none; font-size:1.6rem; cursor:pointer; opacity:.3; transition:.15s; }
+.testimonial-stars button.active { opacity:1; }
+.testimonial-textarea { width:100%; border:1px solid var(--border); border-radius:8px; padding:10px 14px; font-family:'Barlow',sans-serif; font-size:.85rem; resize:vertical; min-height:80px; outline:none; margin-bottom:10px; }
+.testimonial-textarea:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(201,168,76,.1); }
+.testimonial-permission { display:flex; align-items:center; gap:8px; font-size:.78rem; color:var(--muted); margin-bottom:14px; justify-content:center; }
+.testimonial-permission input { width:16px; height:16px; accent-color:var(--teal); }
+.btn-testimonial { padding:10px 24px; background:var(--gold); color:var(--ink); border:none; border-radius:8px; font-size:.85rem; font-weight:700; cursor:pointer; font-family:inherit; transition:.15s; }
+.btn-testimonial:hover { background:var(--gold-light); }
+.testimonial-thanks { background:#dcfce7; border:2px solid #86efac; border-radius:12px; padding:20px; text-align:center; margin-bottom:24px; }
+.testimonial-thanks h3 { color:#15803d; font-family:'Playfair Display',serif; margin-bottom:4px; }
+.testimonial-thanks p { font-size:.8rem; color:#166534; }
 .version-selector { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
 .version-selector label { font-size:.8rem; font-weight:600; color:var(--muted); white-space:nowrap; }
 .version-selector select { flex:1; padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-family:'Barlow',sans-serif; font-size:.85rem; background:#fff; color:var(--ink); cursor:pointer; outline:none; }
@@ -312,6 +329,9 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
       </div>
     </div>
 
+    <!-- TESTIMONIAL -->
+    <div id="testimonial-area"></div>
+
   </div>
 </div>
 
@@ -357,7 +377,8 @@ async function loginAdmin(){var h=await hashStr(document.getElementById('admin-p
 function logoutAdmin(){isAdmin=false;sessionStorage.removeItem(ADMIN_SESSION_KEY);document.getElementById('admin-bar').style.display='none';document.getElementById('admin-login-area').style.display='block';document.getElementById('admin-login-toggle').style.display='inline-block';document.getElementById('note-btn').textContent='Send Note';renderNotes();renderApproval();renderGallery();}
 
 /* CLIENT BRANDING */
-function renderClientBrand(){var el=document.getElementById('client-brand');var logo=portalData.clientLogo;var client=portalData.client;if(!logo){el.style.display='none';return;}el.style.display='flex';el.innerHTML='<img src="'+escHtml(logo)+'" alt="">'+'<div><div class="cb-name">'+escHtml(client||'')+'</div><div class="cb-tag">Client</div></div>'+'<span class="cb-x">×</span>'+'<div><div class="cb-name">Reel Estate Media</div><div class="cb-tag">Production</div></div>';}
+function driveImgUrl(url){var m=url.match(/drive\.google\.com\/file\/d\/([\w-]+)/);if(m)return'https://www.googleapis.com/drive/v3/files/'+m[1]+'?alt=media&key='+GAPI_KEY;var m2=url.match(/drive\.google\.com\/open\?id=([\w-]+)/);if(m2)return'https://www.googleapis.com/drive/v3/files/'+m2[1]+'?alt=media&key='+GAPI_KEY;return url;}
+function renderClientBrand(){var el=document.getElementById('client-brand');var logo=portalData.clientLogo;var client=portalData.client;if(!logo){el.style.display='none';return;}var imgUrl=driveImgUrl(logo);var address=portalData.address||'';var shootType=portalData.type||'';var desc=address||shootType||'Listing Media';el.style.display='flex';el.innerHTML='<img src="'+escHtml(imgUrl)+'" alt="">'+'<div><div class="cb-name">'+escHtml(client||'')+'</div><div class="cb-tag">Client</div></div>'+'<span class="cb-x">×</span>'+'<div><div class="cb-name">Reel Estate Media</div><div class="cb-tag">Production</div></div>';}
 
 /* COUNTDOWN */
 function renderCountdown(){var el=document.getElementById('countdown-bar');var deadline=portalData.reviewDeadline;var ap=getApproval();if(!deadline||ap.approved){el.style.display='none';if(countdownInterval)clearInterval(countdownInterval);return;}var deadlineDate=new Date(deadline);var now=new Date();if(now>=deadlineDate){el.style.display='flex';el.className='countdown-bar expired';el.innerHTML='<span class="cd-label">Review window has expired</span><span class="cd-timer">Auto-approved</span>';if(!ap.approved){saveApprovalData({approved:true,date:deadlineDate.toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric'}),auto:true});renderApproval();renderTimeline();}return;}el.style.display='flex';el.className='countdown-bar';function update(){var diff=deadlineDate-new Date();if(diff<=0){clearInterval(countdownInterval);renderCountdown();return;}var d=Math.floor(diff/86400000),h=Math.floor((diff%86400000)/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);var parts=[];if(d)parts.push(d+'d');parts.push(String(h).padStart(2,'0')+'h');parts.push(String(m).padStart(2,'0')+'m');parts.push(String(s).padStart(2,'0')+'s');el.innerHTML='<span class="cd-label">⏰ Review deadline</span><span class="cd-timer">'+parts.join(' ')+'</span>';}update();if(countdownInterval)clearInterval(countdownInterval);countdownInterval=setInterval(update,1000);}
@@ -400,7 +421,7 @@ function syncRestart(){if(!comparePlayerA||!comparePlayerB)return;comparePlayerA
 function setAudio(m){document.querySelectorAll('.audio-btn').forEach(function(b){b.classList.remove('active');});var el=document.getElementById('audio-'+m);if(el)el.classList.add('active');if(!comparePlayerA||!comparePlayerB)return;switch(m){case'a':comparePlayerA.unMute();comparePlayerA.setVolume(100);comparePlayerB.mute();break;case'b':comparePlayerA.mute();comparePlayerB.unMute();comparePlayerB.setVolume(100);break;case'both':comparePlayerA.unMute();comparePlayerA.setVolume(100);comparePlayerB.unMute();comparePlayerB.setVolume(100);break;case'mute':comparePlayerA.mute();comparePlayerB.mute();break;}}
 
 /* RENDER */
-function render(){var d=portalData;document.title=(d.client||'Client')+' \u2014 Reel Estate Media Portal';document.getElementById('portal-content').style.display='block';document.getElementById('p-client').textContent=d.client||'Your Listing';document.getElementById('p-type-address').textContent=[d.type,d.address].filter(Boolean).join(' \u00b7 ');var meta=[];if(d.date)meta.push('<div class="shoot-meta-item">📅 <strong>'+d.date+(d.time?' @ '+d.time:'')+'</strong></div>');if(d.status){var st=STATUS_INFO[d.status]||STATUS_INFO.delivered;meta.push('<div class="shoot-meta-item"><span class="status-chip" style="background:'+st.bg+';color:'+st.color+'">'+st.emoji+' '+st.label+'</span></div>');}document.getElementById('p-meta').innerHTML=meta.join('');renderClientBrand();renderTimeline();renderCountdown();renderRevisionBar();renderApproval();var vs=getVersions();if(vs.length)loadVideo(vs[vs.length-1].url,vs.length-1);else{document.getElementById('drive-box').innerHTML='<div class="drive-box-icon">⏳</div><div class="drive-box-title">Files coming soon</div><div class="drive-box-sub">Your media is still being prepared.</div>';renderNotes();}loadPhotos();renderStaging();}
+function render(){var d=portalData;document.title=(d.client||'Client')+' \u2014 Reel Estate Media Portal';document.getElementById('portal-content').style.display='block';var title=d.address||d.client||'Your Listing';document.getElementById('p-client').textContent=title;var subtitle=[d.address?d.client:null,d.type].filter(Boolean).join(' \u00b7 ');document.getElementById('p-type-address').textContent=subtitle;var meta=[];if(d.date)meta.push('<div class="shoot-meta-item">📅 <strong>'+d.date+(d.time?' @ '+d.time:'')+'</strong></div>');if(d.status){var st=STATUS_INFO[d.status]||STATUS_INFO.delivered;meta.push('<div class="shoot-meta-item"><span class="status-chip" style="background:'+st.bg+';color:'+st.color+'">'+st.emoji+' '+st.label+'</span></div>');}document.getElementById('p-meta').innerHTML=meta.join('');renderClientBrand();renderTimeline();renderCountdown();renderRevisionBar();renderApproval();var vs=getVersions();if(vs.length)loadVideo(vs[vs.length-1].url,vs.length-1);else{document.getElementById('drive-box').innerHTML='<div class="drive-box-icon">⏳</div><div class="drive-box-title">Files coming soon</div><div class="drive-box-sub">Your media is still being prepared.</div>';renderNotes();}loadPhotos();renderStaging();}
 
 /* NOTES */
 function renderNotes(){var notes=getNotesForVersion(currentVersionIdx);var list=document.getElementById('notes-list');var vs=getVersions();var vl=vs[currentVersionIdx]?vs[currentVersionIdx].label:'';if(!notes.length){list.innerHTML='<div style="font-size:.8rem;color:var(--muted);padding:8px 0">No notes yet for '+escHtml(vl||'this version')+'. '+(isVideoPortal?'Pause the video and leave feedback below.':'Leave a note below.')+'</div>';return;}var html='';notes.forEach(function(n,idx){if(n.replyTo!==undefined&&n.replyTo!==null)return;var ia=n.from==='admin',ir=n.resolved===true;var cls=ia?'note-item admin-reply':'note-item';if(ir)cls+=' resolved';var fh=ia?'<div class="note-from from-admin">Reel Estate Media</div>':'<div class="note-from from-client">'+escHtml(portalData.client||'Client')+'</div>';var ts='';if(n.videoTime!==undefined&&n.videoTime!==null)ts='<span class="note-timestamp" onclick="seekTo('+n.videoTime+')" title="Jump">▶ '+formatTime(n.videoTime)+'</span>';var har=false;notes.forEach(function(r){if(r.replyTo===idx)har=true;});var aa=ir||har;var cd=isAdmin||(!ia&&!aa);var dh=cd?'<button class="note-delete" onclick="deleteNote('+idx+')" title="Delete">🗑</button>':'';var rb=isAdmin&&!ia?' <button class="btn-reply" onclick="startReply('+idx+')">↩ Reply</button>':'';var ch='';if(!ia){if(isAdmin){var bc=ir?'check-box checked':'check-box';ch='<button class="note-check" onclick="toggleResolved('+idx+')"><span class="'+bc+'">'+(ir?'✓':'')+'</span>'+(ir?'Done':'Mark done')+'</button> ';}else if(ir){ch='<span class="resolved-label">✓ Done</span> ';}}html+='<div class="'+cls+'">'+fh+ts+'<span class="note-text">'+escHtml(n.text)+'</span><div class="note-item-meta">'+ch+'<span>'+(n.date||'')+'</span>'+rb+dh+'</div></div>';notes.forEach(function(r,ri){if(r.replyTo!==idx)return;var ra=r.from==='admin';var rc=ra?'note-item admin-reply':'note-item';var rf=ra?'<div class="note-from from-admin">Reel Estate Media</div>':'<div class="note-from from-client">'+escHtml(portalData.client||'Client')+'</div>';var rd=(isAdmin||!ra)?'<button class="note-delete" onclick="deleteNote('+ri+')" title="Delete">🗑</button>':'';html+='<div class="note-reply-wrap"><div class="'+rc+'">'+rf+escHtml(r.text)+'<div class="note-item-meta"><span>'+(r.date||'')+'</span>'+rd+'</div></div></div>';});if(replyingToIdx===idx)html+='<div class="note-reply-input" id="reply-input-'+idx+'"><input type="text" id="reply-text-'+idx+'" placeholder="Write a reply\u2026" onkeydown="if(event.key===\'Enter\')sendReply('+idx+')"><button onclick="sendReply('+idx+')">Send</button></div>';});list.innerHTML=html;if(replyingToIdx>=0){var ri=document.getElementById('reply-text-'+replyingToIdx);if(ri)ri.focus();}}
@@ -409,7 +430,39 @@ async function toggleResolved(i){var n=getNotesForVersion(currentVersionIdx);if(
 async function sendReply(pi){var inp=document.getElementById('reply-text-'+pi);if(!inp)return;var t=inp.value.trim();if(!t)return;var n=getNotesForVersion(currentVersionIdx);n.push({text:t,date:new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'}),from:isAdmin?'admin':'client',replyTo:pi});await saveNotesForVersion(currentVersionIdx,n);replyingToIdx=-1;renderNotes();}
 async function deleteNote(idx){if(!confirm('Delete this note?'))return;var n=getNotesForVersion(currentVersionIdx);var rem=[idx];n.forEach(function(x,i){if(x.replyTo===idx)rem.push(i);});rem.sort(function(a,b){return b-a;});rem.forEach(function(i){n.splice(i,1);});n.forEach(function(x){if(x.replyTo!==undefined&&x.replyTo!==null){var s=0;rem.forEach(function(ri){if(ri<x.replyTo)s++;});x.replyTo=x.replyTo-s;}});await saveNotesForVersion(currentVersionIdx,n);renderNotes();}
 async function submitNote(){var inp=document.getElementById('note-input');var t=inp.value.trim();if(!t)return;var n=getNotesForVersion(currentVersionIdx);var vt=null;if(ytPlayer&&ytPlayer.getCurrentTime)vt=ytPlayer.getCurrentTime();var vs=getVersions();var vl=vs[currentVersionIdx]?vs[currentVersionIdx].label:'';n.push({text:t,date:new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'}),videoTime:vt,version:vl,from:isAdmin?'admin':'client'});await saveNotesForVersion(currentVersionIdx,n);inp.value='';renderNotes();var s=document.getElementById('note-success');s.textContent=isAdmin?'✓ Reply sent!':'✓ Note sent!';s.style.display='block';setTimeout(function(){s.style.display='none';},3000);}
+/* TESTIMONIAL */
+var testimonialRating=0;
+async function renderTestimonial(){var el=document.getElementById('testimonial-area');var ap=getApproval();if(!ap.approved){el.innerHTML='';return;}
+// Check if already submitted
+var existing=await sbGet('testimonials','?slug=eq.'+encodeURIComponent(portalSlug)+'&limit=1');
+if(existing&&existing.length){el.innerHTML='<div class="testimonial-thanks"><h3>🙏 Thank you!</h3><p>Your testimonial has been received. We truly appreciate your feedback.</p></div>';return;}
+el.innerHTML='<div class="testimonial-box"><h3>How was your experience?</h3><p>We\'d love to hear your feedback! Your testimonial helps other realtors find us.</p>'
++'<div class="testimonial-stars" id="t-stars"><button onclick="setRating(1)">⭐</button><button onclick="setRating(2)">⭐</button><button onclick="setRating(3)">⭐</button><button onclick="setRating(4)">⭐</button><button onclick="setRating(5)">⭐</button></div>'
++'<textarea class="testimonial-textarea" id="t-text" placeholder="What did you enjoy about working with Reel Estate Media?"></textarea>'
++'<div class="testimonial-permission"><input type="checkbox" id="t-permission" checked><label for="t-permission">I give permission to share this testimonial publicly</label></div>'
++'<button class="btn-testimonial" onclick="submitTestimonial()">Submit Testimonial</button></div>';}
+function setRating(r){testimonialRating=r;document.querySelectorAll('#t-stars button').forEach(function(b,i){b.classList.toggle('active',i<r);});}
+async function submitTestimonial(){var text=document.getElementById('t-text').value.trim();if(!text){alert('Please write a few words about your experience.');return;}if(!testimonialRating){alert('Please select a star rating.');return;}
+var perm=document.getElementById('t-permission').checked;
+await sbPost('testimonials',{id:'t_'+Date.now(),slug:portalSlug,client_name:portalData.client||'',rating:testimonialRating,text:text,permission:perm,created_at:new Date().toISOString()});
+await queueNotification('testimonial',{client:portalData.client,rating:testimonialRating,text:text});
+document.getElementById('testimonial-area').innerHTML='<div class="testimonial-thanks"><h3>🙏 Thank you!</h3><p>Your testimonial has been received. We truly appreciate your feedback.</p></div>';}
+
+/* NOTIFICATIONS */
+async function queueNotification(type,data){await sbPost('notification_queue',{type:type,slug:portalSlug,data:data,sent:false,created_at:new Date().toISOString()});}
+
+// Queue notifications on key actions
+var _origSaveNotes=saveNotesForVersion;
+saveNotesForVersion=async function(vi,n){await _origSaveNotes(vi,n);var last=n[n.length-1];if(last)await queueNotification(last.from==='admin'?'admin_reply':'client_note',{client:portalData.client,text:last.text,version:'v'+vi});};
+var _origSaveApproval=saveApprovalData;
+saveApprovalData=async function(d){await _origSaveApproval(d);if(d.approved)await queueNotification('approved',{client:portalData.client});if(d.changesRequested)await queueNotification('changes_requested',{client:portalData.client});};
+
 function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+/* RENDER — add testimonial to render */
+var _origRender=render;
+render=function(){_origRender();renderTestimonial();};
+
 init();
 </script>
 </body>
