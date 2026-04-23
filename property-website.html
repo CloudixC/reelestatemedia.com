@@ -1218,6 +1218,7 @@ sections.forEach(function(id) {
 var SB_URL = 'https://dgoiormpqixydbijuqoe.supabase.co';
 var SB_KEY = 'sb_publishable_nz-LREWZbxC0FaN8evKVlQ_ik4PffGj';
 var GAPI_KEY = 'AIzaSyCGePJn9JoVHDiaXaO1OWzvILFlxLYkH7Y';
+var MAPS_KEY = 'AIzaSyDGK_vQ4n_3ARfGPK0-F692OXGBvL7Vo7A';
 var portalSlug = '';
 var portalData = null;
 var isPublished = false;
@@ -1288,7 +1289,7 @@ async function sbPatch(slug, body) {
     if (d.address) {
       var mapArea = document.getElementById('map-area');
       if (mapArea) {
-        mapArea.innerHTML = '<iframe src="https://www.google.com/maps/embed/v1/place?key='+GAPI_KEY+'&q='+encodeURIComponent(d.address)+'" width="100%" height="100%" style="border:0;border-radius:16px" allowfullscreen loading="lazy"></iframe>';
+        mapArea.innerHTML = '<iframe src="https://www.google.com/maps/embed/v1/place?key='+MAPS_KEY+'&q='+encodeURIComponent(d.address)+'" width="100%" height="100%" style="border:0;border-radius:16px" allowfullscreen loading="lazy"></iframe>';
       }
     }
 
