@@ -1273,6 +1273,9 @@ label { font-size: .8rem; font-weight: 600; color: var(--text2); text-transform:
                 <option value="scheduled">📅 Scheduled</option>
                 <option value="shot">📸 Shot</option>
                 <option value="editing">✂️ Editing</option>
+                <option value="review">🔍 In Review</option>
+                <option value="revising">🔄 Revising</option>
+                <option value="approved">👍 Approved</option>
                 <option value="delivered">✅ Delivered</option>
               </select>
             </div>
@@ -3605,6 +3608,9 @@ const SHOOT_STATUSES = {
   scheduled: { label:'Scheduled', emoji:'📅', color:'#0284c7', bg:'#e0f2fe' },
   shot:       { label:'Shot',      emoji:'📸', color:'#7c3aed', bg:'#ede9fe' },
   editing:    { label:'Editing',   emoji:'✂️',  color:'#b45309', bg:'#fef9c3' },
+  review:     { label:'In Review', emoji:'🔍', color:'#d97706', bg:'#fef3c7' },
+  revising:   { label:'Revising',  emoji:'🔄', color:'#e11d48', bg:'#ffe4e6' },
+  approved:   { label:'Approved',  emoji:'👍', color:'#059669', bg:'#d1fae5' },
   delivered:  { label:'Delivered', emoji:'✅', color:'#15803d', bg:'#dcfce7' },
 };
 
@@ -3722,7 +3728,7 @@ function deleteShootEntry(id) {
 function advanceShootStatus(id) {
   const s = currentEditShoots.find(x => x.id === id);
   if (!s) return;
-  const order = ['scheduled','shot','editing','delivered'];
+  const order = ['scheduled','shot','editing','review','revising','approved','delivered'];
   const cur = order.indexOf(s.status || 'scheduled');
   if (cur < order.length - 1) {
     s.status = order[cur + 1];
@@ -3837,7 +3843,7 @@ function renderShootsList() {
     el.innerHTML = '<div style="font-size:.78rem;color:var(--text3);padding:4px 0">No shoots scheduled.</div>';
     return;
   }
-  const order = ['scheduled','shot','editing','delivered'];
+  const order = ['scheduled','shot','editing','review','revising','approved','delivered'];
   el.innerHTML = currentEditShoots.slice().sort((a,b) => a.date > b.date ? 1 : -1).map(s => {
     const st  = SHOOT_STATUSES[s.status || 'scheduled'];
     const cur = order.indexOf(s.status || 'scheduled');
@@ -4330,7 +4336,7 @@ function generateProfilePage(leadId) {
 
   // Build shoot history HTML
   const shootRows = shoots.length ? shoots.map(s => {
-    const st = { scheduled:'📅', shot:'📸', editing:'✂️', delivered:'✅' }[s.status] || '📷';
+    const st = { scheduled:'📅', shot:'📸', editing:'✂️', review:'🔍', revising:'🔄', approved:'👍', delivered:'✅' }[s.status] || '📷';
     return `<div style="display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid #e8f5f0">
       <div style="font-size:1.2rem">${st}</div>
       <div style="flex:1">

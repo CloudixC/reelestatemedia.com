@@ -261,10 +261,12 @@ var STATUS_INFO = {
   scheduled:{ label:'Scheduled', emoji:'📅', color:'#0284c7', bg:'#e0f2fe', idx:0 },
   shot:      { label:'Shot',      emoji:'📸', color:'#7c3aed', bg:'#ede9fe', idx:1 },
   editing:   { label:'Editing',   emoji:'✂️',  color:'#b45309', bg:'#fef9c3', idx:2 },
-  review:    { label:'Review',    emoji:'🔍', color:'#d97706', bg:'#fef3c7', idx:3 },
-  delivered: { label:'Delivered', emoji:'✅', color:'#15803d', bg:'#dcfce7', idx:4 },
+  review:    { label:'In Review', emoji:'🔍', color:'#d97706', bg:'#fef3c7', idx:3 },
+  revising:  { label:'Revising',  emoji:'🔄', color:'#e11d48', bg:'#ffe4e6', idx:4 },
+  approved:  { label:'Approved',  emoji:'👍', color:'#059669', bg:'#d1fae5', idx:5 },
+  delivered: { label:'Delivered', emoji:'✅', color:'#15803d', bg:'#dcfce7', idx:6 },
 };
-var TIMELINE_ORDER = ['scheduled','shot','editing','review','delivered'];
+var TIMELINE_ORDER = ['scheduled','shot','editing','review','revising','approved','delivered'];
 var portalData = null;
 var ytPlayer = null;
 var isVideoPortal = false;
@@ -329,13 +331,12 @@ function logoutAdmin() {
 function renderTimeline() {
   var el=document.getElementById('timeline');
   var rawStatus=portalData.status||'scheduled';
-  // Map old statuses
-  if(rawStatus==='delivered') rawStatus='delivered';
   var curIdx=TIMELINE_ORDER.indexOf(rawStatus);
   if(curIdx===-1) curIdx=0;
-  // Check if approved
+  // Check approval state
   var approval=getApproval();
-  if(approval.approved) curIdx=4; // delivered
+  if(approval.approved) curIdx=TIMELINE_ORDER.indexOf('approved');
+  if(approval.changesRequested && curIdx<TIMELINE_ORDER.indexOf('revising')) curIdx=TIMELINE_ORDER.indexOf('revising');
 
   var html='';
   TIMELINE_ORDER.forEach(function(key,i) {
