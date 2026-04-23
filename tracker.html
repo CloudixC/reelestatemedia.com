@@ -3877,8 +3877,16 @@ async function generatePortalLink(shootId) {
   s.portalUrl = getPortalUrl(slug);
   var data = buildPortalData(s);
   await savePortalToSupabase(slug, data);
+  // Persist portal slug to the lead's shoot data in Supabase
+  var lead = leads.find(function(l){ return l.id === editingId; });
+  if (lead) {
+    var shootInLead = (lead.shoots||[]).find(function(x){ return x.id === shootId; });
+    if (shootInLead) { shootInLead.portalSlug = slug; shootInLead.portalUrl = s.portalUrl; }
+    saveLeads();
+  }
   renderShootsList();
   showToast('Portal created ✓');
+  window.open(s.portalUrl, '_blank');
 }
 async function openPortal(shootId) {
   var s = currentEditShoots.find(function(x){ return x.id === shootId; });
