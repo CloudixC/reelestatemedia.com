@@ -1305,8 +1305,17 @@ label { font-size: .8rem; font-weight: 600; color: var(--text2); text-transform:
               <button type="button" class="btn btn-ghost btn-sm" onclick="addStagingPair()" style="white-space:nowrap">+ Add</button>
             </div>
           </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+            <div class="form-field" style="margin:0">
+              <label>Client Logo URL <span style="font-weight:400;color:var(--text3);font-size:.7rem">(optional)</span></label>
+              <input class="input" id="new-shoot-client-logo" type="url" placeholder="https://…logo.png">
+            </div>
+            <div class="form-field" style="margin:0">
+              <label>Review Deadline <span style="font-weight:400;color:var(--text3);font-size:.7rem">(auto-approves)</span></label>
+              <input class="input" id="new-shoot-deadline" type="datetime-local">
+            </div>
+          </div>
           <div style="display:flex;gap:8px;align-items:center">
-            <button type="button" class="btn btn-ghost btn-sm" onclick="cancelShootEntry()">Cancel</button>
           </div>
         </div>
       </div>
@@ -3644,6 +3653,8 @@ function addShootEntry() {
   document.getElementById('new-shoot-photos').value  = '';
   document.getElementById('staging-before-url').value = '';
   document.getElementById('staging-after-url').value = '';
+  document.getElementById('new-shoot-client-logo').value = '';
+  document.getElementById('new-shoot-deadline').value = '';
   document.getElementById('shoot-save-btn').textContent = 'Save Shoot';
   renderShootVersionsList();
   renderStagingPairsList();
@@ -3674,6 +3685,8 @@ function editShootEntry(id) {
   document.getElementById('new-shoot-photos').value  = s.photosFolder || '';
   document.getElementById('staging-before-url').value = '';
   document.getElementById('staging-after-url').value = '';
+  document.getElementById('new-shoot-client-logo').value = s.clientLogo || '';
+  document.getElementById('new-shoot-deadline').value = s.reviewDeadline || '';
   document.getElementById('shoot-save-btn').textContent = 'Update Shoot';
   renderShootVersionsList();
   renderStagingPairsList();
@@ -3754,16 +3767,18 @@ function saveShootEntry() {
   const status    = document.getElementById('new-shoot-status').value || 'scheduled';
   const maxRevisions = parseInt(document.getElementById('new-shoot-revisions').value) || 3;
   const photosFolder = document.getElementById('new-shoot-photos').value.trim();
+  const clientLogo = document.getElementById('new-shoot-client-logo').value.trim();
+  const reviewDeadline = document.getElementById('new-shoot-deadline').value;
   if (!date) { showToast('Please pick a shoot date'); return; }
   // Use latest version URL as driveLink for backward compatibility
   var driveLink = _editShootVersions.length ? _editShootVersions[_editShootVersions.length - 1].url : '';
   if (editingShootId) {
     const s = currentEditShoots.find(x => x.id === editingShootId);
-    if (s) { s.date = date; s.time = time; s.type = type; s.address = address; s.status = status; s.driveLink = driveLink; s.versions = _editShootVersions.slice(); s.maxRevisions = maxRevisions; s.photosFolder = photosFolder; s.stagingPairs = _editStagingPairs.slice();
+    if (s) { s.date = date; s.time = time; s.type = type; s.address = address; s.status = status; s.driveLink = driveLink; s.versions = _editShootVersions.slice(); s.maxRevisions = maxRevisions; s.photosFolder = photosFolder; s.stagingPairs = _editStagingPairs.slice(); s.clientLogo = clientLogo; s.reviewDeadline = reviewDeadline;
       if (s.portalSlug) syncPortalData(s.id);
     }
   } else {
-    const newShoot = { id: genId(), date, time, type, address, status, driveLink, versions: _editShootVersions.slice(), portalKey: genId(), maxRevisions: maxRevisions, photosFolder: photosFolder, stagingPairs: _editStagingPairs.slice() };
+    const newShoot = { id: genId(), date, time, type, address, status, driveLink, versions: _editShootVersions.slice(), portalKey: genId(), maxRevisions: maxRevisions, photosFolder: photosFolder, stagingPairs: _editStagingPairs.slice(), clientLogo: clientLogo, reviewDeadline: reviewDeadline };
     currentEditShoots.push(newShoot);
     const timeStr = time ? ' @ ' + time : '';
     const typeStr = type ? ' — ' + type : '';
@@ -3850,6 +3865,8 @@ function buildPortalData(shoot) {
     maxRevisions: shoot.maxRevisions || 3,
     photosFolder: shoot.photosFolder || '',
     stagingPairs: shoot.stagingPairs || [],
+    clientLogo: shoot.clientLogo || '',
+    reviewDeadline: shoot.reviewDeadline || '',
   };
 }
 async function savePortalToSupabase(slug, data) {
