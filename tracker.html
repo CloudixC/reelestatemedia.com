@@ -3808,10 +3808,30 @@ function saveShootEntry() {
   _editStagingPairs = [];
   document.getElementById('shoot-new-entry').style.display = 'none';
   renderShootsList();
+  autoSaveCurrentLead();
 }
 function deleteShootEntry(id) {
   currentEditShoots = currentEditShoots.filter(s => s.id !== id);
   renderShootsList();
+  autoSaveCurrentLead();
+}
+function autoSaveCurrentLead() {
+  // Persist current edit state to the leads array and sync to Supabase
+  if (!editingId) return;
+  var lead = leads.find(function(l){ return l.id === editingId; });
+  if (!lead) return;
+  lead.shoots = currentEditShoots.slice();
+  lead.meetings = currentEditMeetings.slice();
+  lead.interactions = currentEditInteractions.slice();
+  lead.properties = currentEditProperties.slice();
+  // Update form fields too
+  lead.name = document.getElementById('f-name').value.trim() || lead.name;
+  lead.brokerage = document.getElementById('f-brokerage').value.trim();
+  lead.phone = document.getElementById('f-phone').value.trim();
+  lead.email = document.getElementById('f-email').value.trim();
+  lead.ig = document.getElementById('f-ig').value.trim();
+  lead.notes = document.getElementById('f-notes').value.trim();
+  saveLeads();
 }
 function advanceShootStatus(id) {
   const s = currentEditShoots.find(x => x.id === id);
@@ -3822,6 +3842,7 @@ function advanceShootStatus(id) {
     s.status = order[cur + 1];
     renderShootsList();
     showToast('Status updated to ' + SHOOT_STATUSES[s.status].label + ' ✓');
+    autoSaveCurrentLead();
     // Auto-sync to portal if it exists
     if (s.portalSlug) syncPortalData(id);
   }
