@@ -1215,25 +1215,57 @@ sections.forEach(function(id) {
 </html>
 <script>
 // Load property data from Supabase if hash slug exists
+var SB_URL = 'https://dgoiormpqixydbijuqoe.supabase.co';
+var SB_KEY = 'sb_publishable_nz-LREWZbxC0FaN8evKVlQ_ik4PffGj';
+var GAPI_KEY = 'AIzaSyCGePJn9JoVHDiaXaO1OWzvILFlxLYkH7Y';
+var portalSlug = '';
+var portalData = null;
+var isPublished = false;
+
+async function sbPatch(slug, body) {
+  await fetch(SB_URL+'/rest/v1/portal_data?slug=eq.'+encodeURIComponent(slug), {
+    method:'PATCH', headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify(body)
+  });
+}
+
 (async function() {
   var hash = window.location.hash.slice(1);
   if (!hash) return;
-  var SB_URL = 'https://dgoiormpqixydbijuqoe.supabase.co';
-  var SB_KEY = 'sb_publishable_nz-LREWZbxC0FaN8evKVlQ_ik4PffGj';
+  portalSlug = hash;
   try {
     var r = await fetch(SB_URL + '/rest/v1/portal_data?slug=eq.' + encodeURIComponent(hash) + '&limit=1', {
       headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
     });
     var rows = await r.json();
     if (!rows || !rows.length) return;
-    var d = rows[0].data;
-    // Populate fields
+    portalData = rows[0].data;
+    var d = portalData;
+    isPublished = d.published === true;
+
+    // Populate address
     var addr = document.querySelector('.hero-address');
-    if (addr && d.address) addr.textContent = d.address;
+    if (addr && d.address) { var mainAddr = d.address.split(',')[0].trim(); addr.textContent = mainAddr; }
+    // City line
+    var cityEl = document.querySelector('.hero-city');
+    if (cityEl && d.address) {
+      var parts = d.address.split(',');
+      cityEl.textContent = parts.length > 1 ? parts.slice(1).join(',').trim() : '';
+    }
+    // Agent name in nav and contact card
     var agentName = document.querySelector('.nav-agent-name');
     if (agentName && d.client) agentName.textContent = d.client;
+    var ccName = document.querySelector('.cc-name');
+    if (ccName && d.client) ccName.textContent = d.client;
+    // Brokerage in nav and contact card
     var agentBrok = document.querySelector('.nav-agent-brok');
     if (agentBrok && d.brokerage) agentBrok.textContent = d.brokerage;
+    var ccBrok = document.querySelector('.cc-brok');
+    if (ccBrok && d.brokerage) ccBrok.textContent = d.brokerage;
+    // Agent phone and email in contact card
+    var ccItems = document.querySelectorAll('.cc-item a');
+    if (ccItems[0] && d.phone) { ccItems[0].textContent = d.phone; ccItems[0].href = 'tel:' + d.phone; }
+    if (ccItems[1] && d.email) { ccItems[1].textContent = d.email; ccItems[1].href = 'mailto:' + d.email; }
     // Price
     var priceEl = document.querySelector('.hp-val');
     if (priceEl && d.price) priceEl.textContent = d.price;
@@ -1246,40 +1278,135 @@ sections.forEach(function(id) {
     // Description
     var descEl = document.querySelector('.section-body');
     if (descEl && d.description) descEl.textContent = d.description;
-    // City line
-    var cityEl = document.querySelector('.hero-city');
-    if (cityEl && d.address) {
-      var parts = d.address.split(',');
-      if (parts.length > 1) cityEl.textContent = parts.slice(1).join(',').trim();
-    }
     // Update title
     document.title = (d.address || 'Property') + ' — Presented by Reel Estate Media';
     // Update inquiry label
     var inqLabel = document.getElementById('inquiry-property-label');
     if (inqLabel && d.address) inqLabel.textContent = d.address;
-    // Load photos from Drive folder if available
+
+    // Google Maps embed
+    if (d.address) {
+      var mapArea = document.getElementById('map-area');
+      if (mapArea) {
+        mapArea.innerHTML = '<iframe src="https://www.google.com/maps/embed/v1/place?key='+GAPI_KEY+'&q='+encodeURIComponent(d.address)+'" width="100%" height="100%" style="border:0;border-radius:16px" allowfullscreen loading="lazy"></iframe>';
+      }
+    }
+
+    // Video embed
+    if (d.videoLink) {
+      var vidFrame = document.getElementById('video-frame');
+      var ytM = d.videoLink.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/);
+      var vmM = d.videoLink.match(/vimeo\.com\/(\d+)/);
+      if (ytM && vidFrame) {
+        vidFrame.innerHTML = '<iframe src="https://www.youtube.com/embed/'+ytM[1]+'?rel=0&modestbranding=1" width="100%" height="100%" style="border:0;border-radius:16px" allowfullscreen></iframe>';
+      } else if (vmM && vidFrame) {
+        vidFrame.innerHTML = '<iframe src="https://player.vimeo.com/video/'+vmM[1]+'" width="100%" height="100%" style="border:0;border-radius:16px" allowfullscreen></iframe>';
+      }
+    }
+
+    // Photos from Drive folder
     if (d.photosFolder) {
-      var GAPI_KEY = 'AIzaSyCGePJn9JoVHDiaXaO1OWzvILFlxLYkH7Y';
       var fm = d.photosFolder.match(/drive\.google\.com\/drive\/folders\/([\w-]+)/);
       if (fm) {
-        var url = 'https://www.googleapis.com/drive/v3/files?q=%27' + fm[1] + '%27+in+parents+and+mimeType+contains+%27image%27&fields=files(id,name,thumbnailLink)&key=' + GAPI_KEY + '&pageSize=20';
+        var url = 'https://www.googleapis.com/drive/v3/files?q=%27'+fm[1]+'%27+in+parents+and+mimeType+contains+%27image%27&fields=files(id,name,thumbnailLink)&key='+GAPI_KEY+'&pageSize=20';
         var pr = await fetch(url);
         var pdata = await pr.json();
         if (pdata.files && pdata.files.length) {
-          // Replace gallery images
-          var galleryItems = document.querySelectorAll('.gallery-item img, .hero-main-img');
-          pdata.files.forEach(function(f, i) {
-            var imgUrl = 'https://www.googleapis.com/drive/v3/files/' + f.id + '?alt=media&key=' + GAPI_KEY;
-            if (galleryItems[i]) galleryItems[i].src = imgUrl;
-          });
-          // Set hero image
           var heroImg = document.querySelector('.hero-main-img');
           if (heroImg && pdata.files[0]) {
-            heroImg.src = 'https://www.googleapis.com/drive/v3/files/' + pdata.files[0].id + '?alt=media&key=' + GAPI_KEY;
+            heroImg.src = 'https://www.googleapis.com/drive/v3/files/'+pdata.files[0].id+'?alt=media&key='+GAPI_KEY;
           }
+          var galleryItems = document.querySelectorAll('.gallery-item img');
+          pdata.files.slice(1).forEach(function(f, i) {
+            if (galleryItems[i]) galleryItems[i].src = 'https://www.googleapis.com/drive/v3/files/'+f.id+'?alt=media&key='+GAPI_KEY;
+          });
         }
       }
     }
+
+    // Show edit toolbar if NOT published
+    if (!isPublished) {
+      enableEditMode();
+    }
   } catch(e) { console.warn('Failed to load property data:', e); }
 })();
+
+function enableEditMode() {
+  document.body.classList.add('editing');
+  var toolbar = document.getElementById('toolbar');
+  if (toolbar) toolbar.classList.add('visible');
+  // Make all contenteditable fields editable
+  document.querySelectorAll('[contenteditable]').forEach(function(el) {
+    el.setAttribute('contenteditable', 'true');
+  });
+  // Add publish button to toolbar
+  var existingPub = document.getElementById('publish-btn');
+  if (!existingPub && toolbar) {
+    var pubBtn = document.createElement('button');
+    pubBtn.id = 'publish-btn';
+    pubBtn.textContent = '🚀 Publish Live';
+    pubBtn.style.cssText = 'background:linear-gradient(135deg,#b8975a,#d4af72);color:#0c0c0b;border:none;padding:8px 18px;border-radius:6px;font-weight:600;font-size:.8rem;cursor:pointer;font-family:Outfit,sans-serif;letter-spacing:.04em;margin-left:auto';
+    pubBtn.onclick = publishSite;
+    toolbar.appendChild(pubBtn);
+  }
+  // Add save draft button
+  var existingSave = document.getElementById('save-draft-btn');
+  if (!existingSave && toolbar) {
+    var saveBtn = document.createElement('button');
+    saveBtn.id = 'save-draft-btn';
+    saveBtn.textContent = '💾 Save Draft';
+    saveBtn.style.cssText = 'background:rgba(255,255,255,.1);color:#f5f3ee;border:1px solid rgba(255,255,255,.15);padding:8px 14px;border-radius:6px;font-weight:500;font-size:.78rem;cursor:pointer;font-family:Outfit,sans-serif;margin-left:8px';
+    saveBtn.onclick = saveDraft;
+    var pubBtn2 = document.getElementById('publish-btn');
+    if (pubBtn2) toolbar.insertBefore(saveBtn, pubBtn2);
+  }
+}
+
+async function saveDraft() {
+  var data = collectPageData();
+  data.published = false;
+  await sbPatch(portalSlug, { data: data, updated_at: new Date().toISOString() });
+  var btn = document.getElementById('save-draft-btn');
+  if (btn) { btn.textContent = '✓ Saved!'; setTimeout(function(){ btn.textContent = '💾 Save Draft'; }, 2000); }
+}
+
+async function publishSite() {
+  if (!confirm('Publish this site live? Once published, visitors won\'t be able to edit it.')) return;
+  var data = collectPageData();
+  data.published = true;
+  await sbPatch(portalSlug, { data: data, updated_at: new Date().toISOString() });
+  isPublished = true;
+  // Disable editing
+  document.querySelectorAll('[contenteditable]').forEach(function(el) {
+    el.setAttribute('contenteditable', 'false');
+  });
+  document.body.classList.remove('editing');
+  var toolbar = document.getElementById('toolbar');
+  if (toolbar) toolbar.classList.remove('visible');
+  alert('Site published! Share this link:\n\nhttps://reelestatemedia.com/property-website.html#' + portalSlug);
+}
+
+function collectPageData() {
+  var addr = document.querySelector('.hero-address');
+  var city = document.querySelector('.hero-city');
+  var fullAddress = (addr ? addr.textContent : '') + (city && city.textContent ? ', ' + city.textContent : '');
+  var ccItems = document.querySelectorAll('.cc-item a');
+  return {
+    address: fullAddress,
+    client: (document.querySelector('.cc-name') || {}).textContent || '',
+    brokerage: (document.querySelector('.cc-brok') || {}).textContent || '',
+    phone: ccItems[0] ? ccItems[0].textContent : '',
+    email: ccItems[1] ? ccItems[1].textContent : '',
+    price: (document.querySelector('.hp-val') || {}).textContent || '',
+    beds: (document.querySelectorAll('.hs-val')[0] || {}).textContent || '',
+    baths: (document.querySelectorAll('.hs-val')[1] || {}).textContent || '',
+    sqft: (document.querySelectorAll('.hs-val')[2] || {}).textContent || '',
+    parking: (document.querySelectorAll('.hs-val')[3] || {}).textContent || '',
+    description: (document.querySelector('.section-body') || {}).textContent || '',
+    photosFolder: portalData ? portalData.photosFolder || '' : '',
+    videoLink: portalData ? portalData.videoLink || '' : '',
+    leadId: portalData ? portalData.leadId || '' : '',
+    type: 'property_site',
+  };
+}
 </script>
