@@ -1292,8 +1292,20 @@ label { font-size: .8rem; font-weight: 600; color: var(--text2); text-transform:
               <button type="button" class="btn btn-ghost btn-sm" onclick="addShootVersion()" style="white-space:nowrap">+ Add Version</button>
             </div>
           </div>
+          <div class="form-field" style="margin-bottom:8px">
+            <label>Photos Folder <span style="font-weight:400;color:var(--text3);font-size:.75rem">(Google Drive folder with photos)</span></label>
+            <input class="input" id="new-shoot-photos" type="url" placeholder="https://drive.google.com/drive/folders/…">
+          </div>
+          <div class="form-field" style="margin-bottom:8px">
+            <label>Before / After Staging <span style="font-weight:400;color:var(--text3);font-size:.75rem">(pairs of image URLs)</span></label>
+            <div id="staging-pairs-list" style="margin-bottom:6px"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:center">
+              <input class="input" id="staging-before-url" type="url" placeholder="Before image URL…">
+              <input class="input" id="staging-after-url" type="url" placeholder="After image URL…">
+              <button type="button" class="btn btn-ghost btn-sm" onclick="addStagingPair()" style="white-space:nowrap">+ Add</button>
+            </div>
+          </div>
           <div style="display:flex;gap:8px;align-items:center">
-            <button type="button" class="btn btn-primary btn-sm" id="shoot-save-btn" onclick="saveShootEntry()">Save Shoot</button>
             <button type="button" class="btn btn-ghost btn-sm" onclick="cancelShootEntry()">Cancel</button>
           </div>
         </div>
@@ -3615,10 +3627,12 @@ const SHOOT_STATUSES = {
 };
 
 let _editShootVersions = [];
+let _editStagingPairs = [];
 
 function addShootEntry() {
   editingShootId = null;
   _editShootVersions = [];
+  _editStagingPairs = [];
   document.getElementById('shoot-new-entry').style.display = 'block';
   document.getElementById('new-shoot-date').value    = '';
   document.getElementById('new-shoot-time').value    = '';
@@ -3627,8 +3641,12 @@ function addShootEntry() {
   document.getElementById('new-shoot-status').value  = 'scheduled';
   document.getElementById('new-shoot-revisions').value = '3';
   document.getElementById('new-version-url').value   = '';
+  document.getElementById('new-shoot-photos').value  = '';
+  document.getElementById('staging-before-url').value = '';
+  document.getElementById('staging-after-url').value = '';
   document.getElementById('shoot-save-btn').textContent = 'Save Shoot';
   renderShootVersionsList();
+  renderStagingPairsList();
   document.getElementById('new-shoot-date').focus();
 }
 function editShootEntry(id) {
@@ -3640,6 +3658,7 @@ function editShootEntry(id) {
     s.versions = [{ url: s.driveLink, label: 'Version 1', added: s.date || nowLocal() }];
   }
   _editShootVersions = (s.versions || []).slice();
+  _editStagingPairs = (s.stagingPairs || []).slice();
   document.getElementById('shoot-new-entry').style.display = 'block';
   document.getElementById('new-shoot-date').value    = s.date    || '';
   document.getElementById('new-shoot-time').value    = s.time    || '';
@@ -3652,8 +3671,12 @@ function editShootEntry(id) {
   document.getElementById('new-shoot-status').value  = s.status  || 'scheduled';
   document.getElementById('new-shoot-revisions').value = s.maxRevisions || '3';
   document.getElementById('new-version-url').value   = '';
+  document.getElementById('new-shoot-photos').value  = s.photosFolder || '';
+  document.getElementById('staging-before-url').value = '';
+  document.getElementById('staging-after-url').value = '';
   document.getElementById('shoot-save-btn').textContent = 'Update Shoot';
   renderShootVersionsList();
+  renderStagingPairsList();
   document.getElementById('new-shoot-date').focus();
 }
 function addShootVersion() {
@@ -3690,7 +3713,36 @@ function renderShootVersionsList() {
 function cancelShootEntry() {
   editingShootId = null;
   _editShootVersions = [];
+  _editStagingPairs = [];
   document.getElementById('shoot-new-entry').style.display = 'none';
+}
+function addStagingPair() {
+  var before = document.getElementById('staging-before-url').value.trim();
+  var after = document.getElementById('staging-after-url').value.trim();
+  if (!before || !after) { showToast('Add both before and after URLs'); return; }
+  _editStagingPairs.push({ before: before, after: after, label: 'Room ' + (_editStagingPairs.length + 1) });
+  document.getElementById('staging-before-url').value = '';
+  document.getElementById('staging-after-url').value = '';
+  renderStagingPairsList();
+}
+function removeStagingPair(idx) {
+  _editStagingPairs.splice(idx, 1);
+  _editStagingPairs.forEach(function(p, i) { p.label = 'Room ' + (i + 1); });
+  renderStagingPairsList();
+}
+function renderStagingPairsList() {
+  var el = document.getElementById('staging-pairs-list');
+  if (!_editStagingPairs.length) {
+    el.innerHTML = '<div style="font-size:.75rem;color:var(--text3);padding:2px 0">No staging pairs added.</div>';
+    return;
+  }
+  el.innerHTML = _editStagingPairs.map(function(p, i) {
+    return '<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;background:var(--surface2);border-radius:6px;margin-bottom:4px;font-size:.75rem">'
+      + '<span style="font-weight:600;color:var(--text2)">' + esc(p.label) + '</span>'
+      + '<span style="color:var(--text3);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Before → After</span>'
+      + '<button onclick="removeStagingPair(' + i + ')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:.9rem">×</button>'
+      + '</div>';
+  }).join('');
 }
 function saveShootEntry() {
   const date      = document.getElementById('new-shoot-date').value;
@@ -3701,16 +3753,17 @@ function saveShootEntry() {
   const address   = document.getElementById('new-shoot-address').value.trim();
   const status    = document.getElementById('new-shoot-status').value || 'scheduled';
   const maxRevisions = parseInt(document.getElementById('new-shoot-revisions').value) || 3;
+  const photosFolder = document.getElementById('new-shoot-photos').value.trim();
   if (!date) { showToast('Please pick a shoot date'); return; }
   // Use latest version URL as driveLink for backward compatibility
   var driveLink = _editShootVersions.length ? _editShootVersions[_editShootVersions.length - 1].url : '';
   if (editingShootId) {
     const s = currentEditShoots.find(x => x.id === editingShootId);
-    if (s) { s.date = date; s.time = time; s.type = type; s.address = address; s.status = status; s.driveLink = driveLink; s.versions = _editShootVersions.slice(); s.maxRevisions = maxRevisions;
+    if (s) { s.date = date; s.time = time; s.type = type; s.address = address; s.status = status; s.driveLink = driveLink; s.versions = _editShootVersions.slice(); s.maxRevisions = maxRevisions; s.photosFolder = photosFolder; s.stagingPairs = _editStagingPairs.slice();
       if (s.portalSlug) syncPortalData(s.id);
     }
   } else {
-    const newShoot = { id: genId(), date, time, type, address, status, driveLink, versions: _editShootVersions.slice(), portalKey: genId(), maxRevisions: maxRevisions };
+    const newShoot = { id: genId(), date, time, type, address, status, driveLink, versions: _editShootVersions.slice(), portalKey: genId(), maxRevisions: maxRevisions, photosFolder: photosFolder, stagingPairs: _editStagingPairs.slice() };
     currentEditShoots.push(newShoot);
     const timeStr = time ? ' @ ' + time : '';
     const typeStr = type ? ' — ' + type : '';
@@ -3720,6 +3773,7 @@ function saveShootEntry() {
   }
   editingShootId = null;
   _editShootVersions = [];
+  _editStagingPairs = [];
   document.getElementById('shoot-new-entry').style.display = 'none';
   renderShootsList();
 }
@@ -3794,6 +3848,8 @@ function buildPortalData(shoot) {
     contact: 'hello@reelestatemedia.com',
     status:  shoot.status || 'scheduled',
     maxRevisions: shoot.maxRevisions || 3,
+    photosFolder: shoot.photosFolder || '',
+    stagingPairs: shoot.stagingPairs || [],
   };
 }
 async function savePortalToSupabase(slug, data) {
