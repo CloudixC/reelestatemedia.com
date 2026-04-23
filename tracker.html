@@ -4108,6 +4108,36 @@ function advanceShootStatus(id) {
     if (s.portalSlug) syncPortalData(id);
   }
 }
+async function generatePropertyWebsite(shootId) {
+  var s = currentEditShoots.find(function(x){ return x.id === shootId; });
+  if (!s || !s.address) { showToast('Add a property address first'); return; }
+  var lead = leads.find(function(l){ return l.id === editingId; });
+  var clientName = lead ? lead.name : document.getElementById('f-name').value || '';
+  var brokerage = lead ? lead.brokerage : document.getElementById('f-brokerage').value || '';
+  var phone = lead ? lead.phone : document.getElementById('f-phone').value || '';
+  var email = lead ? lead.email : document.getElementById('f-email').value || '';
+  var slug = s.address.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  // Save to Supabase
+  var data = {
+    address: s.address,
+    client: clientName,
+    brokerage: brokerage,
+    phone: phone,
+    email: email,
+    type: s.type,
+    date: s.date,
+    photosFolder: s.photosFolder || '',
+    driveLink: s.driveLink || '',
+    versions: s.versions || [],
+  };
+  await sbFetch('POST', 'portal_data', { slug: 'listing-' + slug, data: data, updated_at: new Date().toISOString() });
+  s.propertySiteSlug = 'listing-' + slug;
+  s.propertySiteUrl = 'https://reelestatemedia.com/property-website.html#' + s.propertySiteSlug;
+  autoSaveCurrentLead();
+  renderShootsList();
+  window.open(s.propertySiteUrl, '_blank');
+  showToast('Property site created ✓');
+}
 function sendDeliveryEmail(shootId) {
   const s = currentEditShoots.find(x => x.id === shootId);
   if (!s) return;
@@ -4290,6 +4320,7 @@ function renderShootsList() {
       + (s.portalSlug ? '<button onclick="openPortal(\'' + s.id + '\')" style="background:#7c3aed;color:#fff;border:none;border-radius:5px;padding:3px 8px;font-size:.72rem;font-weight:600;cursor:pointer">🔗 Open Portal</button>' : '')
       + (s.portalSlug ? '<button onclick="copyPortalLink(\'' + s.id + '\')" style="background:none;border:1px solid #7c3aed;border-radius:5px;padding:3px 8px;font-size:.72rem;font-weight:600;cursor:pointer;color:#7c3aed">📋 Copy Link</button>' : '')
       + ((s.driveLink || (s.versions && s.versions.length)) && !s.portalSlug ? '<button onclick="generatePortalLink(\'' + s.id + '\')" style="background:#7c3aed;color:#fff;border:none;border-radius:5px;padding:3px 8px;font-size:.72rem;font-weight:600;cursor:pointer">🔗 Create Portal</button>' : '')
+      + (s.address ? '<button onclick="generatePropertyWebsite(\'' + s.id + '\')" style="background:#059669;color:#fff;border:none;border-radius:5px;padding:3px 8px;font-size:.72rem;font-weight:600;cursor:pointer">🏠 Property Site</button>' : '')
       + '<button onclick="deleteShootEntry(\'' + s.id + '\')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:1rem;padding:3px 4px;margin-left:auto">×</button>'
       + '</div>'
       + renderShootChecklist(s)

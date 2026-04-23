@@ -612,13 +612,13 @@ body.editing .edit-badge { background:rgba(255,255,255,.1); color:var(--white); 
 </style>
 
 <!-- ── GOOGLE ANALYTICS ── -->
-<!-- Replace G-0FKKYXDVLH with your Measurement ID from analytics.google.com -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-0FKKYXDVLH"></script>
+<!-- Replace G-XXXXXXXXXX with your Measurement ID from analytics.google.com -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-  gtag('config', 'G-0FKKYXDVLH');
+  gtag('config', 'G-XXXXXXXXXX');
 </script>
 
 <!-- ── EMAILJS ── -->
@@ -1211,6 +1211,57 @@ sections.forEach(function(id) {
 });
 </script>
 
-
 </body>
 </html>
+<script>
+// Load property data from Supabase if hash slug exists
+(async function() {
+  var hash = window.location.hash.slice(1);
+  if (!hash) return;
+  var SB_URL = 'https://dgoiormpqixydbijuqoe.supabase.co';
+  var SB_KEY = 'sb_publishable_nz-LREWZbxC0FaN8evKVlQ_ik4PffGj';
+  try {
+    var r = await fetch(SB_URL + '/rest/v1/portal_data?slug=eq.' + encodeURIComponent(hash) + '&limit=1', {
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+    });
+    var rows = await r.json();
+    if (!rows || !rows.length) return;
+    var d = rows[0].data;
+    // Populate fields
+    var addr = document.querySelector('.hero-address');
+    if (addr && d.address) addr.textContent = d.address;
+    var agentName = document.querySelector('.nav-agent-name');
+    if (agentName && d.client) agentName.textContent = d.client;
+    var agentBrok = document.querySelector('.nav-agent-brok');
+    if (agentBrok && d.brokerage) agentBrok.textContent = d.brokerage;
+    // Update title
+    document.title = (d.address || 'Property') + ' — Presented by Reel Estate Media';
+    // Update inquiry label
+    var inqLabel = document.getElementById('inquiry-property-label');
+    if (inqLabel && d.address) inqLabel.textContent = d.address;
+    // Load photos from Drive folder if available
+    if (d.photosFolder) {
+      var GAPI_KEY = 'AIzaSyCGePJn9JoVHDiaXaO1OWzvILFlxLYkH7Y';
+      var fm = d.photosFolder.match(/drive\.google\.com\/drive\/folders\/([\w-]+)/);
+      if (fm) {
+        var url = 'https://www.googleapis.com/drive/v3/files?q=%27' + fm[1] + '%27+in+parents+and+mimeType+contains+%27image%27&fields=files(id,name,thumbnailLink)&key=' + GAPI_KEY + '&pageSize=20';
+        var pr = await fetch(url);
+        var pdata = await pr.json();
+        if (pdata.files && pdata.files.length) {
+          // Replace gallery images
+          var galleryItems = document.querySelectorAll('.gallery-item img, .hero-main-img');
+          pdata.files.forEach(function(f, i) {
+            var imgUrl = 'https://www.googleapis.com/drive/v3/files/' + f.id + '?alt=media&key=' + GAPI_KEY;
+            if (galleryItems[i]) galleryItems[i].src = imgUrl;
+          });
+          // Set hero image
+          var heroImg = document.querySelector('.hero-main-img');
+          if (heroImg && pdata.files[0]) {
+            heroImg.src = 'https://www.googleapis.com/drive/v3/files/' + pdata.files[0].id + '?alt=media&key=' + GAPI_KEY;
+          }
+        }
+      }
+    }
+  } catch(e) { console.warn('Failed to load property data:', e); }
+})();
+</script>
