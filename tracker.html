@@ -934,13 +934,57 @@ label { font-size: .8rem; font-weight: 600; color: var(--text2); text-transform:
       </div>
     </div>
 
-    <!-- FOLLOW-UP BANNER -->
+    <!-- REVENUE DASHBOARD -->
+    <div class="section" id="revenue-dashboard" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;cursor:pointer" onclick="toggleRevenueDash()">
+        <div class="section-title" style="margin:0">📊 Revenue Dashboard</div>
+        <span style="font-size:.75rem;color:var(--text3)" id="rev-dash-toggle">▸ Show</span>
+      </div>
+      <div id="rev-dash-content" style="display:none">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:16px">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px">
+            <div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">This Month</div>
+            <div style="font-size:1.3rem;font-weight:700;color:#15803d" id="rev-this-month">$0</div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px">
+            <div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Last Month</div>
+            <div style="font-size:1.3rem;font-weight:700;color:var(--text)" id="rev-last-month">$0</div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px">
+            <div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">This Year</div>
+            <div style="font-size:1.3rem;font-weight:700;color:var(--text)" id="rev-this-year">$0</div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px">
+            <div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Shoots This Month</div>
+            <div style="font-size:1.3rem;font-weight:700;color:#0284c7" id="rev-shoots-month">0</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px">
+            <div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Revenue by Month</div>
+            <div id="rev-chart-monthly" style="display:flex;align-items:flex-end;gap:4px;height:120px"></div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px">
+            <div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Top Services</div>
+            <div id="rev-top-services"></div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="followup-banner" id="followup-banner">
       <div class="followup-banner-title">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         Follow Up Today
       </div>
       <div class="followup-list" id="followup-list"></div>
+    </div>
+
+    <!-- STALE ALERTS -->
+    <div class="followup-banner" id="stale-banner" style="background:#fef2f2;border-color:#fecaca">
+      <div class="followup-banner-title" style="color:#991b1b">
+        🚨 Needs Attention
+      </div>
+      <div class="followup-list" id="stale-list"></div>
     </div>
 
     <!-- SHOOTS BANNER -->
@@ -1799,6 +1843,159 @@ function updateStats() {
   } else {
     shootBanner.classList.remove('visible');
   }
+
+  // STALE ALERTS
+  checkStaleAlerts();
+  updateRevenueDashboard();
+}
+
+function checkStaleAlerts() {
+  var now = new Date();
+  var stale = [];
+  var twoDaysAgo = new Date(now - 48*60*60*1000);
+  var threeDaysAgo = new Date(now - 72*60*60*1000);
+
+  // Check leads with no interaction in 48 hours
+  leads.forEach(function(l) {
+    if (['Closed — Won','Dead','No Response','Ghosted','Cancelled','Not Interested'].includes(l.status)) return;
+    var lastInteraction = (l.interactions||[]).length ? new Date(l.interactions[0].datetime) : (l.createdAt ? new Date(l.createdAt) : null);
+    if (lastInteraction && lastInteraction < twoDaysAgo) {
+      stale.push({ id: l.id, name: l.name || 'Unknown', reason: 'No response in 48+ hours', type: 'lead' });
+    }
+  });
+
+  // Check quotes with no deposit after 48 hours
+  quotes.forEach(function(q) {
+    if (q.remaining > 0 && q.createdAt) {
+      var created = new Date(q.createdAt);
+      if (created < twoDaysAgo) {
+        stale.push({ id: q.id, name: q.client || 'Unknown', reason: 'Quote unpaid for 48+ hours ($' + q.remaining.toFixed(0) + ' due)', type: 'quote' });
+      }
+    }
+  });
+
+  // Check portal reviews sitting for 3+ days
+  leads.forEach(function(l) {
+    (l.shoots||[]).forEach(function(s) {
+      if (s.status === 'review' && s.portalSlug) {
+        var lastChange = s.statusChangedAt ? new Date(s.statusChangedAt) : null;
+        if (!lastChange) {
+          // Estimate from shoot date
+          var d = s.date ? new Date(s.date) : null;
+          if (d && d < threeDaysAgo) {
+            stale.push({ id: l.id, name: (l.name||'Unknown') + ' — portal review', reason: 'In review for 3+ days with no response', type: 'lead' });
+          }
+        } else if (lastChange < threeDaysAgo) {
+          stale.push({ id: l.id, name: (l.name||'Unknown') + ' — portal review', reason: 'In review for 3+ days', type: 'lead' });
+        }
+      }
+    });
+  });
+
+  var banner = document.getElementById('stale-banner');
+  var list = document.getElementById('stale-list');
+  if (stale.length > 0) {
+    banner.classList.add('visible');
+    list.innerHTML = stale.map(function(s) {
+      var onclick = s.type === 'quote' ? "switchPage('quotes');setTimeout(function(){openEditQuote('"+s.id+"')},200)" : "openEditModal('"+s.id+"')";
+      return '<div class="followup-chip-wrap" style="display:inline-flex;align-items:center;gap:4px">'
+        + '<div class="followup-chip" style="background:#fee2e2;border-color:#fca5a5;color:#991b1b" onclick="'+onclick+'">'
+        + esc(s.name) + ' <span style="font-size:.68rem;opacity:.7">' + esc(s.reason) + '</span></div></div>';
+    }).join('');
+  } else {
+    banner.classList.remove('visible');
+  }
+}
+
+function toggleRevenueDash() {
+  var el = document.getElementById('rev-dash-content');
+  var toggle = document.getElementById('rev-dash-toggle');
+  if (el.style.display === 'none') {
+    el.style.display = 'block';
+    toggle.textContent = '▾ Hide';
+    updateRevenueDashboard();
+  } else {
+    el.style.display = 'none';
+    toggle.textContent = '▸ Show';
+  }
+}
+
+function updateRevenueDashboard() {
+  var now = new Date();
+  var thisMonth = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  var lastMonthDate = new Date(now.getFullYear(), now.getMonth()-1, 1);
+  var lastMonth = lastMonthDate.getFullYear() + '-' + String(lastMonthDate.getMonth()+1).padStart(2,'0');
+  var thisYear = String(now.getFullYear());
+
+  var revThisMonth=0, revLastMonth=0, revThisYear=0;
+  var monthlyRevenue = {};
+  var serviceCounts = {};
+
+  quotes.forEach(function(q) {
+    var dep = parseFloat(q.deposit) || 0;
+    if (!dep) return;
+    var payDate = q.payDate || q.createdAt || '';
+    var ym = payDate.slice(0,7);
+    var yr = payDate.slice(0,4);
+
+    if (ym === thisMonth) revThisMonth += dep;
+    if (ym === lastMonth) revLastMonth += dep;
+    if (yr === thisYear) revThisYear += dep;
+
+    monthlyRevenue[ym] = (monthlyRevenue[ym]||0) + dep;
+
+    (q.lineItems||[]).forEach(function(li) {
+      serviceCounts[li.desc] = (serviceCounts[li.desc]||0) + 1;
+    });
+  });
+
+  var fmt = function(v) { return '$' + (v >= 1000 ? (v/1000).toFixed(1)+'k' : v.toFixed(0)); };
+  document.getElementById('rev-this-month').textContent = fmt(revThisMonth);
+  document.getElementById('rev-last-month').textContent = fmt(revLastMonth);
+  document.getElementById('rev-this-year').textContent = fmt(revThisYear);
+
+  // Shoots this month
+  var shootsThisMonth = 0;
+  leads.forEach(function(l) {
+    (l.shoots||[]).forEach(function(s) {
+      if (s.date && s.date.slice(0,7) === thisMonth) shootsThisMonth++;
+    });
+  });
+  document.getElementById('rev-shoots-month').textContent = shootsThisMonth;
+
+  // Monthly chart (last 6 months)
+  var chartEl = document.getElementById('rev-chart-monthly');
+  var months = [];
+  for (var i=5; i>=0; i--) {
+    var d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    months.push(d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'));
+  }
+  var maxRev = Math.max.apply(null, months.map(function(m){ return monthlyRevenue[m]||0; })) || 1;
+  var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  chartEl.innerHTML = months.map(function(m) {
+    var val = monthlyRevenue[m] || 0;
+    var h = Math.max(4, (val/maxRev)*100);
+    var mIdx = parseInt(m.split('-')[1])-1;
+    var isCurrent = m === thisMonth;
+    return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">'
+      + '<div style="font-size:.65rem;color:var(--text3)">' + fmt(val) + '</div>'
+      + '<div style="width:100%;height:'+h+'px;background:'+(isCurrent?'var(--teal)':'var(--border)')+';border-radius:3px"></div>'
+      + '<div style="font-size:.62rem;color:var(--text3)">' + monthNames[mIdx] + '</div></div>';
+  }).join('');
+
+  // Top services
+  var servEl = document.getElementById('rev-top-services');
+  var sorted = Object.entries(serviceCounts).sort(function(a,b){ return b[1]-a[1]; }).slice(0,5);
+  if (!sorted.length) {
+    servEl.innerHTML = '<div style="font-size:.78rem;color:var(--text3)">No data yet</div>';
+  } else {
+    var topCount = sorted[0][1];
+    servEl.innerHTML = sorted.map(function(s) {
+      var pct = (s[1]/topCount)*100;
+      return '<div style="margin-bottom:6px"><div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:2px"><span style="color:var(--text)">' + esc(s[0]) + '</span><span style="color:var(--text3)">' + s[1] + '</span></div>'
+        + '<div style="height:4px;background:var(--border);border-radius:2px"><div style="height:100%;width:'+pct+'%;background:var(--teal);border-radius:2px"></div></div></div>';
+    }).join('');
+  }
 }
 
 /* ============================================================
@@ -2400,6 +2597,8 @@ function resetLeadForm() {
   document.getElementById('meeting-new-entry').style.display = 'none';
   document.getElementById('shoot-new-entry').style.display = 'none';
   currentEditInteractions = [];
+  renderMeetingsList();
+  renderShootsList();
   renderInteractionLog();
   renderPropertiesList();
   document.getElementById('interaction-new-entry').style.display = 'none';
@@ -2997,7 +3196,7 @@ function openNewQuote() {
   renderPackageButtons();
   renderLineItems();
   updateQuoteTotals();
-  ['q-client','q-brokerage','q-email','q-phone','q-address','q-notes','q-deposit'].forEach(id => {
+  ['q-client','q-brokerage','q-email','q-phone','q-address','q-notes','q-deposit','q-pay-method','q-pay-date'].forEach(id => {
     const el = document.getElementById(id); if(el) el.value = '';
   });
   const dateEl = document.getElementById('q-date');
@@ -3081,6 +3280,8 @@ function openEditQuote(id) {
   document.getElementById('q-address').value   = q.address || '';
   document.getElementById('q-notes').value     = q.notes || '';
   document.getElementById('q-deposit').value   = q.deposit || '';
+  document.getElementById('q-pay-method').value = q.payMethod || '';
+  document.getElementById('q-pay-date').value   = q.payDate || '';
   document.getElementById('q-date').value      = q.shootDate || '';
   document.getElementById('q-doctype').value   = q.docType || 'Quote';
   // Restore tax toggle
@@ -3121,6 +3322,8 @@ function saveQuote() {
     address:   document.getElementById('q-address').value.trim(),
     notes:     document.getElementById('q-notes').value.trim(),
     deposit:   dep,
+    payMethod: document.getElementById('q-pay-method').value,
+    payDate:   document.getElementById('q-pay-date').value,
     shootDate: document.getElementById('q-date').value,
     docType:   document.getElementById('q-doctype').value,
     leadId:    (document.getElementById('quote-modal').__leadId || (editingQuoteId ? (quotes.find(x=>x.id===editingQuoteId)||{}).leadId : null) || null),
@@ -3181,13 +3384,14 @@ function renderQuotesList() {
         <span class="badge ${badgeCls}">${badgeLabel}</span>
         <div style="text-align:right">
           <div class="quote-total">$${(q.total||0).toFixed(2)}</div>
-          ${q.remaining > 0 ? `<div style="font-size:.75rem;color:#dc2626">$${q.remaining.toFixed(2)} due</div>` : (q.total > 0 ? `<div style="font-size:.75rem;color:#15803d">Paid ✓</div>` : '')}
+          ${q.remaining > 0 ? `<div style="font-size:.75rem;color:#dc2626">$${q.remaining.toFixed(2)} due</div>` : (q.total > 0 ? `<div style="font-size:.75rem;color:#15803d">Paid ✓${q.payMethod === 'etransfer' ? ' · e-Transfer' : (q.payMethod === 'cash' ? ' · Cash' : (q.payMethod === 'cheque' ? ' · Cheque' : ''))}</div>` : '')}
         </div>
         <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();printQuote('${q.id}')">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Save Image
         </button>
-        ${q.remaining > 0 ? `<button class="btn btn-sm" style="background:#635bff;color:#fff;border:none" onclick="event.stopPropagation();generateStripeLink('${q.id}')" title="Copy Stripe deposit link">💳 Deposit Link</button>` : ''}
+        ${q.remaining > 0 ? `<button class="btn btn-sm" style="background:#15803d;color:#fff;border:none" onclick="event.stopPropagation();markQuotePaid('${q.id}')" title="Mark e-Transfer received">💰 Mark Paid</button>` : ''}
+        ${isPaid && q.paidDate ? `<div style="font-size:.65rem;color:#15803d;margin-top:2px">e-Transfer ${q.paidDate}</div>` : ''}
         <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteQuote('${q.id}')" title="Delete">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
         </button>
@@ -3838,6 +4042,58 @@ function autoSaveCurrentLead() {
   console.log('Auto-saving lead:', lead.name, 'shoots:', lead.shoots.length);
   saveLeads();
 }
+/* SHOOT CHECKLIST */
+var SHOOT_CHECKLIST_ITEMS = [
+  { key:'confirmed', label:'Confirmation sent to client' },
+  { key:'equipment', label:'Equipment packed & charged' },
+  { key:'parking', label:'Parking confirmed' },
+  { key:'staged', label:'Property staged / prep done' },
+  { key:'backed_up', label:'Files backed up' },
+  { key:'edited', label:'Editing complete' },
+  { key:'delivered', label:'Files delivered to client' },
+];
+function renderShootChecklist(s) {
+  var cl = s.checklist || {};
+  var done = 0;
+  SHOOT_CHECKLIST_ITEMS.forEach(function(item) { if (cl[item.key]) done++; });
+  var total = SHOOT_CHECKLIST_ITEMS.length;
+  var pct = Math.round((done / total) * 100);
+  var expanded = cl._expanded;
+  var html = '<div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleChecklist(\'' + s.id + '\')">'
+    + '<div style="display:flex;align-items:center;gap:6px"><span style="font-size:.75rem;font-weight:600;color:var(--text2)">📋 Checklist</span>'
+    + '<span style="font-size:.68rem;color:' + (pct === 100 ? '#15803d' : 'var(--text3)') + ';font-weight:600">' + done + '/' + total + '</span>'
+    + '<div style="width:60px;height:4px;background:var(--border);border-radius:2px;overflow:hidden"><div style="width:' + pct + '%;height:100%;background:' + (pct === 100 ? '#15803d' : 'var(--teal)') + ';border-radius:2px"></div></div></div>'
+    + '<span style="font-size:.7rem;color:var(--text3)">' + (expanded ? '▾' : '▸') + '</span></div>';
+  if (expanded) {
+    html += '<div style="margin-top:6px">';
+    SHOOT_CHECKLIST_ITEMS.forEach(function(item) {
+      var checked = cl[item.key];
+      html += '<label style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:.78rem;color:' + (checked ? '#15803d' : 'var(--text2)') + ';cursor:pointer' + (checked ? ';text-decoration:line-through' : '') + '">'
+        + '<input type="checkbox" ' + (checked ? 'checked' : '') + ' onchange="toggleCheckItem(\'' + s.id + '\',\'' + item.key + '\')" style="accent-color:var(--teal);width:15px;height:15px">'
+        + item.label + '</label>';
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+function toggleChecklist(shootId) {
+  var s = currentEditShoots.find(function(x) { return x.id === shootId; });
+  if (!s) return;
+  if (!s.checklist) s.checklist = {};
+  s.checklist._expanded = !s.checklist._expanded;
+  renderShootsList();
+}
+function toggleCheckItem(shootId, key) {
+  var s = currentEditShoots.find(function(x) { return x.id === shootId; });
+  if (!s) return;
+  if (!s.checklist) s.checklist = {};
+  s.checklist[key] = !s.checklist[key];
+  renderShootsList();
+  autoSaveCurrentLead();
+}
+
 function advanceShootStatus(id) {
   const s = currentEditShoots.find(x => x.id === id);
   if (!s) return;
@@ -4035,7 +4291,9 @@ function renderShootsList() {
       + (s.portalSlug ? '<button onclick="copyPortalLink(\'' + s.id + '\')" style="background:none;border:1px solid #7c3aed;border-radius:5px;padding:3px 8px;font-size:.72rem;font-weight:600;cursor:pointer;color:#7c3aed">📋 Copy Link</button>' : '')
       + ((s.driveLink || (s.versions && s.versions.length)) && !s.portalSlug ? '<button onclick="generatePortalLink(\'' + s.id + '\')" style="background:#7c3aed;color:#fff;border:none;border-radius:5px;padding:3px 8px;font-size:.72rem;font-weight:600;cursor:pointer">🔗 Create Portal</button>' : '')
       + '<button onclick="deleteShootEntry(\'' + s.id + '\')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:1rem;padding:3px 4px;margin-left:auto">×</button>'
-      + '</div></div>';
+      + '</div>'
+      + renderShootChecklist(s)
+      + '</div>';
   }).join('');
 }
 
@@ -4197,21 +4455,24 @@ setInterval(checkFollowUpReminders, 5*60*1000);
 /* ============================================================
    FEATURE 2: STRIPE PAYMENT LINK GENERATION
    ============================================================ */
-function generateStripeLink(quoteId) {
+function markQuotePaid(quoteId) {
   var q = quotes.find(function(x){ return x.id === quoteId; });
-  if (!q) { showToast('Quote not found'); return; }
-  var depositAmt = Math.round((q.total || 0) * 50) ; // 50% in cents
-  if (depositAmt <= 0) { showToast('Quote total is $0'); return; }
-  // Generate a Stripe Payment Link URL (requires Stripe account setup)
-  // For now, generate a prefilled Stripe checkout URL template
-  var desc = encodeURIComponent('Reel Estate Media — Deposit for ' + (q.client || 'Client'));
-  var link = 'https://buy.stripe.com/test_00g?amount=' + depositAmt + '&description=' + desc + '&client_reference_id=' + q.id;
-  // Copy to clipboard
-  navigator.clipboard.writeText(link).then(function() {
-    showToast('Stripe deposit link copied to clipboard ✓');
-  }).catch(function() {
-    prompt('Copy this Stripe link:', link);
-  });
+  if (!q) return;
+  var amount = prompt('Amount received via e-Transfer ($):', q.remaining.toFixed(2));
+  if (!amount) return;
+  amount = parseFloat(amount);
+  if (isNaN(amount) || amount <= 0) { showToast('Invalid amount'); return; }
+  q.deposit = (parseFloat(q.deposit) || 0) + amount;
+  q.remaining = Math.max(0, (q.total || 0) - q.deposit);
+  q.paidDate = new Date().toLocaleDateString('en-CA');
+  q.paymentMethod = 'Interac e-Transfer';
+  saveQuotes();
+  renderQuotesList();
+  showToast('💰 Payment of $' + amount.toFixed(2) + ' recorded ✓');
+}
+function saveQuotes() {
+  localStorage.setItem(QUOTES_KEY, JSON.stringify(quotes));
+  quotes.forEach(function(q){ saveQuoteToDB(q); });
 }
 
 /* ============================================================
@@ -5448,6 +5709,19 @@ async function loadTestimonials() {
         <div class="form-field">
           <label>Deposit Paid ($)</label>
           <input class="input" id="q-deposit" type="number" min="0" step="0.01" placeholder="0.00" oninput="updateQuoteTotals()">
+        </div>
+        <div class="form-field">
+          <label>Payment Method</label>
+          <select class="select" id="q-pay-method">
+            <option value="">— Select —</option>
+            <option value="etransfer">Interac e-Transfer</option>
+            <option value="cash">Cash</option>
+            <option value="cheque">Cheque</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Payment Date</label>
+          <input class="input" id="q-pay-date" type="date">
         </div>
       </div>
 
