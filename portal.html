@@ -610,7 +610,12 @@ function renderNotes() {
     if (n.videoTime !== undefined && n.videoTime !== null) {
       tsHtml = '<span class="note-timestamp" onclick="seekTo(' + n.videoTime + ')" title="Jump to this moment">▶ ' + formatTime(n.videoTime) + '</span>';
     }
-    var canDelete = isAdmin || !isAdminNote;
+    // Check if admin has interacted (replied or resolved)
+    var hasAdminReply = false;
+    notes.forEach(function(r) { if (r.replyTo === idx) hasAdminReply = true; });
+    var adminActed = isResolved || hasAdminReply;
+    // Admin can always delete. Client can only delete their own AND only if admin hasn't acted on it.
+    var canDelete = isAdmin || (!isAdminNote && !adminActed);
     var delHtml = canDelete ? '<button class="note-delete" onclick="deleteNote(' + idx + ')" title="Delete note">🗑</button>' : '';
     var replyBtn = isAdmin && !isAdminNote ? ' <button class="btn-reply" onclick="startReply(' + idx + ')">↩ Reply</button>' : '';
 
