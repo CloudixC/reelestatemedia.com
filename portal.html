@@ -63,6 +63,19 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
 .note-item .note-from { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
 .note-item .note-from.from-client { color:var(--teal); }
 .note-item .note-from.from-admin { color:#b45309; }
+.note-reply-wrap { margin-left:20px; border-left:2px solid var(--gold); padding-left:12px; margin-top:6px; }
+.note-reply-input { display:flex; gap:6px; margin-top:8px; margin-left:20px; }
+.note-reply-input input { flex:1; padding:6px 10px; border:1px solid var(--border); border-radius:6px; font-size:.8rem; font-family:inherit; outline:none; }
+.note-reply-input input:focus { border-color:var(--teal); }
+.note-reply-input button { padding:6px 12px; background:var(--gold); color:var(--ink); border:none; border-radius:6px; font-size:.78rem; font-weight:600; cursor:pointer; font-family:inherit; white-space:nowrap; }
+.btn-reply { background:none; border:none; color:var(--gold); cursor:pointer; font-size:.72rem; font-weight:600; font-family:inherit; padding:0; }
+.note-item.resolved { opacity:.7; }
+.note-item.resolved .note-text { text-decoration:line-through; color:var(--muted); }
+.note-check { display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:.72rem; font-weight:600; padding:0; background:none; border:none; font-family:inherit; }
+.note-check .check-box { width:16px; height:16px; border:2px solid var(--border); border-radius:4px; display:inline-flex; align-items:center; justify-content:center; transition:.15s; font-size:.7rem; }
+.note-check .check-box.checked { background:var(--teal); border-color:var(--teal); color:#fff; }
+.note-check:hover .check-box { border-color:var(--teal); }
+.resolved-label { font-size:.68rem; font-weight:700; color:#15803d; background:#dcfce7; padding:1px 6px; border-radius:4px; margin-left:4px; }
 .note-item-meta { font-size:.7rem; color:var(--muted); margin-top:4px; display:flex; align-items:center; gap:8px; }
 .note-delete { background:none; border:none; color:var(--muted); cursor:pointer; font-size:.75rem; padding:2px 4px; opacity:.5; transition:.15s; }
 .note-delete:hover { opacity:1; color:#dc2626; }
@@ -559,6 +572,8 @@ function render() {
 }
 
 /* == NOTES (per version, with admin replies and delete) == */
+var replyingToIdx = -1;
+
 function renderNotes() {
   var key = getNotesKey(currentVersionIdx);
   var notes = [];
@@ -577,9 +592,17 @@ function renderNotes() {
     list.innerHTML = '<div style="font-size:.8rem;color:var(--muted);padding:8px 0">No notes yet for ' + escHtml(vLabel || 'this version') + '. ' + (isVideoPortal ? 'Pause the video and leave feedback below.' : 'Leave a note below if you need any adjustments.') + '</div>';
     return;
   }
-  list.innerHTML = notes.map(function(n, idx) {
+
+  // Group: top-level notes and their replies
+  var html = '';
+  notes.forEach(function(n, idx) {
+    // Skip replies — they render under their parent
+    if (n.replyTo !== undefined && n.replyTo !== null) return;
+
     var isAdminNote = n.from === 'admin';
+    var isResolved = n.resolved === true;
     var cls = isAdminNote ? 'note-item admin-reply' : 'note-item';
+    if (isResolved) cls += ' resolved';
     var fromHtml = isAdminNote
       ? '<div class="note-from from-admin">Reel Estate Media</div>'
       : '<div class="note-from from-client">' + escHtml(portalData.client || 'Client') + '</div>';
@@ -587,11 +610,90 @@ function renderNotes() {
     if (n.videoTime !== undefined && n.videoTime !== null) {
       tsHtml = '<span class="note-timestamp" onclick="seekTo(' + n.videoTime + ')" title="Jump to this moment">▶ ' + formatTime(n.videoTime) + '</span>';
     }
-    // Delete button: client can delete their own, admin can delete any
     var canDelete = isAdmin || !isAdminNote;
     var delHtml = canDelete ? '<button class="note-delete" onclick="deleteNote(' + idx + ')" title="Delete note">🗑</button>' : '';
-    return '<div class="' + cls + '">' + fromHtml + tsHtml + escHtml(n.text) + '<div class="note-item-meta"><span>' + (n.date || '') + '</span>' + delHtml + '</div></div>';
-  }).join('');
+    var replyBtn = isAdmin && !isAdminNote ? ' <button class="btn-reply" onclick="startReply(' + idx + ')">↩ Reply</button>' : '';
+
+    // Checklist: admin sees a clickable checkbox, client sees resolved badge
+    var checkHtml = '';
+    if (!isAdminNote) {
+      if (isAdmin) {
+        var boxCls = isResolved ? 'check-box checked' : 'check-box';
+        checkHtml = '<button class="note-check" onclick="toggleResolved(' + idx + ')"><span class="' + boxCls + '">' + (isResolved ? '✓' : '') + '</span>' + (isResolved ? 'Done' : 'Mark done') + '</button> ';
+      } else if (isResolved) {
+        checkHtml = '<span class="resolved-label">✓ Done</span> ';
+      }
+    }
+
+    html += '<div class="' + cls + '">' + fromHtml + tsHtml + '<span class="note-text">' + escHtml(n.text) + '</span>'
+      + '<div class="note-item-meta">' + checkHtml + '<span>' + (n.date || '') + '</span>' + replyBtn + delHtml + '</div></div>';
+
+    // Render replies to this note
+    notes.forEach(function(r, ri) {
+      if (r.replyTo !== idx) return;
+      var rIsAdmin = r.from === 'admin';
+      var rCls = rIsAdmin ? 'note-item admin-reply' : 'note-item';
+      var rFrom = rIsAdmin
+        ? '<div class="note-from from-admin">Reel Estate Media</div>'
+        : '<div class="note-from from-client">' + escHtml(portalData.client || 'Client') + '</div>';
+      var rCanDel = isAdmin || !rIsAdmin;
+      var rDelHtml = rCanDel ? '<button class="note-delete" onclick="deleteNote(' + ri + ')" title="Delete">🗑</button>' : '';
+      html += '<div class="note-reply-wrap"><div class="' + rCls + '">' + rFrom + escHtml(r.text)
+        + '<div class="note-item-meta"><span>' + (r.date || '') + '</span>' + rDelHtml + '</div></div></div>';
+    });
+
+    // Show reply input if replying to this note
+    if (replyingToIdx === idx) {
+      html += '<div class="note-reply-input" id="reply-input-' + idx + '">'
+        + '<input type="text" id="reply-text-' + idx + '" placeholder="Write a reply…" onkeydown="if(event.key===\'Enter\')sendReply(' + idx + ')">'
+        + '<button onclick="sendReply(' + idx + ')">Send</button></div>';
+    }
+  });
+
+  list.innerHTML = html;
+
+  // Focus reply input if open
+  if (replyingToIdx >= 0) {
+    var ri = document.getElementById('reply-text-' + replyingToIdx);
+    if (ri) ri.focus();
+  }
+}
+
+function startReply(idx) {
+  replyingToIdx = replyingToIdx === idx ? -1 : idx;
+  renderNotes();
+}
+
+function toggleResolved(idx) {
+  var key = getNotesKey(currentVersionIdx);
+  var notes = [];
+  try { notes = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
+  if (notes[idx]) {
+    notes[idx].resolved = !notes[idx].resolved;
+    localStorage.setItem(key, JSON.stringify(notes));
+    renderNotes();
+  }
+}
+
+function sendReply(parentIdx) {
+  var input = document.getElementById('reply-text-' + parentIdx);
+  if (!input) return;
+  var text = input.value.trim();
+  if (!text) return;
+
+  var key = getNotesKey(currentVersionIdx);
+  var notes = [];
+  try { notes = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
+
+  notes.push({
+    text: text,
+    date: new Date().toLocaleDateString('en-CA', { year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' }),
+    from: isAdmin ? 'admin' : 'client',
+    replyTo: parentIdx
+  });
+  localStorage.setItem(key, JSON.stringify(notes));
+  replyingToIdx = -1;
+  renderNotes();
 }
 
 function deleteNote(idx) {
@@ -599,7 +701,19 @@ function deleteNote(idx) {
   var key = getNotesKey(currentVersionIdx);
   var notes = [];
   try { notes = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
-  notes.splice(idx, 1);
+  // Also remove any replies to this note
+  var toRemove = [idx];
+  notes.forEach(function(n, i) { if (n.replyTo === idx) toRemove.push(i); });
+  toRemove.sort(function(a,b){ return b - a; }); // Remove from end first
+  toRemove.forEach(function(i) { notes.splice(i, 1); });
+  // Fix replyTo indexes after removal
+  notes.forEach(function(n) {
+    if (n.replyTo !== undefined && n.replyTo !== null) {
+      var shift = 0;
+      toRemove.forEach(function(ri) { if (ri < n.replyTo) shift++; });
+      n.replyTo = n.replyTo - shift;
+    }
+  });
   localStorage.setItem(key, JSON.stringify(notes));
   renderNotes();
 }
