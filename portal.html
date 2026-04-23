@@ -252,22 +252,23 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
 </div>
 
 <script>
-var NOTES_KEY_PREFIX = 'rem_portal_notes_';
-var APPROVAL_KEY_PREFIX = 'rem_portal_approval_';
+var SB_URL = 'https://dgoiormpqixydbijuqoe.supabase.co';
+var SB_KEY = 'sb_publishable_nz-LREWZbxC0FaN8evKVlQ_ik4PffGj';
 var ADMIN_SESSION_KEY = 'rem_portal_admin_session';
 var DEFAULT_ADMIN_HASH = '1dbb38a3aae7bdf38a75b6591b0618ad2b90e669f2af7f6cd3b7e7b49b73a6d6';
 var isAdmin = false;
 var STATUS_INFO = {
-  scheduled:{ label:'Scheduled', emoji:'📅', color:'#0284c7', bg:'#e0f2fe', idx:0 },
-  shot:      { label:'Shot',      emoji:'📸', color:'#7c3aed', bg:'#ede9fe', idx:1 },
-  editing:   { label:'Editing',   emoji:'✂️',  color:'#b45309', bg:'#fef9c3', idx:2 },
-  review:    { label:'In Review', emoji:'🔍', color:'#d97706', bg:'#fef3c7', idx:3 },
-  revising:  { label:'Revising',  emoji:'🔄', color:'#e11d48', bg:'#ffe4e6', idx:4 },
-  approved:  { label:'Approved',  emoji:'👍', color:'#059669', bg:'#d1fae5', idx:5 },
-  delivered: { label:'Delivered', emoji:'✅', color:'#15803d', bg:'#dcfce7', idx:6 },
+  scheduled:{ label:'Scheduled', emoji:'📅', color:'#0284c7', bg:'#e0f2fe' },
+  shot:     { label:'Shot',      emoji:'📸', color:'#7c3aed', bg:'#ede9fe' },
+  editing:  { label:'Editing',   emoji:'✂️',  color:'#b45309', bg:'#fef9c3' },
+  review:   { label:'In Review', emoji:'🔍', color:'#d97706', bg:'#fef3c7' },
+  revising: { label:'Revising',  emoji:'🔄', color:'#e11d48', bg:'#ffe4e6' },
+  approved: { label:'Approved',  emoji:'👍', color:'#059669', bg:'#d1fae5' },
+  delivered:{ label:'Delivered', emoji:'✅', color:'#15803d', bg:'#dcfce7' },
 };
 var TIMELINE_ORDER = ['scheduled','shot','editing','review','revising','approved','delivered'];
 var portalData = null;
+var portalSlug = '';
 var ytPlayer = null;
 var isVideoPortal = false;
 var currentVersionIdx = -1;
@@ -277,269 +278,118 @@ var comparePlayerA = null, comparePlayerB = null;
 var compareIdxA = -1, compareIdxB = -1;
 var replyingToIdx = -1;
 
-function init() {
+async function sbGet(table, params) {
+  try {
+    var r = await fetch(SB_URL+'/rest/v1/'+table+(params||''),{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    if(!r.ok) return null;
+    return await r.json();
+  } catch(e){ return null; }
+}
+async function sbPost(table, body) {
+  try {
+    await fetch(SB_URL+'/rest/v1/'+table,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify(body)});
+  } catch(e){}
+}
+async function sbPatch(table, params, body) {
+  try {
+    await fetch(SB_URL+'/rest/v1/'+table+params,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});
+  } catch(e){}
+}
+
+async function init() {
   var hash = window.location.hash.slice(1);
   if (!hash) { showError(); return; }
-  try {
-    var json = decodeURIComponent(escape(atob(hash)));
-    portalData = JSON.parse(json);
-    if (!portalData || !portalData.key) { showError(); return; }
-    if (sessionStorage.getItem(ADMIN_SESSION_KEY) === portalData.key) {
-      isAdmin = true;
-      document.getElementById('admin-bar').style.display = 'flex';
-      document.getElementById('admin-login-area').style.display = 'none';
-    }
-    render();
-  } catch(e) { showError(); }
+  portalSlug = hash;
+  // Try Supabase first
+  var rows = await sbGet('portal_data','?slug=eq.'+encodeURIComponent(portalSlug)+'&limit=1');
+  if (rows && rows.length) {
+    portalData = rows[0].data;
+    portalData._approval = rows[0].approval || {};
+    portalData._notes = rows[0].notes || {};
+  } else {
+    // Fall back to old base64 encoded hash
+    try {
+      var json = decodeURIComponent(escape(atob(hash)));
+      portalData = JSON.parse(json);
+    } catch(e) { showError(); return; }
+  }
+  if (!portalData || (!portalData.key && !portalData.client)) { showError(); return; }
+  if (!portalData.key) portalData.key = portalSlug;
+  if (sessionStorage.getItem(ADMIN_SESSION_KEY) === portalSlug) {
+    isAdmin = true;
+    document.getElementById('admin-bar').style.display = 'flex';
+    document.getElementById('admin-login-area').style.display = 'none';
+  }
+  render();
 }
 function showError() { document.getElementById('error-screen').style.display = 'block'; }
-function formatTime(s) { var sec=Math.floor(s); var m=Math.floor(sec/60); sec=sec%60; return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'); }
+function formatTime(s) { var sec=Math.floor(s);var m=Math.floor(sec/60);sec=sec%60;return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'); }
 function seekTo(s) { if(ytPlayer&&ytPlayer.seekTo){ytPlayer.seekTo(s,true);ytPlayer.pauseVideo();} }
-function getVersions() { var d=portalData; if(d.versions&&d.versions.length)return d.versions.slice(); if(d.drive)return[{url:d.drive,label:'Version 1'}]; return[]; }
-function getNotesKey(vi) { return NOTES_KEY_PREFIX+portalData.key+'_v'+vi; }
-function getYtId(url) { var m=url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/); return m?m[1]:null; }
-function ensureYtApi(cb) { if(ytApiLoaded){cb();return;} var t=document.createElement('script');t.src='https://www.youtube.com/iframe_api';document.head.appendChild(t);window.onYouTubeIframeAPIReady=function(){ytApiLoaded=true;cb();}; }
-async function hashStr(s) { var b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)); return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0');}).join(''); }
+function getVersions() { if(portalData.versions&&portalData.versions.length)return portalData.versions.slice();if(portalData.drive)return[{url:portalData.drive,label:'Version 1'}];return[]; }
+function getYtId(url) { var m=url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/);return m?m[1]:null; }
+function ensureYtApi(cb) { if(ytApiLoaded){cb();return;}var t=document.createElement('script');t.src='https://www.youtube.com/iframe_api';document.head.appendChild(t);window.onYouTubeIframeAPIReady=function(){ytApiLoaded=true;cb();}; }
+async function hashStr(s) { var b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0');}).join(''); }
 
-/* == ADMIN == */
-function showAdminLogin() { document.getElementById('admin-gate').style.display='block'; document.getElementById('admin-login-toggle').style.display='none'; document.getElementById('admin-pw').focus(); }
-async function loginAdmin() {
-  var h=await hashStr(document.getElementById('admin-pw').value);
-  if(h===DEFAULT_ADMIN_HASH) {
-    isAdmin=true; sessionStorage.setItem(ADMIN_SESSION_KEY,portalData.key);
-    document.getElementById('admin-gate').style.display='none';
-    document.getElementById('admin-bar').style.display='flex';
-    document.getElementById('admin-login-area').style.display='none';
-    document.getElementById('admin-error').style.display='none';
-    document.getElementById('note-btn').textContent='Reply as Admin';
-    renderNotes(); renderApproval();
-  } else {
-    document.getElementById('admin-error').style.display='block';
-    document.getElementById('admin-pw').value=''; document.getElementById('admin-pw').focus();
-  }
+/* NOTES — stored in Supabase */
+function getNotesForVersion(vi) {
+  var allNotes = portalData._notes || {};
+  return allNotes['v'+vi] || [];
 }
-function logoutAdmin() {
-  isAdmin=false; sessionStorage.removeItem(ADMIN_SESSION_KEY);
-  document.getElementById('admin-bar').style.display='none';
-  document.getElementById('admin-login-area').style.display='block';
-  document.getElementById('admin-login-toggle').style.display='inline-block';
-  document.getElementById('note-btn').textContent='Send Note';
-  renderNotes(); renderApproval();
+async function saveNotesForVersion(vi, notes) {
+  var allNotes = portalData._notes || {};
+  allNotes['v'+vi] = notes;
+  portalData._notes = allNotes;
+  await sbPatch('portal_data','?slug=eq.'+encodeURIComponent(portalSlug),{notes:allNotes,updated_at:new Date().toISOString()});
 }
 
-/* == TIMELINE == */
-function renderTimeline() {
-  var el=document.getElementById('timeline');
-  var rawStatus=portalData.status||'scheduled';
-  var curIdx=TIMELINE_ORDER.indexOf(rawStatus);
-  if(curIdx===-1) curIdx=0;
-  // Check approval state
-  var approval=getApproval();
-  if(approval.approved) curIdx=TIMELINE_ORDER.indexOf('approved');
-  if(approval.changesRequested && curIdx<TIMELINE_ORDER.indexOf('revising')) curIdx=TIMELINE_ORDER.indexOf('revising');
-
-  var html='';
-  TIMELINE_ORDER.forEach(function(key,i) {
-    var info=STATUS_INFO[key];
-    var dotCls='timeline-dot';
-    var lblCls='timeline-label';
-    if(i<curIdx) { dotCls+=' done'; lblCls+=' done'; }
-    else if(i===curIdx) { dotCls+=' current'; lblCls+=' current'; }
-    if(i>0) html+='<div class="timeline-line'+(i<=curIdx?' done':'')+'"></div>';
-    html+='<div class="timeline-step"><div class="'+dotCls+'">'+(i<curIdx?'✓':info.emoji)+'</div><div class="'+lblCls+'">'+info.label+'</div></div>';
-  });
-  el.innerHTML=html;
+/* APPROVAL — stored in Supabase */
+function getApproval() { return portalData._approval || {}; }
+async function saveApprovalData(data) {
+  portalData._approval = data;
+  await sbPatch('portal_data','?slug=eq.'+encodeURIComponent(portalSlug),{approval:data,updated_at:new Date().toISOString()});
 }
 
-/* == REVISION COUNTER == */
-function renderRevisionBar() {
-  var el=document.getElementById('revision-bar');
-  var versions=getVersions();
-  var max=portalData.maxRevisions||3;
-  var used=Math.max(0,versions.length-1); // first version isn't a revision
-  if(versions.length<=1) { el.style.display='none'; return; }
-  el.style.display='flex';
-  var dots='';
-  for(var i=0;i<max;i++) {
-    var cls='rev-dot';
-    if(i<used) cls+=' used';
-    else if(i===used) cls+=' current';
-    dots+='<span class="'+cls+'"></span>';
-  }
-  var warn='';
-  if(used>=max) warn='<span class="rev-warn">Additional revisions may incur a fee</span>';
-  el.innerHTML='<div><span class="rev-label">Revisions: </span><span class="rev-count">'+used+' of '+max+' included</span> '+warn+'</div><div class="revision-dots">'+dots+'</div>';
-}
+/* ADMIN */
+function showAdminLogin(){document.getElementById('admin-gate').style.display='block';document.getElementById('admin-login-toggle').style.display='none';document.getElementById('admin-pw').focus();}
+async function loginAdmin(){var h=await hashStr(document.getElementById('admin-pw').value);if(h===DEFAULT_ADMIN_HASH){isAdmin=true;sessionStorage.setItem(ADMIN_SESSION_KEY,portalSlug);document.getElementById('admin-gate').style.display='none';document.getElementById('admin-bar').style.display='flex';document.getElementById('admin-login-area').style.display='none';document.getElementById('admin-error').style.display='none';document.getElementById('note-btn').textContent='Reply as Admin';renderNotes();renderApproval();}else{document.getElementById('admin-error').style.display='block';document.getElementById('admin-pw').value='';document.getElementById('admin-pw').focus();}}
+function logoutAdmin(){isAdmin=false;sessionStorage.removeItem(ADMIN_SESSION_KEY);document.getElementById('admin-bar').style.display='none';document.getElementById('admin-login-area').style.display='block';document.getElementById('admin-login-toggle').style.display='inline-block';document.getElementById('note-btn').textContent='Send Note';renderNotes();renderApproval();}
 
-/* == APPROVAL == */
-function getApproval() {
-  try { return JSON.parse(localStorage.getItem(APPROVAL_KEY_PREFIX+portalData.key)||'{}'); } catch(e){ return {}; }
-}
-function saveApproval(data) {
-  localStorage.setItem(APPROVAL_KEY_PREFIX+portalData.key, JSON.stringify(data));
-}
-function renderApproval() {
-  var el=document.getElementById('approval-area');
-  var approval=getApproval();
-  var versions=getVersions();
-  if(!versions.length) { el.innerHTML=''; return; }
+/* TIMELINE */
+function renderTimeline(){var el=document.getElementById('timeline');var rawStatus=portalData.status||'scheduled';var curIdx=TIMELINE_ORDER.indexOf(rawStatus);if(curIdx===-1)curIdx=0;var approval=getApproval();if(approval.approved)curIdx=TIMELINE_ORDER.indexOf('approved');if(approval.changesRequested&&curIdx<TIMELINE_ORDER.indexOf('revising'))curIdx=TIMELINE_ORDER.indexOf('revising');var html='';TIMELINE_ORDER.forEach(function(key,i){var info=STATUS_INFO[key];var dotCls='timeline-dot';var lblCls='timeline-label';if(i<curIdx){dotCls+=' done';lblCls+=' done';}else if(i===curIdx){dotCls+=' current';lblCls+=' current';}if(i>0)html+='<div class="timeline-line'+(i<=curIdx?' done':'')+'"></div>';html+='<div class="timeline-step"><div class="'+dotCls+'">'+(i<curIdx?'✓':info.emoji)+'</div><div class="'+lblCls+'">'+info.label+'</div></div>';});el.innerHTML=html;}
 
-  if(approval.approved) {
-    el.innerHTML='<div class="approved-banner"><h3>✅ Approved</h3><p>This version was approved on '+escHtml(approval.date||'')+'. Your final media is ready for delivery.</p></div>';
-    renderTimeline();
-    return;
-  }
+/* REVISION */
+function renderRevisionBar(){var el=document.getElementById('revision-bar');var versions=getVersions();var max=portalData.maxRevisions||3;var used=Math.max(0,versions.length-1);if(versions.length<=1){el.style.display='none';return;}el.style.display='flex';var dots='';for(var i=0;i<max;i++){var cls='rev-dot';if(i<used)cls+=' used';else if(i===used)cls+=' current';dots+='<span class="'+cls+'"></span>';}var warn='';if(used>=max)warn='<span class="rev-warn">Additional revisions may incur a fee</span>';el.innerHTML='<div><span class="rev-label">Revisions: </span><span class="rev-count">'+used+' of '+max+' included</span> '+warn+'</div><div class="revision-dots">'+dots+'</div>';}
 
-  if(approval.changesRequested && !isAdmin) {
-    el.innerHTML='<div class="approval-box"><h3>🔄 Changes Requested</h3><p>You requested changes on '+escHtml(approval.date||'')+'. We\'re working on the next version — check back soon!</p></div>';
-    return;
-  }
+/* APPROVAL */
+function renderApproval(){var el=document.getElementById('approval-area');var approval=getApproval();var versions=getVersions();if(!versions.length){el.innerHTML='';return;}if(approval.approved){el.innerHTML='<div class="approved-banner"><h3>✅ Approved</h3><p>Approved on '+escHtml(approval.date||'')+'. Your final media is ready for delivery.</p></div>';renderTimeline();return;}if(approval.changesRequested&&!isAdmin){el.innerHTML='<div class="approval-box"><h3>🔄 Changes Requested</h3><p>You requested changes on '+escHtml(approval.date||'')+'. We\'re working on the next version!</p></div>';return;}if(!isAdmin){el.innerHTML='<div class="approval-box"><h3>Ready to approve?</h3><p>Review the current version. When you\'re happy, approve it. Need adjustments? Request changes and leave a note below.</p><div class="approval-btns"><button class="btn-approve" onclick="approveVersion()">✅ Approve</button><button class="btn-changes" onclick="requestChanges()">🔄 Request Changes</button></div></div>';}else{if(approval.changesRequested){el.innerHTML='<div class="approval-box" style="border-color:#f59e0b"><h3>🔄 Client Requested Changes</h3><p>Requested on '+escHtml(approval.date||'')+'. Upload a new version and clear when ready.</p><div class="approval-btns"><button class="btn-approve" onclick="clearChangeRequest()">✓ Clear — New Version Ready</button></div></div>';}else{el.innerHTML='<div style="font-size:.78rem;color:var(--muted);text-align:center;margin-bottom:16px">Waiting for client to review and approve.</div>';}}}
+async function approveVersion(){if(!confirm('Approve this version? This will finalize the project.'))return;await saveApprovalData({approved:true,date:new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric'})});renderApproval();renderTimeline();}
+async function requestChanges(){await saveApprovalData({changesRequested:true,date:new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric'})});renderApproval();document.getElementById('note-input').focus();}
+async function clearChangeRequest(){await saveApprovalData({});renderApproval();}
 
-  // Show approval buttons for client (not admin)
-  if(!isAdmin) {
-    el.innerHTML='<div class="approval-box"><h3>Ready to approve?</h3><p>Review the current version above. When you\'re happy with everything, approve it. Need adjustments? Request changes and leave a note below.</p>'
-      +'<div class="approval-btns"><button class="btn-approve" onclick="approveVersion()">✅ Approve</button>'
-      +'<button class="btn-changes" onclick="requestChanges()">🔄 Request Changes</button></div></div>';
-  } else {
-    if(approval.changesRequested) {
-      el.innerHTML='<div class="approval-box" style="border-color:#f59e0b"><h3>🔄 Client Requested Changes</h3><p>Requested on '+escHtml(approval.date||'')+'. Upload a new version and clear this status when ready.</p>'
-        +'<div class="approval-btns"><button class="btn-approve" onclick="clearChangeRequest()">✓ Clear — New Version Ready</button></div></div>';
-    } else {
-      el.innerHTML='<div style="font-size:.78rem;color:var(--muted);text-align:center;margin-bottom:16px">Waiting for client to review and approve.</div>';
-    }
-  }
-}
-function approveVersion() {
-  if(!confirm('Approve this version? This will finalize the project.')) return;
-  saveApproval({ approved:true, date:new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric'}) });
-  renderApproval(); renderTimeline();
-}
-function requestChanges() {
-  saveApproval({ changesRequested:true, date:new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric'}) });
-  renderApproval();
-  document.getElementById('note-input').focus();
-}
-function clearChangeRequest() {
-  saveApproval({});
-  renderApproval();
-}
+/* VIDEO */
+function loadVideo(url,versionIdx){compareMode=false;currentVersionIdx=versionIdx;ytPlayer=null;var driveBox=document.getElementById('drive-box');var ytId=getYtId(url);var fileMatch=url.match(/drive\.google\.com\/file\/d\/([\w-]+)/);var openMatch=url.match(/drive\.google\.com\/open\?id=([\w-]+)/);var vmMatch=url.match(/vimeo\.com\/(\d+)/);var versions=getVersions();var selectorHtml='';if(versions.length>1){var opts=versions.slice().reverse().map(function(v,ri){var oi=versions.length-1-ri;var sel=oi===versionIdx?' selected':'';var lt=oi===versions.length-1?' (latest)':'';return'<option value="'+oi+'"'+sel+'>'+escHtml(v.label)+lt+'</option>';}).join('');selectorHtml='<div class="version-selector"><label>🎬 Version:</label><select onchange="switchVersion(parseInt(this.value))">'+opts+'</select></div>';}var compareBtn=versions.length>1?'<button class="btn-compare" onclick="enterCompareMode()">⚖️ Compare</button> ':'';var playerHtml='',buttonsHtml='';if(ytId){isVideoPortal=true;playerHtml='<div class="video-wrapper"><div id="yt-player"></div></div>';buttonsHtml='<a href="'+escHtml(url)+'" class="btn-download" target="_blank">↗ Open on YouTube</a>';ensureYtApi(function(){setTimeout(function(){ytPlayer=new YT.Player('yt-player',{videoId:ytId,playerVars:{rel:0,fs:1,vq:'hd1080'},width:'100%',height:'100%'});},50);});}else if(vmMatch){isVideoPortal=true;playerHtml='<div class="video-wrapper"><iframe src="https://player.vimeo.com/video/'+vmMatch[1]+'?title=0&byline=0&portrait=0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>';buttonsHtml='<a href="'+escHtml(url)+'" class="btn-download" target="_blank">↗ Open on Vimeo</a>';}else if(fileMatch||openMatch){isVideoPortal=true;var fid=fileMatch?fileMatch[1]:openMatch[1];playerHtml='<div class="video-wrapper"><iframe src="https://drive.google.com/file/d/'+fid+'/preview" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>';buttonsHtml='<a href="https://drive.google.com/uc?export=download&id='+fid+'" class="btn-download" target="_blank">⬇ Download</a> <a href="'+escHtml(url)+'" class="btn-download" target="_blank" style="background:var(--teal-mid)">↗ Open in Drive</a>';}else{driveBox.innerHTML='<div class="drive-box-icon">📁</div><div class="drive-box-title">Your listing media is ready</div><div class="drive-box-sub">Click below to open your Google Drive folder.</div><a href="'+escHtml(url)+'" target="_blank" class="btn-drive">Open Drive Folder</a>';renderNotes();return;}driveBox.innerHTML=selectorHtml+playerHtml+'<div class="desktop-tip">💡 <strong>For the best experience, review on a desktop</strong> so you can change the video quality to maximum.</div><div style="text-align:center;margin-top:12px">'+compareBtn+buttonsHtml+'</div>';if(isVideoPortal)document.getElementById('note-input').placeholder='Pause the video and leave a note \u2014 the timestamp will be saved automatically.';if(isAdmin)document.getElementById('note-btn').textContent='Reply as Admin';renderNotes();}
+function switchVersion(idx){var v=getVersions();if(v[idx])loadVideo(v[idx].url,idx);}
 
-/* == VIDEO == */
-function loadVideo(url,versionIdx) {
-  compareMode=false; currentVersionIdx=versionIdx; ytPlayer=null;
-  var driveBox=document.getElementById('drive-box');
-  var ytId=getYtId(url);
-  var fileMatch=url.match(/drive\.google\.com\/file\/d\/([\w-]+)/);
-  var openMatch=url.match(/drive\.google\.com\/open\?id=([\w-]+)/);
-  var vmMatch=url.match(/vimeo\.com\/(\d+)/);
-  var versions=getVersions();
-  var selectorHtml='';
-  if(versions.length>1) {
-    var opts=versions.slice().reverse().map(function(v,ri){var oi=versions.length-1-ri;var sel=oi===versionIdx?' selected':'';var lt=oi===versions.length-1?' (latest)':'';return'<option value="'+oi+'"'+sel+'>'+escHtml(v.label)+lt+'</option>';}).join('');
-    selectorHtml='<div class="version-selector"><label>🎬 Version:</label><select onchange="switchVersion(parseInt(this.value))">'+opts+'</select></div>';
-  }
-  var compareBtn=versions.length>1?'<button class="btn-compare" onclick="enterCompareMode()">⚖️ Compare</button> ':'';
-  var playerHtml='',buttonsHtml='';
-  if(ytId) {
-    isVideoPortal=true;
-    playerHtml='<div class="video-wrapper"><div id="yt-player"></div></div>';
-    buttonsHtml='<a href="'+escHtml(url)+'" class="btn-download" target="_blank">↗ Open on YouTube</a>';
-    ensureYtApi(function(){setTimeout(function(){ytPlayer=new YT.Player('yt-player',{videoId:ytId,playerVars:{rel:0,fs:1,vq:'hd1080'},width:'100%',height:'100%'});},50);});
-  } else if(vmMatch) {
-    isVideoPortal=true;
-    playerHtml='<div class="video-wrapper"><iframe src="https://player.vimeo.com/video/'+vmMatch[1]+'?title=0&byline=0&portrait=0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>';
-    buttonsHtml='<a href="'+escHtml(url)+'" class="btn-download" target="_blank">↗ Open on Vimeo</a>';
-  } else if(fileMatch||openMatch) {
-    isVideoPortal=true; var fid=fileMatch?fileMatch[1]:openMatch[1];
-    playerHtml='<div class="video-wrapper"><iframe src="https://drive.google.com/file/d/'+fid+'/preview" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>';
-    buttonsHtml='<a href="https://drive.google.com/uc?export=download&id='+fid+'" class="btn-download" target="_blank">⬇ Download</a> <a href="'+escHtml(url)+'" class="btn-download" target="_blank" style="background:var(--teal-mid)">↗ Open in Drive</a>';
-  } else {
-    driveBox.innerHTML='<div class="drive-box-icon">📁</div><div class="drive-box-title">Your listing media is ready</div><div class="drive-box-sub">Click below to open your Google Drive folder.</div><a href="'+escHtml(url)+'" target="_blank" class="btn-drive">Open Drive Folder</a>';
-    renderNotes(); return;
-  }
-  driveBox.innerHTML=selectorHtml+playerHtml+'<div class="desktop-tip">💡 <strong>For the best experience, review on a desktop</strong> so you can change the video quality to maximum.</div><div style="text-align:center;margin-top:12px">'+compareBtn+buttonsHtml+'</div>';
-  if(isVideoPortal) document.getElementById('note-input').placeholder='Pause the video and leave a note \u2014 the timestamp will be saved automatically.';
-  if(isAdmin) document.getElementById('note-btn').textContent='Reply as Admin';
-  renderNotes();
-}
-function switchVersion(idx) { var v=getVersions(); if(v[idx]) loadVideo(v[idx].url,idx); }
-
-/* == COMPARE == */
-function enterCompareMode() { var v=getVersions(); if(v.length<2)return; compareMode=true;ytPlayer=null;comparePlayerA=null;comparePlayerB=null; compareIdxA=v.length-2;compareIdxB=v.length-1; document.getElementById('drive-box').classList.add('compare-active'); renderCompare(); }
-function exitCompareMode() { compareMode=false;comparePlayerA=null;comparePlayerB=null; document.getElementById('drive-box').classList.remove('compare-active'); var v=getVersions(); loadVideo(v[v.length-1].url,v.length-1); }
-function renderCompare() {
-  var versions=getVersions(); var driveBox=document.getElementById('drive-box');
-  function bSel(selIdx){return versions.slice().reverse().map(function(v,ri){var oi=versions.length-1-ri;var sel=oi===selIdx?' selected':'';var lt=oi===versions.length-1?' (latest)':'';return'<option value="'+oi+'"'+sel+'>'+escHtml(v.label)+lt+'</option>';}).join('');}
-  var ytIdA=getYtId(versions[compareIdxA].url),ytIdB=getYtId(versions[compareIdxB].url);
-  var html='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-weight:700;font-size:.85rem">⚖️ Compare</span><button onclick="exitCompareMode()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 12px;font-size:.78rem;cursor:pointer;font-family:inherit">✕ Exit</button></div>';
-  html+='<div class="compare-grid"><div class="compare-col"><div class="compare-label"><select onchange="changeCompareA(parseInt(this.value))" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:.78rem;font-family:inherit">'+bSel(compareIdxA)+'</select></div><div class="video-wrapper"><div id="cmp-player-a"></div></div></div><div class="compare-col"><div class="compare-label"><select onchange="changeCompareB(parseInt(this.value))" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:.78rem;font-family:inherit">'+bSel(compareIdxB)+'</select></div><div class="video-wrapper"><div id="cmp-player-b"></div></div></div></div>';
-  if(ytIdA&&ytIdB){html+='<div class="compare-playback"><button onclick="syncPlay()" style="background:var(--teal);color:#fff">▶ Play Both</button><button onclick="syncPause()" style="background:var(--teal-mid);color:#fff">⏸ Pause</button><button onclick="syncRestart()" style="background:#6b7280;color:#fff">⏮ Restart</button></div><div class="audio-controls"><span style="font-size:.75rem;font-weight:600;color:var(--muted)">Audio:</span><button class="audio-btn active" id="audio-a" onclick="setAudio(\'a\')">🔊 '+escHtml(versions[compareIdxA].label)+'</button><button class="audio-btn" id="audio-b" onclick="setAudio(\'b\')">🔊 '+escHtml(versions[compareIdxB].label)+'</button><button class="audio-btn" id="audio-both" onclick="setAudio(\'both\')">🔊 Both</button><button class="audio-btn" id="audio-mute" onclick="setAudio(\'mute\')">🔇 Mute</button></div>';}
-  driveBox.innerHTML=html;
-  if(ytIdA&&ytIdB){ensureYtApi(function(){setTimeout(function(){comparePlayerA=new YT.Player('cmp-player-a',{videoId:ytIdA,playerVars:{rel:0,fs:1,vq:'hd1080'},width:'100%',height:'100%',events:{onReady:function(e){e.target.setVolume(100);}}});comparePlayerB=new YT.Player('cmp-player-b',{videoId:ytIdB,playerVars:{rel:0,fs:1,vq:'hd1080'},width:'100%',height:'100%',events:{onReady:function(e){e.target.setVolume(0);}}});},50);});}
-}
-function changeCompareA(i){compareIdxA=i;renderCompare();}
-function changeCompareB(i){compareIdxB=i;renderCompare();}
+/* COMPARE */
+function enterCompareMode(){var v=getVersions();if(v.length<2)return;compareMode=true;ytPlayer=null;comparePlayerA=null;comparePlayerB=null;compareIdxA=v.length-2;compareIdxB=v.length-1;document.getElementById('drive-box').classList.add('compare-active');renderCompare();}
+function exitCompareMode(){compareMode=false;comparePlayerA=null;comparePlayerB=null;document.getElementById('drive-box').classList.remove('compare-active');var v=getVersions();loadVideo(v[v.length-1].url,v.length-1);}
+function renderCompare(){var versions=getVersions();var driveBox=document.getElementById('drive-box');function bSel(selIdx){return versions.slice().reverse().map(function(v,ri){var oi=versions.length-1-ri;var sel=oi===selIdx?' selected':'';var lt=oi===versions.length-1?' (latest)':'';return'<option value="'+oi+'"'+sel+'>'+escHtml(v.label)+lt+'</option>';}).join('');}var ytIdA=getYtId(versions[compareIdxA].url),ytIdB=getYtId(versions[compareIdxB].url);var html='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-weight:700;font-size:.85rem">⚖️ Compare</span><button onclick="exitCompareMode()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 12px;font-size:.78rem;cursor:pointer;font-family:inherit">✕ Exit</button></div>';html+='<div class="compare-grid"><div class="compare-col"><div class="compare-label"><select onchange="changeCompareA(parseInt(this.value))" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:.78rem;font-family:inherit">'+bSel(compareIdxA)+'</select></div><div class="video-wrapper"><div id="cmp-player-a"></div></div></div><div class="compare-col"><div class="compare-label"><select onchange="changeCompareB(parseInt(this.value))" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:.78rem;font-family:inherit">'+bSel(compareIdxB)+'</select></div><div class="video-wrapper"><div id="cmp-player-b"></div></div></div></div>';if(ytIdA&&ytIdB){html+='<div class="compare-playback"><button onclick="syncPlay()" style="background:var(--teal);color:#fff">▶ Play Both</button><button onclick="syncPause()" style="background:var(--teal-mid);color:#fff">⏸ Pause</button><button onclick="syncRestart()" style="background:#6b7280;color:#fff">⏮ Restart</button></div><div class="audio-controls"><span style="font-size:.75rem;font-weight:600;color:var(--muted)">Audio:</span><button class="audio-btn active" id="audio-a" onclick="setAudio(\'a\')">🔊 '+escHtml(versions[compareIdxA].label)+'</button><button class="audio-btn" id="audio-b" onclick="setAudio(\'b\')">🔊 '+escHtml(versions[compareIdxB].label)+'</button><button class="audio-btn" id="audio-both" onclick="setAudio(\'both\')">🔊 Both</button><button class="audio-btn" id="audio-mute" onclick="setAudio(\'mute\')">🔇 Mute</button></div>';}driveBox.innerHTML=html;if(ytIdA&&ytIdB){ensureYtApi(function(){setTimeout(function(){comparePlayerA=new YT.Player('cmp-player-a',{videoId:ytIdA,playerVars:{rel:0,fs:1,vq:'hd1080'},width:'100%',height:'100%',events:{onReady:function(e){e.target.setVolume(100);}}});comparePlayerB=new YT.Player('cmp-player-b',{videoId:ytIdB,playerVars:{rel:0,fs:1,vq:'hd1080'},width:'100%',height:'100%',events:{onReady:function(e){e.target.setVolume(0);}}});},50);});}}
+function changeCompareA(i){compareIdxA=i;renderCompare();}function changeCompareB(i){compareIdxB=i;renderCompare();}
 function syncPlay(){if(!comparePlayerA||!comparePlayerB)return;var t=comparePlayerA.getCurrentTime?comparePlayerA.getCurrentTime():0;comparePlayerB.seekTo(t,true);requestAnimationFrame(function(){comparePlayerA.playVideo();comparePlayerB.playVideo();});}
 function syncPause(){requestAnimationFrame(function(){if(comparePlayerA&&comparePlayerA.pauseVideo)comparePlayerA.pauseVideo();if(comparePlayerB&&comparePlayerB.pauseVideo)comparePlayerB.pauseVideo();});}
 function syncRestart(){if(!comparePlayerA||!comparePlayerB)return;comparePlayerA.seekTo(0,true);comparePlayerB.seekTo(0,true);requestAnimationFrame(function(){comparePlayerA.pauseVideo();comparePlayerB.pauseVideo();});}
 function setAudio(m){document.querySelectorAll('.audio-btn').forEach(function(b){b.classList.remove('active');});var el=document.getElementById('audio-'+m);if(el)el.classList.add('active');if(!comparePlayerA||!comparePlayerB)return;switch(m){case'a':comparePlayerA.unMute();comparePlayerA.setVolume(100);comparePlayerB.mute();break;case'b':comparePlayerA.mute();comparePlayerB.unMute();comparePlayerB.setVolume(100);break;case'both':comparePlayerA.unMute();comparePlayerA.setVolume(100);comparePlayerB.unMute();comparePlayerB.setVolume(100);break;case'mute':comparePlayerA.mute();comparePlayerB.mute();break;}}
 
-/* == RENDER == */
-function render() {
-  var d=portalData;
-  document.title=(d.client||'Client')+' \u2014 Reel Estate Media Portal';
-  document.getElementById('portal-content').style.display='block';
-  document.getElementById('p-client').textContent=d.client||'Your Listing';
-  document.getElementById('p-type-address').textContent=[d.type,d.address].filter(Boolean).join(' \u00b7 ');
-  var meta=[];
-  if(d.date)meta.push('<div class="shoot-meta-item">📅 <strong>'+d.date+(d.time?' @ '+d.time:'')+'</strong></div>');
-  if(d.status){var st=STATUS_INFO[d.status]||STATUS_INFO.delivered;meta.push('<div class="shoot-meta-item"><span class="status-chip" style="background:'+st.bg+';color:'+st.color+'">'+st.emoji+' '+st.label+'</span></div>');}
-  document.getElementById('p-meta').innerHTML=meta.join('');
-  renderTimeline();
-  renderRevisionBar();
-  renderApproval();
-  var versions=getVersions();
-  if(versions.length){loadVideo(versions[versions.length-1].url,versions.length-1);}
-  else{document.getElementById('drive-box').innerHTML='<div class="drive-box-icon">⏳</div><div class="drive-box-title">Files coming soon</div><div class="drive-box-sub">Your media is still being prepared. Check back shortly or contact us if you have questions.</div>';renderNotes();}
-}
+/* RENDER */
+function render(){var d=portalData;document.title=(d.client||'Client')+' \u2014 Reel Estate Media Portal';document.getElementById('portal-content').style.display='block';document.getElementById('p-client').textContent=d.client||'Your Listing';document.getElementById('p-type-address').textContent=[d.type,d.address].filter(Boolean).join(' \u00b7 ');var meta=[];if(d.date)meta.push('<div class="shoot-meta-item">📅 <strong>'+d.date+(d.time?' @ '+d.time:'')+'</strong></div>');if(d.status){var st=STATUS_INFO[d.status]||STATUS_INFO.delivered;meta.push('<div class="shoot-meta-item"><span class="status-chip" style="background:'+st.bg+';color:'+st.color+'">'+st.emoji+' '+st.label+'</span></div>');}document.getElementById('p-meta').innerHTML=meta.join('');renderTimeline();renderRevisionBar();renderApproval();var versions=getVersions();if(versions.length){loadVideo(versions[versions.length-1].url,versions.length-1);}else{document.getElementById('drive-box').innerHTML='<div class="drive-box-icon">⏳</div><div class="drive-box-title">Files coming soon</div><div class="drive-box-sub">Your media is still being prepared.</div>';renderNotes();}}
 
-/* == NOTES == */
-function renderNotes() {
-  var key=getNotesKey(currentVersionIdx); var notes=[];
-  try{notes=JSON.parse(localStorage.getItem(key)||'[]');}catch(e){}
-  var legacyKey=NOTES_KEY_PREFIX+portalData.key; var legacyNotes=[];
-  try{legacyNotes=JSON.parse(localStorage.getItem(legacyKey)||'[]');}catch(e){}
-  if(currentVersionIdx===0&&!notes.length&&legacyNotes.length) notes=legacyNotes;
-  var list=document.getElementById('notes-list');
-  var versions=getVersions();
-  var vLabel=versions[currentVersionIdx]?versions[currentVersionIdx].label:'';
-  if(!notes.length){list.innerHTML='<div style="font-size:.8rem;color:var(--muted);padding:8px 0">No notes yet for '+escHtml(vLabel||'this version')+'. '+(isVideoPortal?'Pause the video and leave feedback below.':'Leave a note below if you need any adjustments.')+'</div>';return;}
-  var html='';
-  notes.forEach(function(n,idx){
-    if(n.replyTo!==undefined&&n.replyTo!==null) return;
-    var isAdminNote=n.from==='admin'; var isResolved=n.resolved===true;
-    var cls=isAdminNote?'note-item admin-reply':'note-item'; if(isResolved)cls+=' resolved';
-    var fromHtml=isAdminNote?'<div class="note-from from-admin">Reel Estate Media</div>':'<div class="note-from from-client">'+escHtml(portalData.client||'Client')+'</div>';
-    var tsHtml=''; if(n.videoTime!==undefined&&n.videoTime!==null) tsHtml='<span class="note-timestamp" onclick="seekTo('+n.videoTime+')" title="Jump to this moment">▶ '+formatTime(n.videoTime)+'</span>';
-    var hasAdminReply=false; notes.forEach(function(r){if(r.replyTo===idx)hasAdminReply=true;});
-    var adminActed=isResolved||hasAdminReply;
-    var canDelete=isAdmin||(!isAdminNote&&!adminActed);
-    var delHtml=canDelete?'<button class="note-delete" onclick="deleteNote('+idx+')" title="Delete">🗑</button>':'';
-    var replyBtn=isAdmin&&!isAdminNote?' <button class="btn-reply" onclick="startReply('+idx+')">↩ Reply</button>':'';
-    var checkHtml='';
-    if(!isAdminNote){if(isAdmin){var boxCls=isResolved?'check-box checked':'check-box';checkHtml='<button class="note-check" onclick="toggleResolved('+idx+')"><span class="'+boxCls+'">'+(isResolved?'✓':'')+'</span>'+(isResolved?'Done':'Mark done')+'</button> ';}else if(isResolved){checkHtml='<span class="resolved-label">✓ Done</span> ';}}
-    html+='<div class="'+cls+'">'+fromHtml+tsHtml+'<span class="note-text">'+escHtml(n.text)+'</span><div class="note-item-meta">'+checkHtml+'<span>'+(n.date||'')+'</span>'+replyBtn+delHtml+'</div></div>';
-    notes.forEach(function(r,ri){if(r.replyTo!==idx)return;var rA=r.from==='admin';var rC=rA?'note-item admin-reply':'note-item';var rF=rA?'<div class="note-from from-admin">Reel Estate Media</div>':'<div class="note-from from-client">'+escHtml(portalData.client||'Client')+'</div>';var rD=(isAdmin||!rA)?'<button class="note-delete" onclick="deleteNote('+ri+')" title="Delete">🗑</button>':'';html+='<div class="note-reply-wrap"><div class="'+rC+'">'+rF+escHtml(r.text)+'<div class="note-item-meta"><span>'+(r.date||'')+'</span>'+rD+'</div></div></div>';});
-    if(replyingToIdx===idx) html+='<div class="note-reply-input" id="reply-input-'+idx+'"><input type="text" id="reply-text-'+idx+'" placeholder="Write a reply\u2026" onkeydown="if(event.key===\'Enter\')sendReply('+idx+')"><button onclick="sendReply('+idx+')">Send</button></div>';
-  });
-  list.innerHTML=html;
-  if(replyingToIdx>=0){var ri=document.getElementById('reply-text-'+replyingToIdx);if(ri)ri.focus();}
-}
+/* NOTES */
+function renderNotes(){var notes=getNotesForVersion(currentVersionIdx);var list=document.getElementById('notes-list');var versions=getVersions();var vLabel=versions[currentVersionIdx]?versions[currentVersionIdx].label:'';if(!notes.length){list.innerHTML='<div style="font-size:.8rem;color:var(--muted);padding:8px 0">No notes yet for '+escHtml(vLabel||'this version')+'. '+(isVideoPortal?'Pause the video and leave feedback below.':'Leave a note below.')+'</div>';return;}var html='';notes.forEach(function(n,idx){if(n.replyTo!==undefined&&n.replyTo!==null)return;var isAdminNote=n.from==='admin';var isResolved=n.resolved===true;var cls=isAdminNote?'note-item admin-reply':'note-item';if(isResolved)cls+=' resolved';var fromHtml=isAdminNote?'<div class="note-from from-admin">Reel Estate Media</div>':'<div class="note-from from-client">'+escHtml(portalData.client||'Client')+'</div>';var tsHtml='';if(n.videoTime!==undefined&&n.videoTime!==null)tsHtml='<span class="note-timestamp" onclick="seekTo('+n.videoTime+')" title="Jump to this moment">▶ '+formatTime(n.videoTime)+'</span>';var hasAdminReply=false;notes.forEach(function(r){if(r.replyTo===idx)hasAdminReply=true;});var adminActed=isResolved||hasAdminReply;var canDelete=isAdmin||(!isAdminNote&&!adminActed);var delHtml=canDelete?'<button class="note-delete" onclick="deleteNote('+idx+')" title="Delete">🗑</button>':'';var replyBtn=isAdmin&&!isAdminNote?' <button class="btn-reply" onclick="startReply('+idx+')">↩ Reply</button>':'';var checkHtml='';if(!isAdminNote){if(isAdmin){var boxCls=isResolved?'check-box checked':'check-box';checkHtml='<button class="note-check" onclick="toggleResolved('+idx+')"><span class="'+boxCls+'">'+(isResolved?'✓':'')+'</span>'+(isResolved?'Done':'Mark done')+'</button> ';}else if(isResolved){checkHtml='<span class="resolved-label">✓ Done</span> ';}}html+='<div class="'+cls+'">'+fromHtml+tsHtml+'<span class="note-text">'+escHtml(n.text)+'</span><div class="note-item-meta">'+checkHtml+'<span>'+(n.date||'')+'</span>'+replyBtn+delHtml+'</div></div>';notes.forEach(function(r,ri){if(r.replyTo!==idx)return;var rA=r.from==='admin';var rC=rA?'note-item admin-reply':'note-item';var rF=rA?'<div class="note-from from-admin">Reel Estate Media</div>':'<div class="note-from from-client">'+escHtml(portalData.client||'Client')+'</div>';var rD=(isAdmin||!rA)?'<button class="note-delete" onclick="deleteNote('+ri+')" title="Delete">🗑</button>':'';html+='<div class="note-reply-wrap"><div class="'+rC+'">'+rF+escHtml(r.text)+'<div class="note-item-meta"><span>'+(r.date||'')+'</span>'+rD+'</div></div></div>';});if(replyingToIdx===idx)html+='<div class="note-reply-input" id="reply-input-'+idx+'"><input type="text" id="reply-text-'+idx+'" placeholder="Write a reply\u2026" onkeydown="if(event.key===\'Enter\')sendReply('+idx+')"><button onclick="sendReply('+idx+')">Send</button></div>';});list.innerHTML=html;if(replyingToIdx>=0){var ri=document.getElementById('reply-text-'+replyingToIdx);if(ri)ri.focus();}}
 function startReply(i){replyingToIdx=replyingToIdx===i?-1:i;renderNotes();}
-function toggleResolved(i){var k=getNotesKey(currentVersionIdx);var n=[];try{n=JSON.parse(localStorage.getItem(k)||'[]');}catch(e){}if(n[i]){n[i].resolved=!n[i].resolved;localStorage.setItem(k,JSON.stringify(n));renderNotes();}}
-function sendReply(pi){var inp=document.getElementById('reply-text-'+pi);if(!inp)return;var t=inp.value.trim();if(!t)return;var k=getNotesKey(currentVersionIdx);var n=[];try{n=JSON.parse(localStorage.getItem(k)||'[]');}catch(e){}n.push({text:t,date:new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'}),from:isAdmin?'admin':'client',replyTo:pi});localStorage.setItem(k,JSON.stringify(n));replyingToIdx=-1;renderNotes();}
-function deleteNote(idx){if(!confirm('Delete this note?'))return;var k=getNotesKey(currentVersionIdx);var n=[];try{n=JSON.parse(localStorage.getItem(k)||'[]');}catch(e){}var rem=[idx];n.forEach(function(x,i){if(x.replyTo===idx)rem.push(i);});rem.sort(function(a,b){return b-a;});rem.forEach(function(i){n.splice(i,1);});n.forEach(function(x){if(x.replyTo!==undefined&&x.replyTo!==null){var shift=0;rem.forEach(function(ri){if(ri<x.replyTo)shift++;});x.replyTo=x.replyTo-shift;}});localStorage.setItem(k,JSON.stringify(n));renderNotes();}
-function submitNote(){var inp=document.getElementById('note-input');var t=inp.value.trim();if(!t)return;var k=getNotesKey(currentVersionIdx);var n=[];try{n=JSON.parse(localStorage.getItem(k)||'[]');}catch(e){}var vt=null;if(ytPlayer&&ytPlayer.getCurrentTime)vt=ytPlayer.getCurrentTime();var vs=getVersions();var vl=vs[currentVersionIdx]?vs[currentVersionIdx].label:'';n.push({text:t,date:new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'}),videoTime:vt,version:vl,from:isAdmin?'admin':'client'});localStorage.setItem(k,JSON.stringify(n));inp.value='';renderNotes();var s=document.getElementById('note-success');s.textContent=isAdmin?'✓ Reply sent!':'✓ Note sent!';s.style.display='block';setTimeout(function(){s.style.display='none';},3000);}
+async function toggleResolved(i){var notes=getNotesForVersion(currentVersionIdx);if(notes[i]){notes[i].resolved=!notes[i].resolved;await saveNotesForVersion(currentVersionIdx,notes);renderNotes();}}
+async function sendReply(pi){var inp=document.getElementById('reply-text-'+pi);if(!inp)return;var t=inp.value.trim();if(!t)return;var notes=getNotesForVersion(currentVersionIdx);notes.push({text:t,date:new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'}),from:isAdmin?'admin':'client',replyTo:pi});await saveNotesForVersion(currentVersionIdx,notes);replyingToIdx=-1;renderNotes();}
+async function deleteNote(idx){if(!confirm('Delete this note?'))return;var notes=getNotesForVersion(currentVersionIdx);var rem=[idx];notes.forEach(function(x,i){if(x.replyTo===idx)rem.push(i);});rem.sort(function(a,b){return b-a;});rem.forEach(function(i){notes.splice(i,1);});notes.forEach(function(x){if(x.replyTo!==undefined&&x.replyTo!==null){var shift=0;rem.forEach(function(ri){if(ri<x.replyTo)shift++;});x.replyTo=x.replyTo-shift;}});await saveNotesForVersion(currentVersionIdx,notes);renderNotes();}
+async function submitNote(){var inp=document.getElementById('note-input');var t=inp.value.trim();if(!t)return;var notes=getNotesForVersion(currentVersionIdx);var vt=null;if(ytPlayer&&ytPlayer.getCurrentTime)vt=ytPlayer.getCurrentTime();var vs=getVersions();var vl=vs[currentVersionIdx]?vs[currentVersionIdx].label:'';notes.push({text:t,date:new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'}),videoTime:vt,version:vl,from:isAdmin?'admin':'client'});await saveNotesForVersion(currentVersionIdx,notes);inp.value='';renderNotes();var s=document.getElementById('note-success');s.textContent=isAdmin?'✓ Reply sent!':'✓ Note sent!';s.style.display='block';setTimeout(function(){s.style.display='none';},3000);}
 function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 init();
 </script>
