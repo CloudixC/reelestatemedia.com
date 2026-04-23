@@ -1359,9 +1359,6 @@ function lockPublishedPage() {
   document.querySelectorAll('[contenteditable]').forEach(function(el) {
     el.removeAttribute('contenteditable');
   });
-  // Hide edit badge completely
-  var badge = document.getElementById('edit-badge');
-  if (badge) badge.style.display = 'none';
   // Hide toolbar
   var toolbar = document.getElementById('toolbar');
   if (toolbar) toolbar.style.display = 'none';
@@ -1377,6 +1374,23 @@ function lockPublishedPage() {
     el.removeAttribute('ondragover');
     el.removeAttribute('ondrop');
   });
+  // Repurpose the edit badge as an "Unpublish & Edit" button for the site owner
+  var badge = document.getElementById('edit-badge');
+  if (badge && portalSlug) {
+    badge.textContent = '🔓 Unpublish & Edit';
+    badge.style.display = 'block';
+    badge.onclick = function() {
+      if (!confirm('Unpublish this site and re-enter edit mode?\n\nVisitors will see the draft version until you publish again.')) return;
+      isPublished = false;
+      var data = portalData;
+      data.published = false;
+      sbPatch(portalSlug, { data: data, updated_at: new Date().toISOString() }).then(function() {
+        window.location.reload();
+      });
+    };
+  } else if (badge) {
+    badge.style.display = 'none';
+  }
 }
 
 function enterSupabaseEditMode() {
