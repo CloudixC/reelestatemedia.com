@@ -905,6 +905,9 @@ label { font-size: .8rem; font-weight: 600; color: var(--text2); text-transform:
         <button class="tab-btn" id="nav-testimonials" onclick="switchPage('testimonials')">
           ⭐ Testimonials
         </button>
+        <button class="tab-btn" id="nav-sites" onclick="switchPage('sites')">
+          🏠 Property Sites
+        </button>
       </div>
       <button class="btn btn-ghost btn-sm" onclick="openImportModal()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8m-4-4l4 4 4-4"/></svg>
@@ -1182,6 +1185,85 @@ label { font-size: .8rem; font-weight: 600; color: var(--text2); text-transform:
       <div id="testimonials-list" style="color:var(--text3);font-size:.85rem">Loading testimonials…</div>
     </div>
   </div>
+
+  <!-- PROPERTY SITES PAGE -->
+  <div id="page-sites" style="display:none">
+    <div class="section" style="margin-bottom:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div class="section-title" style="margin:0">Property Websites</div>
+        <button class="btn btn-primary btn-sm" onclick="openNewPropertySite()">+ New Property Site</button>
+      </div>
+
+      <!-- NEW SITE FORM -->
+      <div id="new-site-form" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div class="form-field" style="margin:0">
+            <label>Property Address *</label>
+            <input class="input" id="site-address" type="text" placeholder="123 Maple Drive, Toronto">
+          </div>
+          <div class="form-field" style="margin:0">
+            <label>Price</label>
+            <input class="input" id="site-price" type="text" placeholder="$1,495,000">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div class="form-field" style="margin:0">
+            <label>Agent Name</label>
+            <input class="input" id="site-agent" type="text" placeholder="Realtor name">
+          </div>
+          <div class="form-field" style="margin:0">
+            <label>Brokerage</label>
+            <input class="input" id="site-brokerage" type="text" placeholder="RE/MAX, Keller Williams…">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+          <div class="form-field" style="margin:0">
+            <label>Beds</label>
+            <input class="input" id="site-beds" type="number" placeholder="4">
+          </div>
+          <div class="form-field" style="margin:0">
+            <label>Baths</label>
+            <input class="input" id="site-baths" type="number" placeholder="3">
+          </div>
+          <div class="form-field" style="margin:0">
+            <label>Sqft</label>
+            <input class="input" id="site-sqft" type="text" placeholder="2,450">
+          </div>
+          <div class="form-field" style="margin:0">
+            <label>Parking</label>
+            <input class="input" id="site-parking" type="text" placeholder="2">
+          </div>
+        </div>
+        <div class="form-field" style="margin-bottom:10px">
+          <label>Description</label>
+          <textarea class="textarea" id="site-description" rows="3" placeholder="Property description…"></textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div class="form-field" style="margin:0">
+            <label>Photos Folder (Google Drive)</label>
+            <input class="input" id="site-photos" type="url" placeholder="https://drive.google.com/drive/folders/…">
+          </div>
+          <div class="form-field" style="margin:0">
+            <label>Video Tour Link</label>
+            <input class="input" id="site-video" type="url" placeholder="YouTube or Vimeo link">
+          </div>
+        </div>
+        <div class="form-field" style="margin-bottom:10px">
+          <label>Link to Lead <span style="font-weight:400;color:var(--text3);font-size:.75rem">(optional)</span></label>
+          <select class="select" id="site-lead-select">
+            <option value="">— No linked lead —</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary btn-sm" onclick="createPropertySite()">Create Site</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('new-site-form').style.display='none'">Cancel</button>
+        </div>
+      </div>
+
+      <div id="sites-list" style="color:var(--text3);font-size:.85rem">Loading property sites…</div>
+    </div>
+  </div>
+
   </main>
 </div>
 
@@ -1437,6 +1519,9 @@ label { font-size: .8rem; font-weight: 600; color: var(--text2); text-transform:
       </button>
       <button class="btn btn-ghost btn-sm" id="btn-review-req" style="display:none;color:#15803d;border-color:#86efac" onclick="sendReviewRequest(editingId)">
         ⭐ Request Review
+      </button>
+      <button class="btn btn-ghost btn-sm" id="btn-property-site" style="display:none;color:#059669;border-color:#6ee7b7" onclick="quickPropertySite()">
+        🏠 Property Site
       </button>
       <button class="btn btn-primary btn-lg" id="save-lead-btn" onclick="saveLead()">Add Lead</button>
     </div>
@@ -2491,6 +2576,7 @@ function openAddModal() {
   document.getElementById('gen-profile-btn').style.display = 'none';
   document.getElementById('btn-confirm-email').style.display = 'none';
   document.getElementById('btn-review-req').style.display = 'none';
+  document.getElementById('btn-property-site').style.display = 'none';
   document.getElementById('lead-dossier-section').style.display = 'none';
   document.getElementById('lead-bundle-section').style.display = 'none';
   if (document.getElementById('quote-modal')) document.getElementById('quote-modal').__leadId = null;
@@ -2528,6 +2614,7 @@ function openEditModal(id) {
   document.getElementById('gen-profile-btn').style.display = 'inline-flex';
   document.getElementById('btn-confirm-email').style.display = 'inline-flex';
   document.getElementById('btn-review-req').style.display = 'inline-flex';
+  document.getElementById('btn-property-site').style.display = 'inline-flex';
   renderLeadQuotesPanel(id);
   document.getElementById('lead-dossier-section').style.display = 'block';
   renderLeadDossier(id);
@@ -2880,13 +2967,16 @@ function switchPage(page) {
   document.getElementById('page-quotes').style.display    = page === 'quotes'    ? '' : 'none';
   document.getElementById('page-analytics').style.display = page === 'analytics' ? '' : 'none';
   document.getElementById('page-testimonials').style.display = page === 'testimonials' ? '' : 'none';
+  document.getElementById('page-sites').style.display     = page === 'sites'     ? '' : 'none';
   document.getElementById('nav-leads').classList.toggle('active',     page === 'leads');
   document.getElementById('nav-quotes').classList.toggle('active',    page === 'quotes');
   document.getElementById('nav-analytics').classList.toggle('active', page === 'analytics');
   document.getElementById('nav-testimonials').classList.toggle('active', page === 'testimonials');
+  document.getElementById('nav-sites').classList.toggle('active',     page === 'sites');
   if (page === 'quotes') renderQuotesList();
   if (page === 'analytics') loadLookerDashboard();
   if (page === 'testimonials') loadTestimonials();
+  if (page === 'sites') loadPropertySites();
 }
 
 /* ============================================================
@@ -5567,6 +5657,139 @@ async function loadTestimonials() {
       + '<div style="font-size:.85rem;color:var(--text);line-height:1.5">"' + esc(r.text || '') + '"</div>'
       + '</div>';
   }).join('');
+}
+
+/* ============================================================
+   PROPERTY SITES
+   ============================================================ */
+function openNewPropertySite() {
+  document.getElementById('new-site-form').style.display = 'block';
+  document.getElementById('site-address').value = '';
+  document.getElementById('site-price').value = '';
+  document.getElementById('site-agent').value = '';
+  document.getElementById('site-brokerage').value = '';
+  document.getElementById('site-beds').value = '';
+  document.getElementById('site-baths').value = '';
+  document.getElementById('site-sqft').value = '';
+  document.getElementById('site-parking').value = '';
+  document.getElementById('site-description').value = '';
+  document.getElementById('site-photos').value = '';
+  document.getElementById('site-video').value = '';
+  // Populate lead picker
+  var sel = document.getElementById('site-lead-select');
+  sel.innerHTML = '<option value="">— No linked lead —</option>' + leads.map(function(l) {
+    return '<option value="' + l.id + '">' + esc(l.name || 'Unknown') + (l.brokerage ? ' · ' + esc(l.brokerage) : '') + '</option>';
+  }).join('');
+  document.getElementById('site-address').focus();
+}
+
+async function createPropertySite() {
+  var address = document.getElementById('site-address').value.trim();
+  if (!address) { showToast('Enter a property address'); return; }
+  var slug = 'listing-' + address.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  var leadId = document.getElementById('site-lead-select').value;
+  var lead = leadId ? leads.find(function(l){ return l.id === leadId; }) : null;
+
+  var data = {
+    address: address,
+    price: document.getElementById('site-price').value.trim(),
+    client: lead ? lead.name : document.getElementById('site-agent').value.trim(),
+    brokerage: lead ? lead.brokerage : document.getElementById('site-brokerage').value.trim(),
+    phone: lead ? lead.phone : '',
+    email: lead ? lead.email : '',
+    beds: document.getElementById('site-beds').value,
+    baths: document.getElementById('site-baths').value,
+    sqft: document.getElementById('site-sqft').value.trim(),
+    parking: document.getElementById('site-parking').value.trim(),
+    description: document.getElementById('site-description').value.trim(),
+    photosFolder: document.getElementById('site-photos').value.trim(),
+    videoLink: document.getElementById('site-video').value.trim(),
+    leadId: leadId || null,
+    createdAt: new Date().toISOString(),
+    type: 'property_site',
+  };
+
+  await sbFetch('POST', 'portal_data', { slug: slug, data: data, updated_at: new Date().toISOString() });
+  document.getElementById('new-site-form').style.display = 'none';
+  var siteUrl = 'https://reelestatemedia.com/property-website.html#' + slug;
+  window.open(siteUrl, '_blank');
+  showToast('Property site created ✓');
+  loadPropertySites();
+}
+
+function quickPropertySite() {
+  // Get address from first shoot that has one, or prompt
+  var address = '';
+  var photosFolder = '';
+  var videoLink = '';
+  currentEditShoots.forEach(function(s) {
+    if (s.address && !address) address = s.address;
+    if (s.photosFolder && !photosFolder) photosFolder = s.photosFolder;
+    if (s.driveLink && !videoLink) videoLink = s.driveLink;
+  });
+  if (!address) {
+    address = prompt('Enter the property address:');
+    if (!address) return;
+  }
+  var lead = leads.find(function(l){ return l.id === editingId; });
+  var slug = 'listing-' + address.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  var data = {
+    address: address,
+    client: lead ? lead.name : '',
+    brokerage: lead ? lead.brokerage : '',
+    phone: lead ? lead.phone : '',
+    email: lead ? lead.email : '',
+    photosFolder: photosFolder,
+    videoLink: videoLink,
+    leadId: editingId,
+    createdAt: new Date().toISOString(),
+    type: 'property_site',
+  };
+  sbFetch('POST', 'portal_data', { slug: slug, data: data, updated_at: new Date().toISOString() }).then(function() {
+    var url = 'https://reelestatemedia.com/property-website.html#' + slug;
+    window.open(url, '_blank');
+    showToast('Property site created ✓');
+  });
+}
+
+async function loadPropertySites() {
+  var el = document.getElementById('sites-list');
+  el.innerHTML = '<div style="color:var(--text3);font-size:.85rem">Loading…</div>';
+  var rows = await sbFetch('GET', 'portal_data', null, '?slug=like.listing-*&order=updated_at.desc&limit=50');
+  if (!rows || !rows.length) {
+    el.innerHTML = '<div style="color:var(--text3);font-size:.85rem;padding:16px 0">No property sites yet. Click "+ New Property Site" to create one.</div>';
+    return;
+  }
+  el.innerHTML = rows.map(function(row) {
+    var d = row.data || {};
+    var url = 'https://reelestatemedia.com/property-website.html#' + row.slug;
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px">'
+      + '<div style="flex:1;min-width:0">'
+      + '<div style="font-weight:600;font-size:.9rem">' + esc(d.address || row.slug) + '</div>'
+      + '<div style="font-size:.78rem;color:var(--text3)">'
+      + (d.client ? esc(d.client) : '') + (d.brokerage ? ' · ' + esc(d.brokerage) : '') + (d.price ? ' · ' + esc(d.price) : '')
+      + '</div>'
+      + '<div style="font-size:.7rem;color:var(--text3);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><a href="' + esc(url) + '" target="_blank" style="color:#7c3aed">' + esc(url) + '</a></div>'
+      + '</div>'
+      + '<div style="display:flex;gap:6px;flex-shrink:0">'
+      + '<button onclick="window.open(\'' + esc(url) + '\',\'_blank\')" style="background:#059669;color:#fff;border:none;border-radius:5px;padding:5px 10px;font-size:.75rem;font-weight:600;cursor:pointer">🔗 Open</button>'
+      + '<button onclick="copySiteLink(\'' + esc(url) + '\')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:5px 10px;font-size:.75rem;cursor:pointer;color:var(--text2)">📋 Copy</button>'
+      + '<button onclick="deleteSite(\'' + esc(row.slug) + '\')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:1rem">×</button>'
+      + '</div></div>';
+  }).join('');
+}
+
+function copySiteLink(url) {
+  navigator.clipboard.writeText(url)
+    .then(function() { showToast('Link copied ✓'); })
+    .catch(function() { prompt('Copy this link:', url); });
+}
+
+async function deleteSite(slug) {
+  if (!confirm('Delete this property site?')) return;
+  await sbFetch('DELETE', 'portal_data', null, '?slug=eq.' + encodeURIComponent(slug));
+  loadPropertySites();
+  showToast('Site deleted');
 }
 
 </script>

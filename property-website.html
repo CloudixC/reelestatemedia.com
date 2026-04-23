@@ -1234,6 +1234,24 @@ sections.forEach(function(id) {
     if (agentName && d.client) agentName.textContent = d.client;
     var agentBrok = document.querySelector('.nav-agent-brok');
     if (agentBrok && d.brokerage) agentBrok.textContent = d.brokerage;
+    // Price
+    var priceEl = document.querySelector('.hp-val');
+    if (priceEl && d.price) priceEl.textContent = d.price;
+    // Beds, baths, sqft, parking
+    var statEls = document.querySelectorAll('.hs-val');
+    if (statEls[0] && d.beds) statEls[0].textContent = d.beds;
+    if (statEls[1] && d.baths) statEls[1].textContent = d.baths;
+    if (statEls[2] && d.sqft) statEls[2].textContent = d.sqft;
+    if (statEls[3] && d.parking) statEls[3].textContent = d.parking;
+    // Description
+    var descEl = document.querySelector('.section-body');
+    if (descEl && d.description) descEl.textContent = d.description;
+    // City line
+    var cityEl = document.querySelector('.hero-city');
+    if (cityEl && d.address) {
+      var parts = d.address.split(',');
+      if (parts.length > 1) cityEl.textContent = parts.slice(1).join(',').trim();
+    }
     // Update title
     document.title = (d.address || 'Property') + ' — Presented by Reel Estate Media';
     // Update inquiry label
