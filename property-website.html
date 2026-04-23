@@ -641,7 +641,9 @@ body.editing .edit-badge { background:rgba(255,255,255,.1); color:var(--white); 
   <span class="toolbar-hint"><span>✏️ Click any text to edit</span> &nbsp;·&nbsp; <span>📸 Click any photo to replace</span> &nbsp;·&nbsp; Drag &amp; drop images anywhere</span>
   <button class="tb-btn" onclick="undoLast()">↩ Undo</button>
   <button class="tb-btn danger" onclick="resetPage()">Reset</button>
-  <button class="tb-btn primary" onclick="savePage()">💾 Save as HTML</button>
+  <button class="tb-btn" id="save-html-btn" onclick="savePage()">💾 Save as HTML</button>
+  <button class="tb-btn" id="save-draft-btn" style="display:none" onclick="saveDraft()">💾 Save Draft</button>
+  <button class="tb-btn primary" id="publish-btn" style="display:none" onclick="publishSite()">🚀 Publish Live</button>
   <button class="tb-btn" onclick="toggleEdit()">✕ Done editing</button>
 </div>
 
@@ -721,7 +723,7 @@ body.editing .edit-badge { background:rgba(255,255,255,.1); color:var(--white); 
 <section class="details-section">
   <div class="details-left">
     <div class="section-eyebrow">About This Property</div>
-    <h2 class="section-title">A rare opportunity in <em>the heart of Toronto</em></h2>
+    <h2 class="section-title" contenteditable="false" spellcheck="false">A rare opportunity in <em>the heart of Toronto</em></h2>
     <div class="section-body" contenteditable="false" spellcheck="false">
       This beautifully renovated detached home offers an exceptional blend of modern luxury and timeless character. Nestled on a quiet, tree-lined street in one of Toronto's most sought-after neighbourhoods, the property features soaring ceilings, wide-plank hardwood floors throughout, and a sun-drenched open-concept main floor perfect for entertaining.
 
@@ -1211,8 +1213,6 @@ sections.forEach(function(id) {
 });
 </script>
 
-</body>
-</html>
 <script>
 // Load property data from Supabase if hash slug exists
 var SB_URL = 'https://dgoiormpqixydbijuqoe.supabase.co';
@@ -1265,8 +1265,9 @@ async function sbPatch(slug, body) {
     if (ccBrok && d.brokerage) ccBrok.textContent = d.brokerage;
     // Agent phone and email in contact card
     var ccItems = document.querySelectorAll('.cc-item a');
-    if (ccItems[0] && d.phone) { ccItems[0].textContent = d.phone; ccItems[0].href = 'tel:' + d.phone; }
+    if (ccItems[0] && d.phone) { ccItems[0].textContent = d.phone; ccItems[0].href = 'tel:' + d.phone.replace(/[^+\d]/g,''); }
     if (ccItems[1] && d.email) { ccItems[1].textContent = d.email; ccItems[1].href = 'mailto:' + d.email; }
+    if (ccItems[2] && d.instagram) { ccItems[2].textContent = d.instagram; ccItems[2].href = 'https://instagram.com/' + d.instagram.replace('@',''); }
     // Price
     var priceEl = document.querySelector('.hp-val');
     if (priceEl && d.price) priceEl.textContent = d.price;
@@ -1279,6 +1280,18 @@ async function sbPatch(slug, body) {
     // Description
     var descEl = document.querySelector('.section-body');
     if (descEl && d.description) descEl.textContent = d.description;
+    // Section title (if previously edited and saved)
+    var secTitle = document.querySelector('.section-title');
+    if (secTitle && d.sectionTitle) secTitle.innerHTML = d.sectionTitle;
+    // Features (if previously edited and saved)
+    if (d.features) {
+      document.querySelectorAll('.feature-item').forEach(function(fi) {
+        var label = (fi.querySelector('.fi-label') || {}).textContent || '';
+        var key = label.toLowerCase().replace(/\s+/g,'_');
+        var valEl = fi.querySelector('.fi-val');
+        if (valEl && d.features[key]) valEl.textContent = d.features[key];
+      });
+    }
     // Update title
     document.title = (d.address || 'Property') + ' — Presented by Reel Estate Media';
     // Update inquiry label
@@ -1309,58 +1322,86 @@ async function sbPatch(slug, body) {
     if (d.photosFolder) {
       var fm = d.photosFolder.match(/drive\.google\.com\/drive\/folders\/([\w-]+)/);
       if (fm) {
-        var url = 'https://www.googleapis.com/drive/v3/files?q=%27'+fm[1]+'%27+in+parents+and+mimeType+contains+%27image%27&fields=files(id,name,thumbnailLink)&key='+GAPI_KEY+'&pageSize=20';
+        var url = 'https://www.googleapis.com/drive/v3/files?q=%27'+fm[1]+'%27+in+parents+and+mimeType+contains+%27image%27&fields=files(id,name,thumbnailLink)&key='+GAPI_KEY+'&pageSize=20&orderBy=name';
         var pr = await fetch(url);
         var pdata = await pr.json();
         if (pdata.files && pdata.files.length) {
-          var heroImg = document.querySelector('.hero-main-img');
-          if (heroImg && pdata.files[0]) {
-            heroImg.src = 'https://www.googleapis.com/drive/v3/files/'+pdata.files[0].id+'?alt=media&key='+GAPI_KEY;
+          // First photo goes to hero background
+          var heroBg = document.querySelector('.hero-bg');
+          if (heroBg && pdata.files[0]) {
+            heroBg.style.backgroundImage = 'url(https://www.googleapis.com/drive/v3/files/'+pdata.files[0].id+'?alt=media&key='+GAPI_KEY+')';
           }
-          var galleryItems = document.querySelectorAll('.gallery-item img');
+          // Remaining photos go to gallery cells
+          var galleryCells = document.querySelectorAll('.photo-cell');
           pdata.files.slice(1).forEach(function(f, i) {
-            if (galleryItems[i]) galleryItems[i].src = 'https://www.googleapis.com/drive/v3/files/'+f.id+'?alt=media&key='+GAPI_KEY;
+            if (galleryCells[i]) {
+              galleryCells[i].style.backgroundImage = 'url(https://www.googleapis.com/drive/v3/files/'+f.id+'?alt=media&key='+GAPI_KEY+')';
+              galleryCells[i].style.backgroundSize = 'cover';
+              galleryCells[i].style.backgroundPosition = 'center';
+            }
           });
         }
       }
     }
 
-    // Show edit toolbar if NOT published
+    // Show edit toolbar if NOT published (Supabase-loaded draft)
     if (!isPublished) {
-      enableEditMode();
+      enterSupabaseEditMode();
+    } else {
+      // PUBLISHED: completely lock the page
+      lockPublishedPage();
     }
   } catch(e) { console.warn('Failed to load property data:', e); }
 })();
 
-function enableEditMode() {
+function lockPublishedPage() {
+  // Remove ALL contenteditable attributes entirely
+  document.querySelectorAll('[contenteditable]').forEach(function(el) {
+    el.removeAttribute('contenteditable');
+  });
+  // Hide edit badge completely
+  var badge = document.getElementById('edit-badge');
+  if (badge) badge.style.display = 'none';
+  // Hide toolbar
+  var toolbar = document.getElementById('toolbar');
+  if (toolbar) toolbar.style.display = 'none';
+  // Remove editing class
+  document.body.classList.remove('editing');
+  // Hide video input
+  var vinput = document.getElementById('video-url-input');
+  if (vinput) vinput.style.display = 'none';
+  // Remove drop-zone overlays
+  document.querySelectorAll('.drop-zone').forEach(function(el) {
+    el.classList.remove('drop-zone');
+    el.removeAttribute('onclick');
+    el.removeAttribute('ondragover');
+    el.removeAttribute('ondrop');
+  });
+}
+
+function enterSupabaseEditMode() {
+  // Override the standalone edit mode — go straight to editing
+  isEditing = true;
   document.body.classList.add('editing');
   var toolbar = document.getElementById('toolbar');
   if (toolbar) toolbar.classList.add('visible');
-  // Make all contenteditable fields editable
+  // Enable contenteditable on all fields
   document.querySelectorAll('[contenteditable]').forEach(function(el) {
-    el.setAttribute('contenteditable', 'true');
+    el.contentEditable = 'true';
   });
-  // Add publish button to toolbar
-  var existingPub = document.getElementById('publish-btn');
-  if (!existingPub && toolbar) {
-    var pubBtn = document.createElement('button');
-    pubBtn.id = 'publish-btn';
-    pubBtn.textContent = '🚀 Publish Live';
-    pubBtn.style.cssText = 'background:linear-gradient(135deg,#b8975a,#d4af72);color:#0c0c0b;border:none;padding:8px 18px;border-radius:6px;font-weight:600;font-size:.8rem;cursor:pointer;font-family:Outfit,sans-serif;letter-spacing:.04em;margin-left:auto';
-    pubBtn.onclick = publishSite;
-    toolbar.appendChild(pubBtn);
-  }
-  // Add save draft button
-  var existingSave = document.getElementById('save-draft-btn');
-  if (!existingSave && toolbar) {
-    var saveBtn = document.createElement('button');
-    saveBtn.id = 'save-draft-btn';
-    saveBtn.textContent = '💾 Save Draft';
-    saveBtn.style.cssText = 'background:rgba(255,255,255,.1);color:#f5f3ee;border:1px solid rgba(255,255,255,.15);padding:8px 14px;border-radius:6px;font-weight:500;font-size:.78rem;cursor:pointer;font-family:Outfit,sans-serif;margin-left:8px';
-    saveBtn.onclick = saveDraft;
-    var pubBtn2 = document.getElementById('publish-btn');
-    if (pubBtn2) toolbar.insertBefore(saveBtn, pubBtn2);
-  }
+  // Show video URL input
+  var vinput = document.getElementById('video-url-input');
+  if (vinput) vinput.style.display = 'block';
+  // Hide the standalone edit badge (use toolbar instead)
+  var badge = document.getElementById('edit-badge');
+  if (badge) badge.style.display = 'none';
+  // Swap buttons: hide Save as HTML, show Save Draft + Publish
+  var saveHtmlBtn = document.getElementById('save-html-btn');
+  if (saveHtmlBtn) saveHtmlBtn.style.display = 'none';
+  var saveDraftBtn = document.getElementById('save-draft-btn');
+  if (saveDraftBtn) saveDraftBtn.style.display = '';
+  var publishBtn = document.getElementById('publish-btn');
+  if (publishBtn) publishBtn.style.display = '';
 }
 
 async function saveDraft() {
@@ -1372,18 +1413,13 @@ async function saveDraft() {
 }
 
 async function publishSite() {
-  if (!confirm('Publish this site live? Once published, visitors won\'t be able to edit it.')) return;
+  if (!confirm('Publish this site live? Once published, visitors will see a polished, non-editable page.\n\nYou can always re-save as draft later from the tracker.')) return;
   var data = collectPageData();
   data.published = true;
   await sbPatch(portalSlug, { data: data, updated_at: new Date().toISOString() });
   isPublished = true;
-  // Disable editing
-  document.querySelectorAll('[contenteditable]').forEach(function(el) {
-    el.setAttribute('contenteditable', 'false');
-  });
-  document.body.classList.remove('editing');
-  var toolbar = document.getElementById('toolbar');
-  if (toolbar) toolbar.classList.remove('visible');
+  isEditing = false;
+  lockPublishedPage();
   alert('Site published! Share this link:\n\nhttps://reelestatemedia.com/property-website.html#' + portalSlug);
 }
 
@@ -1392,18 +1428,28 @@ function collectPageData() {
   var city = document.querySelector('.hero-city');
   var fullAddress = (addr ? addr.textContent : '') + (city && city.textContent ? ', ' + city.textContent : '');
   var ccItems = document.querySelectorAll('.cc-item a');
+  // Collect feature items
+  var features = {};
+  document.querySelectorAll('.feature-item').forEach(function(fi) {
+    var label = (fi.querySelector('.fi-label') || {}).textContent || '';
+    var val = (fi.querySelector('.fi-val') || {}).textContent || '';
+    if (label) features[label.toLowerCase().replace(/\s+/g,'_')] = val;
+  });
   return {
     address: fullAddress,
     client: (document.querySelector('.cc-name') || {}).textContent || '',
     brokerage: (document.querySelector('.cc-brok') || {}).textContent || '',
     phone: ccItems[0] ? ccItems[0].textContent : '',
     email: ccItems[1] ? ccItems[1].textContent : '',
+    instagram: ccItems[2] ? ccItems[2].textContent : '',
     price: (document.querySelector('.hp-val') || {}).textContent || '',
     beds: (document.querySelectorAll('.hs-val')[0] || {}).textContent || '',
     baths: (document.querySelectorAll('.hs-val')[1] || {}).textContent || '',
     sqft: (document.querySelectorAll('.hs-val')[2] || {}).textContent || '',
     parking: (document.querySelectorAll('.hs-val')[3] || {}).textContent || '',
     description: (document.querySelector('.section-body') || {}).textContent || '',
+    sectionTitle: (document.querySelector('.section-title') || {}).innerHTML || '',
+    features: features,
     photosFolder: portalData ? portalData.photosFolder || '' : '',
     videoLink: portalData ? portalData.videoLink || '' : '',
     leadId: portalData ? portalData.leadId || '' : '',
@@ -1411,3 +1457,6 @@ function collectPageData() {
   };
 }
 </script>
+
+</body>
+</html>
