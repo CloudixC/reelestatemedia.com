@@ -143,6 +143,26 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
 .ba-label.before { left:10px; background:rgba(0,0,0,.6); color:#fff; }
 .ba-label.after { right:10px; background:var(--gold); color:var(--ink); }
 .ba-room-label { font-size:.85rem; font-weight:600; color:var(--ink); margin-bottom:8px; }
+
+/* CLIENT BRANDING */
+.client-brand { display:flex; align-items:center; gap:10px; padding:12px 16px; background:#fff; border:1px solid var(--border); border-radius:10px; margin-bottom:16px; }
+.client-brand img { width:40px; height:40px; border-radius:6px; object-fit:contain; border:1px solid var(--border); }
+.client-brand .cb-name { font-weight:600; font-size:.88rem; color:var(--ink); }
+.client-brand .cb-tag { font-size:.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
+.client-brand .cb-x { font-size:.7rem; color:var(--muted); margin:0 4px; }
+
+/* DOWNLOAD BUTTON */
+.btn-download-all { display:inline-flex; align-items:center; gap:8px; background:var(--teal); color:#fff; padding:10px 20px; border-radius:8px; border:none; font-size:.85rem; font-weight:600; cursor:pointer; font-family:inherit; transition:.15s; margin-bottom:12px; }
+.btn-download-all:hover { background:var(--teal-mid); }
+.btn-download-all:disabled { opacity:.5; cursor:wait; }
+
+/* COUNTDOWN */
+.countdown-bar { background:#fef3c7; border:1px solid #fbbf24; border-radius:8px; padding:10px 16px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+.countdown-bar .cd-label { font-size:.8rem; color:#92400e; font-weight:500; }
+.countdown-bar .cd-timer { font-size:.9rem; font-weight:700; color:#b45309; font-family:'Barlow Condensed',sans-serif; letter-spacing:.04em; }
+.countdown-bar.expired { background:#fee2e2; border-color:#fca5a5; }
+.countdown-bar.expired .cd-label { color:#991b1b; }
+.countdown-bar.expired .cd-timer { color:#dc2626; }
 .version-selector { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
 .version-selector label { font-size:.8rem; font-weight:600; color:var(--muted); white-space:nowrap; }
 .version-selector select { flex:1; padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-family:'Barlow',sans-serif; font-size:.85rem; background:#fff; color:var(--ink); cursor:pointer; outline:none; }
@@ -226,6 +246,7 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
   <div id="portal-content" style="display:none">
 
     <!-- SHOOT INFO -->
+    <div id="client-brand" class="client-brand" style="display:none"></div>
     <div class="shoot-card">
       <div class="shoot-client" id="p-client">Loading…</div>
       <div style="font-size:.8rem;color:var(--muted)" id="p-type-address"></div>
@@ -234,6 +255,9 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
 
     <!-- PROGRESS TIMELINE -->
     <div class="timeline" id="timeline"></div>
+
+    <!-- COUNTDOWN -->
+    <div class="countdown-bar" id="countdown-bar" style="display:none"></div>
 
     <!-- REVISION COUNTER -->
     <div class="revision-bar" id="revision-bar" style="display:none"></div>
@@ -245,6 +269,7 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
     <div id="photos-section" style="display:none">
       <div class="section-title">Photos</div>
       <div class="gallery-summary" id="gallery-summary"></div>
+      <div id="download-area" style="display:none"><button class="btn-download-all" id="download-all-btn" onclick="downloadAllPhotos()">⬇ Download All Photos</button></div>
       <div class="gallery-grid" id="gallery-grid"></div>
     </div>
 
@@ -300,32 +325,28 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
 </div>
 
 <script>
-var SB_URL='https://dgoiormpqixydbijuqoe.supabase.co';
-var SB_KEY='sb_publishable_nz-LREWZbxC0FaN8evKVlQ_ik4PffGj';
-var GAPI_KEY='AIzaSyCGePJn9JoVHDiaXaO1OWzvILFlxLYkH7Y';
-var ADMIN_SESSION_KEY='rem_portal_admin_session';
-var DEFAULT_ADMIN_HASH='1dbb38a3aae7bdf38a75b6591b0618ad2b90e669f2af7f6cd3b7e7b49b73a6d6';
-var isAdmin=false;
+var SB_URL='https://dgoiormpqixydbijuqoe.supabase.co',SB_KEY='sb_publishable_nz-LREWZbxC0FaN8evKVlQ_ik4PffGj',GAPI_KEY='AIzaSyCGePJn9JoVHDiaXaO1OWzvILFlxLYkH7Y';
+var ADMIN_SESSION_KEY='rem_portal_admin_session',DEFAULT_ADMIN_HASH='1dbb38a3aae7bdf38a75b6591b0618ad2b90e669f2af7f6cd3b7e7b49b73a6d6';
+var isAdmin=false,portalData=null,portalSlug='',ytPlayer=null,isVideoPortal=false,currentVersionIdx=-1,ytApiLoaded=false;
+var compareMode=false,comparePlayerA=null,comparePlayerB=null,compareIdxA=-1,compareIdxB=-1,replyingToIdx=-1,photoStatuses={};
 var STATUS_INFO={scheduled:{label:'Scheduled',emoji:'📅',color:'#0284c7',bg:'#e0f2fe'},shot:{label:'Shot',emoji:'📸',color:'#7c3aed',bg:'#ede9fe'},editing:{label:'Editing',emoji:'✂️',color:'#b45309',bg:'#fef9c3'},review:{label:'In Review',emoji:'🔍',color:'#d97706',bg:'#fef3c7'},revising:{label:'Revising',emoji:'🔄',color:'#e11d48',bg:'#ffe4e6'},approved:{label:'Approved',emoji:'👍',color:'#059669',bg:'#d1fae5'},delivered:{label:'Delivered',emoji:'✅',color:'#15803d',bg:'#dcfce7'}};
 var TIMELINE_ORDER=['scheduled','shot','editing','review','revising','approved','delivered'];
-var portalData=null,portalSlug='',ytPlayer=null,isVideoPortal=false,currentVersionIdx=-1,ytApiLoaded=false;
-var compareMode=false,comparePlayerA=null,comparePlayerB=null,compareIdxA=-1,compareIdxB=-1,replyingToIdx=-1;
-var photoStatuses={};
+var countdownInterval=null;
 
 async function sbGet(t,p){try{var r=await fetch(SB_URL+'/rest/v1/'+t+(p||''),{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});if(!r.ok)return null;return await r.json();}catch(e){return null;}}
-async function sbPost(t,b){try{await fetch(SB_URL+'/rest/v1/'+t,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify(b)});}catch(e){}}
 async function sbPatch(t,p,b){try{await fetch(SB_URL+'/rest/v1/'+t+p,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(b)});}catch(e){}}
+async function sbPost(t,b){try{await fetch(SB_URL+'/rest/v1/'+t,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify(b)});}catch(e){}}
 
-async function init(){var hash=window.location.hash.slice(1);if(!hash){showError();return;}portalSlug=hash;var rows=await sbGet('portal_data','?slug=eq.'+encodeURIComponent(portalSlug)+'&limit=1');if(rows&&rows.length){portalData=rows[0].data;portalData._approval=rows[0].approval||{};portalData._notes=rows[0].notes||{};photoStatuses=portalData._photoStatuses||rows[0].photo_statuses||{};}else{try{var json=decodeURIComponent(escape(atob(hash)));portalData=JSON.parse(json);}catch(e){showError();return;}}if(!portalData||(!portalData.key&&!portalData.client)){showError();return;}if(!portalData.key)portalData.key=portalSlug;if(sessionStorage.getItem(ADMIN_SESSION_KEY)===portalSlug){isAdmin=true;document.getElementById('admin-bar').style.display='flex';document.getElementById('admin-login-area').style.display='none';}render();}
+async function init(){var hash=window.location.hash.slice(1);if(!hash){showError();return;}portalSlug=hash;var rows=await sbGet('portal_data','?slug=eq.'+encodeURIComponent(portalSlug)+'&limit=1');if(rows&&rows.length){portalData=rows[0].data;portalData._approval=rows[0].approval||{};portalData._notes=rows[0].notes||{};photoStatuses=portalData._photoStatuses||{};}else{try{portalData=JSON.parse(decodeURIComponent(escape(atob(hash))));}catch(e){showError();return;}}if(!portalData||(!portalData.key&&!portalData.client)){showError();return;}if(!portalData.key)portalData.key=portalSlug;if(sessionStorage.getItem(ADMIN_SESSION_KEY)===portalSlug){isAdmin=true;document.getElementById('admin-bar').style.display='flex';document.getElementById('admin-login-area').style.display='none';}render();}
 function showError(){document.getElementById('error-screen').style.display='block';}
-function formatTime(s){var sec=Math.floor(s);var m=Math.floor(sec/60);sec=sec%60;return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');}
+function formatTime(s){var sec=Math.floor(s),m=Math.floor(sec/60);sec=sec%60;return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');}
 function seekTo(s){if(ytPlayer&&ytPlayer.seekTo){ytPlayer.seekTo(s,true);ytPlayer.pauseVideo();}}
 function getVersions(){if(portalData.versions&&portalData.versions.length)return portalData.versions.slice();if(portalData.drive)return[{url:portalData.drive,label:'Version 1'}];return[];}
 function getYtId(u){var m=u.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/);return m?m[1]:null;}
 function ensureYtApi(cb){if(ytApiLoaded){cb();return;}var t=document.createElement('script');t.src='https://www.youtube.com/iframe_api';document.head.appendChild(t);window.onYouTubeIframeAPIReady=function(){ytApiLoaded=true;cb();};}
 async function hashStr(s){var b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0');}).join('');}
 function getNotesForVersion(vi){return(portalData._notes||{})['v'+vi]||[];}
-async function saveNotesForVersion(vi,notes){var a=portalData._notes||{};a['v'+vi]=notes;portalData._notes=a;await sbPatch('portal_data','?slug=eq.'+encodeURIComponent(portalSlug),{notes:a,updated_at:new Date().toISOString()});}
+async function saveNotesForVersion(vi,n){var a=portalData._notes||{};a['v'+vi]=n;portalData._notes=a;await sbPatch('portal_data','?slug=eq.'+encodeURIComponent(portalSlug),{notes:a,updated_at:new Date().toISOString()});}
 function getApproval(){return portalData._approval||{};}
 async function saveApprovalData(d){portalData._approval=d;await sbPatch('portal_data','?slug=eq.'+encodeURIComponent(portalSlug),{approval:d,updated_at:new Date().toISOString()});}
 async function savePhotoStatuses(){await sbPatch('portal_data','?slug=eq.'+encodeURIComponent(portalSlug),{data:Object.assign({},portalData,{_photoStatuses:photoStatuses}),updated_at:new Date().toISOString()});}
@@ -335,89 +356,37 @@ function showAdminLogin(){document.getElementById('admin-gate').style.display='b
 async function loginAdmin(){var h=await hashStr(document.getElementById('admin-pw').value);if(h===DEFAULT_ADMIN_HASH){isAdmin=true;sessionStorage.setItem(ADMIN_SESSION_KEY,portalSlug);document.getElementById('admin-gate').style.display='none';document.getElementById('admin-bar').style.display='flex';document.getElementById('admin-login-area').style.display='none';document.getElementById('admin-error').style.display='none';document.getElementById('note-btn').textContent='Reply as Admin';renderNotes();renderApproval();renderGallery();}else{document.getElementById('admin-error').style.display='block';document.getElementById('admin-pw').value='';document.getElementById('admin-pw').focus();}}
 function logoutAdmin(){isAdmin=false;sessionStorage.removeItem(ADMIN_SESSION_KEY);document.getElementById('admin-bar').style.display='none';document.getElementById('admin-login-area').style.display='block';document.getElementById('admin-login-toggle').style.display='inline-block';document.getElementById('note-btn').textContent='Send Note';renderNotes();renderApproval();renderGallery();}
 
+/* CLIENT BRANDING */
+function renderClientBrand(){var el=document.getElementById('client-brand');var logo=portalData.clientLogo;var client=portalData.client;if(!logo){el.style.display='none';return;}el.style.display='flex';el.innerHTML='<img src="'+escHtml(logo)+'" alt="">'+'<div><div class="cb-name">'+escHtml(client||'')+'</div><div class="cb-tag">Client</div></div>'+'<span class="cb-x">×</span>'+'<div><div class="cb-name">Reel Estate Media</div><div class="cb-tag">Production</div></div>';}
+
+/* COUNTDOWN */
+function renderCountdown(){var el=document.getElementById('countdown-bar');var deadline=portalData.reviewDeadline;var ap=getApproval();if(!deadline||ap.approved){el.style.display='none';if(countdownInterval)clearInterval(countdownInterval);return;}var deadlineDate=new Date(deadline);var now=new Date();if(now>=deadlineDate){el.style.display='flex';el.className='countdown-bar expired';el.innerHTML='<span class="cd-label">Review window has expired</span><span class="cd-timer">Auto-approved</span>';if(!ap.approved){saveApprovalData({approved:true,date:deadlineDate.toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric'}),auto:true});renderApproval();renderTimeline();}return;}el.style.display='flex';el.className='countdown-bar';function update(){var diff=deadlineDate-new Date();if(diff<=0){clearInterval(countdownInterval);renderCountdown();return;}var d=Math.floor(diff/86400000),h=Math.floor((diff%86400000)/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);var parts=[];if(d)parts.push(d+'d');parts.push(String(h).padStart(2,'0')+'h');parts.push(String(m).padStart(2,'0')+'m');parts.push(String(s).padStart(2,'0')+'s');el.innerHTML='<span class="cd-label">⏰ Review deadline</span><span class="cd-timer">'+parts.join(' ')+'</span>';}update();if(countdownInterval)clearInterval(countdownInterval);countdownInterval=setInterval(update,1000);}
+
 /* TIMELINE */
 function renderTimeline(){var el=document.getElementById('timeline');var raw=portalData.status||'scheduled';var ci=TIMELINE_ORDER.indexOf(raw);if(ci===-1)ci=0;var ap=getApproval();if(ap.approved)ci=TIMELINE_ORDER.indexOf('approved');if(ap.changesRequested&&ci<TIMELINE_ORDER.indexOf('revising'))ci=TIMELINE_ORDER.indexOf('revising');var h='';TIMELINE_ORDER.forEach(function(k,i){var info=STATUS_INFO[k];var dc='timeline-dot',lc='timeline-label';if(i<ci){dc+=' done';lc+=' done';}else if(i===ci){dc+=' current';lc+=' current';}if(i>0)h+='<div class="timeline-line'+(i<=ci?' done':'')+'"></div>';h+='<div class="timeline-step"><div class="'+dc+'">'+(i<ci?'✓':info.emoji)+'</div><div class="'+lc+'">'+info.label+'</div></div>';});el.innerHTML=h;}
 function renderRevisionBar(){var el=document.getElementById('revision-bar');var v=getVersions();var max=portalData.maxRevisions||3;var used=Math.max(0,v.length-1);if(v.length<=1){el.style.display='none';return;}el.style.display='flex';var dots='';for(var i=0;i<max;i++){var c='rev-dot';if(i<used)c+=' used';else if(i===used)c+=' current';dots+='<span class="'+c+'"></span>';}var w='';if(used>=max)w='<span class="rev-warn">Additional revisions may incur a fee</span>';el.innerHTML='<div><span class="rev-label">Revisions: </span><span class="rev-count">'+used+' of '+max+' included</span> '+w+'</div><div class="revision-dots">'+dots+'</div>';}
 
 /* APPROVAL */
-function renderApproval(){var el=document.getElementById('approval-area');var ap=getApproval();var v=getVersions();if(!v.length){el.innerHTML='';return;}if(ap.approved){el.innerHTML='<div class="approved-banner"><h3>✅ Approved</h3><p>Approved on '+escHtml(ap.date||'')+'. Your final media is ready for delivery.</p></div>';renderTimeline();return;}if(ap.changesRequested&&!isAdmin){el.innerHTML='<div class="approval-box"><h3>🔄 Changes Requested</h3><p>You requested changes on '+escHtml(ap.date||'')+'. We\'re working on the next version!</p></div>';return;}if(!isAdmin){el.innerHTML='<div class="approval-box"><h3>Ready to approve?</h3><p>Review the current version. When you\'re happy, approve it. Need adjustments? Request changes and leave a note below.</p><div class="approval-btns"><button class="btn-approve" onclick="approveVersion()">✅ Approve</button><button class="btn-changes" onclick="requestChanges()">🔄 Request Changes</button></div></div>';}else{if(ap.changesRequested){el.innerHTML='<div class="approval-box" style="border-color:#f59e0b"><h3>🔄 Client Requested Changes</h3><p>Requested on '+escHtml(ap.date||'')+'. Upload a new version and clear when ready.</p><div class="approval-btns"><button class="btn-approve" onclick="clearChangeRequest()">✓ Clear — New Version Ready</button></div></div>';}else{el.innerHTML='<div style="font-size:.78rem;color:var(--muted);text-align:center;margin-bottom:16px">Waiting for client to review and approve.</div>';}}}
-async function approveVersion(){if(!confirm('Approve this version? This will finalize the project.'))return;await saveApprovalData({approved:true,date:new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric'})});renderApproval();renderTimeline();}
+function renderApproval(){var el=document.getElementById('approval-area');var ap=getApproval();var v=getVersions();if(!v.length){el.innerHTML='';return;}if(ap.approved){el.innerHTML='<div class="approved-banner"><h3>✅ Approved</h3><p>Approved on '+escHtml(ap.date||'')+'.'+(ap.auto?' (Auto-approved — review window expired)':' Your final media is ready for delivery.')+'</p></div>';renderTimeline();return;}if(ap.changesRequested&&!isAdmin){el.innerHTML='<div class="approval-box"><h3>🔄 Changes Requested</h3><p>You requested changes on '+escHtml(ap.date||'')+'. We\'re working on the next version!</p></div>';return;}if(!isAdmin){el.innerHTML='<div class="approval-box"><h3>Ready to approve?</h3><p>Review the current version. When you\'re happy, approve it. Need adjustments? Request changes.</p><div class="approval-btns"><button class="btn-approve" onclick="approveVersion()">✅ Approve</button><button class="btn-changes" onclick="requestChanges()">🔄 Request Changes</button></div></div>';}else{if(ap.changesRequested){el.innerHTML='<div class="approval-box" style="border-color:#f59e0b"><h3>🔄 Client Requested Changes</h3><p>Requested on '+escHtml(ap.date||'')+'. Upload a new version and clear when ready.</p><div class="approval-btns"><button class="btn-approve" onclick="clearChangeRequest()">✓ Clear — New Version Ready</button></div></div>';}else{el.innerHTML='<div style="font-size:.78rem;color:var(--muted);text-align:center;margin-bottom:16px">Waiting for client to review and approve.</div>';}}}
+async function approveVersion(){if(!confirm('Approve this version? This will finalize the project.'))return;await saveApprovalData({approved:true,date:new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric'})});renderApproval();renderTimeline();renderCountdown();}
 async function requestChanges(){await saveApprovalData({changesRequested:true,date:new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric'})});renderApproval();document.getElementById('note-input').focus();}
 async function clearChangeRequest(){await saveApprovalData({});renderApproval();}
 
-/* PHOTO GALLERY */
-async function loadPhotos(){
-  var folder=portalData.photosFolder;if(!folder)return;
-  var fMatch=folder.match(/drive\.google\.com\/drive\/folders\/([\w-]+)/);
-  if(!fMatch)return;
-  var folderId=fMatch[1];
-  document.getElementById('photos-section').style.display='block';
-  document.getElementById('gallery-grid').innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)">Loading photos…</div>';
-  try{
-    var url='https://www.googleapis.com/drive/v3/files?q=%27'+folderId+'%27+in+parents+and+mimeType+contains+%27image%27&fields=files(id,name,thumbnailLink,webContentLink)&key='+GAPI_KEY+'&pageSize=100';
-    var r=await fetch(url);var data=await r.json();
-    if(!data.files||!data.files.length){document.getElementById('gallery-grid').innerHTML='<div style="color:var(--muted);font-size:.8rem">No photos found in this folder. Make sure the folder is shared publicly.</div>';return;}
-    portalData._photos=data.files;
-    renderGallery();
-  }catch(e){document.getElementById('gallery-grid').innerHTML='<div style="color:#dc2626;font-size:.8rem">Could not load photos. Make sure the folder is shared as "Anyone with the link."</div>';}
-}
-function renderGallery(){
-  var photos=portalData._photos;if(!photos||!photos.length)return;
-  var grid=document.getElementById('gallery-grid');
-  var favCount=0,editCount=0,rejectCount=0;
-  grid.innerHTML=photos.map(function(p,i){
-    var st=photoStatuses[p.id]||'';
-    if(st==='fav')favCount++;if(st==='edit')editCount++;if(st==='reject')rejectCount++;
-    var cls='gallery-item'+(st?(' has-status'+(st==='reject'?' rejected':'')):'');
-    var thumb=p.thumbnailLink?p.thumbnailLink.replace('=s220','=s400'):'';
-    var full='https://drive.google.com/uc?export=view&id='+p.id;
-    return'<div class="'+cls+'"><img src="'+escHtml(thumb)+'" alt="'+escHtml(p.name)+'" onclick="openLightbox(\''+escHtml(full)+'\')" loading="lazy"><div class="gallery-actions">'
-      +'<button class="gallery-btn fav'+(st==='fav'?' active':'')+'" onclick="event.stopPropagation();setPhotoStatus(\''+p.id+'\',\'fav\')" title="Favorite">⭐</button>'
-      +'<button class="gallery-btn edit'+(st==='edit'?' active':'')+'" onclick="event.stopPropagation();setPhotoStatus(\''+p.id+'\',\'edit\')" title="Needs edit">✏️</button>'
-      +'<button class="gallery-btn reject'+(st==='reject'?' active':'')+'" onclick="event.stopPropagation();setPhotoStatus(\''+p.id+'\',\'reject\')" title="Remove">✕</button>'
-      +'</div></div>';
-  }).join('');
-  var summary=document.getElementById('gallery-summary');
-  summary.innerHTML='<span>'+photos.length+' photos</span>'+(favCount?'<span>⭐ '+favCount+' favorites</span>':'')+(editCount?'<span>✏️ '+editCount+' need edits</span>':'')+(rejectCount?'<span>✕ '+rejectCount+' removed</span>':'');
-}
-async function setPhotoStatus(id,status){
-  if(photoStatuses[id]===status)photoStatuses[id]='';else photoStatuses[id]=status;
-  renderGallery();await savePhotoStatuses();
-}
+/* PHOTOS */
+async function loadPhotos(){var folder=portalData.photosFolder;if(!folder)return;var fm=folder.match(/drive\.google\.com\/drive\/folders\/([\w-]+)/);if(!fm)return;document.getElementById('photos-section').style.display='block';document.getElementById('gallery-grid').innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)">Loading photos\u2026</div>';try{var url='https://www.googleapis.com/drive/v3/files?q=%27'+fm[1]+'%27+in+parents+and+mimeType+contains+%27image%27&fields=files(id,name,thumbnailLink,webContentLink)&key='+GAPI_KEY+'&pageSize=100';var r=await fetch(url);var data=await r.json();if(!data.files||!data.files.length){document.getElementById('gallery-grid').innerHTML='<div style="color:var(--muted);font-size:.8rem">No photos found. Make sure the folder is shared publicly.</div>';return;}portalData._photos=data.files;document.getElementById('download-area').style.display='block';renderGallery();}catch(e){document.getElementById('gallery-grid').innerHTML='<div style="color:#dc2626;font-size:.8rem">Could not load photos.</div>';}}
+function renderGallery(){var photos=portalData._photos;if(!photos||!photos.length)return;var grid=document.getElementById('gallery-grid');var fc=0,ec=0,rc=0;grid.innerHTML=photos.map(function(p,i){var st=photoStatuses[p.id]||'';if(st==='fav')fc++;if(st==='edit')ec++;if(st==='reject')rc++;var cls='gallery-item'+(st?(' has-status'+(st==='reject'?' rejected':'')):'');var thumb=p.thumbnailLink?p.thumbnailLink.replace('=s220','=s400'):'';var full='https://drive.google.com/uc?export=view&id='+p.id;return'<div class="'+cls+'"><img src="'+escHtml(thumb)+'" alt="'+escHtml(p.name)+'" onclick="openLightbox(\''+escHtml(full)+'\')" loading="lazy"><div class="gallery-actions"><button class="gallery-btn fav'+(st==='fav'?' active':'')+'" onclick="event.stopPropagation();setPhotoStatus(\''+p.id+'\',\'fav\')" title="Favorite">⭐</button><button class="gallery-btn edit'+(st==='edit'?' active':'')+'" onclick="event.stopPropagation();setPhotoStatus(\''+p.id+'\',\'edit\')" title="Needs edit">✏️</button><button class="gallery-btn reject'+(st==='reject'?' active':'')+'" onclick="event.stopPropagation();setPhotoStatus(\''+p.id+'\',\'reject\')" title="Remove">✕</button></div></div>';}).join('');document.getElementById('gallery-summary').innerHTML='<span>'+photos.length+' photos</span>'+(fc?'<span>⭐ '+fc+' favorites</span>':'')+(ec?'<span>✏️ '+ec+' need edits</span>':'')+(rc?'<span>✕ '+rc+' removed</span>':'');}
+async function setPhotoStatus(id,s){if(photoStatuses[id]===s)photoStatuses[id]='';else photoStatuses[id]=s;renderGallery();await savePhotoStatuses();}
 function openLightbox(src){document.getElementById('lightbox-img').src=src;document.getElementById('lightbox').style.display='flex';}
 
-/* BEFORE/AFTER SLIDER */
-function renderStaging(){
-  var pairs=portalData.stagingPairs;if(!pairs||!pairs.length)return;
-  document.getElementById('staging-section').style.display='block';
-  document.getElementById('staging-sliders').innerHTML=pairs.map(function(p,i){
-    return'<div style="margin-bottom:24px"><div class="ba-room-label">'+escHtml(p.label||('Room '+(i+1)))+'</div>'
-      +'<div class="ba-slider" id="ba-slider-'+i+'" onmousedown="startSlide(event,'+i+')" ontouchstart="startSlide(event,'+i+')">'
-      +'<img class="ba-before" src="'+escHtml(p.before)+'">'
-      +'<img class="ba-after" id="ba-after-'+i+'" src="'+escHtml(p.after)+'">'
-      +'<div class="ba-handle" id="ba-handle-'+i+'"></div>'
-      +'<span class="ba-label before">Before</span><span class="ba-label after">After</span>'
-      +'</div></div>';
-  }).join('');
-}
-function startSlide(e,i){
-  e.preventDefault();
-  var slider=document.getElementById('ba-slider-'+i);
-  function doSlide(ev){
-    var rect=slider.getBoundingClientRect();
-    var x=(ev.touches?ev.touches[0].clientX:ev.clientX)-rect.left;
-    var pct=Math.max(0,Math.min(100,(x/rect.width)*100));
-    document.getElementById('ba-after-'+i).style.clipPath='inset(0 0 0 '+pct+'%)';
-    document.getElementById('ba-handle-'+i).style.left=pct+'%';
-  }
-  function stopSlide(){document.removeEventListener('mousemove',doSlide);document.removeEventListener('mouseup',stopSlide);document.removeEventListener('touchmove',doSlide);document.removeEventListener('touchend',stopSlide);}
-  document.addEventListener('mousemove',doSlide);document.addEventListener('mouseup',stopSlide);
-  document.addEventListener('touchmove',doSlide,{passive:false});document.addEventListener('touchend',stopSlide);
-  doSlide(e);
-}
+/* DOWNLOAD ALL */
+async function downloadAllPhotos(){var photos=portalData._photos;if(!photos||!photos.length)return;var btn=document.getElementById('download-all-btn');btn.disabled=true;btn.textContent='⏳ Preparing download\u2026';try{var JSZip=window.JSZip;if(!JSZip){var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';document.head.appendChild(s);await new Promise(function(r){s.onload=r;});JSZip=window.JSZip;}var zip=new JSZip();var promises=photos.map(function(p,i){var url='https://drive.google.com/uc?export=download&id='+p.id;return fetch(url).then(function(r){return r.blob();}).then(function(blob){var ext=p.name.match(/\.\w+$/)?p.name.match(/\.\w+$/)[0]:'.jpg';zip.file((i+1)+'-'+p.name,blob);}).catch(function(){});});await Promise.all(promises);var content=await zip.generateAsync({type:'blob'});var a=document.createElement('a');a.href=URL.createObjectURL(content);a.download=(portalData.client||'photos')+'-listing-media.zip';a.click();URL.revokeObjectURL(a.href);}catch(e){alert('Download failed. Try downloading from Google Drive directly.');}btn.disabled=false;btn.textContent='⬇ Download All Photos';}
+
+/* STAGING */
+function renderStaging(){var pairs=portalData.stagingPairs;if(!pairs||!pairs.length)return;document.getElementById('staging-section').style.display='block';document.getElementById('staging-sliders').innerHTML=pairs.map(function(p,i){return'<div style="margin-bottom:24px"><div class="ba-room-label">'+escHtml(p.label||('Room '+(i+1)))+'</div><div class="ba-slider" id="ba-slider-'+i+'" onmousedown="startSlide(event,'+i+')" ontouchstart="startSlide(event,'+i+')"><img class="ba-before" src="'+escHtml(p.before)+'"><img class="ba-after" id="ba-after-'+i+'" src="'+escHtml(p.after)+'"><div class="ba-handle" id="ba-handle-'+i+'"></div><span class="ba-label before">Before</span><span class="ba-label after">After</span></div></div>';}).join('');}
+function startSlide(e,i){e.preventDefault();var sl=document.getElementById('ba-slider-'+i);function doS(ev){var r=sl.getBoundingClientRect();var x=(ev.touches?ev.touches[0].clientX:ev.clientX)-r.left;var p=Math.max(0,Math.min(100,(x/r.width)*100));document.getElementById('ba-after-'+i).style.clipPath='inset(0 0 0 '+p+'%)';document.getElementById('ba-handle-'+i).style.left=p+'%';}function stop(){document.removeEventListener('mousemove',doS);document.removeEventListener('mouseup',stop);document.removeEventListener('touchmove',doS);document.removeEventListener('touchend',stop);}document.addEventListener('mousemove',doS);document.addEventListener('mouseup',stop);document.addEventListener('touchmove',doS,{passive:false});document.addEventListener('touchend',stop);doS(e);}
 
 /* VIDEO */
-function loadVideo(url,vi){compareMode=false;currentVersionIdx=vi;ytPlayer=null;var db=document.getElementById('drive-box');var ytId=getYtId(url);var fm=url.match(/drive\.google\.com\/file\/d\/([\w-]+)/);var om=url.match(/drive\.google\.com\/open\?id=([\w-]+)/);var vm=url.match(/vimeo\.com\/(\d+)/);var vs=getVersions();var sh='';if(vs.length>1){var opts=vs.slice().reverse().map(function(v,ri){var oi=vs.length-1-ri;var sel=oi===vi?' selected':'';var lt=oi===vs.length-1?' (latest)':'';return'<option value="'+oi+'"'+sel+'>'+escHtml(v.label)+lt+'</option>';}).join('');sh='<div class="version-selector"><label>🎬 Version:</label><select onchange="switchVersion(parseInt(this.value))">'+opts+'</select></div>';}var cb=vs.length>1?'<button class="btn-compare" onclick="enterCompareMode()">⚖️ Compare</button> ':'';var ph='',bh='';if(ytId){isVideoPortal=true;ph='<div class="video-wrapper"><div id="yt-player"></div></div>';bh='<a href="'+escHtml(url)+'" class="btn-download" target="_blank">↗ YouTube</a>';ensureYtApi(function(){setTimeout(function(){ytPlayer=new YT.Player('yt-player',{videoId:ytId,playerVars:{rel:0,fs:1,vq:'hd1080'},width:'100%',height:'100%'});},50);});}else if(vm){isVideoPortal=true;ph='<div class="video-wrapper"><iframe src="https://player.vimeo.com/video/'+vm[1]+'?title=0&byline=0&portrait=0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>';bh='<a href="'+escHtml(url)+'" class="btn-download" target="_blank">↗ Vimeo</a>';}else if(fm||om){isVideoPortal=true;var fid=fm?fm[1]:om[1];ph='<div class="video-wrapper"><iframe src="https://drive.google.com/file/d/'+fid+'/preview" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>';bh='<a href="https://drive.google.com/uc?export=download&id='+fid+'" class="btn-download" target="_blank">⬇ Download</a> <a href="'+escHtml(url)+'" class="btn-download" target="_blank" style="background:var(--teal-mid)">↗ Drive</a>';}else{db.innerHTML='<div class="drive-box-icon">📁</div><div class="drive-box-title">Your listing media is ready</div><div class="drive-box-sub">Click below to open your Google Drive folder.</div><a href="'+escHtml(url)+'" target="_blank" class="btn-drive">Open Drive Folder</a>';renderNotes();return;}db.innerHTML=sh+ph+'<div class="desktop-tip">💡 <strong>For the best experience, review on a desktop</strong> so you can change the video quality to maximum.</div><div style="text-align:center;margin-top:12px">'+cb+bh+'</div>';if(isVideoPortal)document.getElementById('note-input').placeholder='Pause the video and leave a note \u2014 the timestamp will be saved automatically.';if(isAdmin)document.getElementById('note-btn').textContent='Reply as Admin';renderNotes();}
+function loadVideo(url,vi){compareMode=false;currentVersionIdx=vi;ytPlayer=null;var db=document.getElementById('drive-box');var ytId=getYtId(url);var fm=url.match(/drive\.google\.com\/file\/d\/([\w-]+)/);var om=url.match(/drive\.google\.com\/open\?id=([\w-]+)/);var vm=url.match(/vimeo\.com\/(\d+)/);var vs=getVersions();var sh='';if(vs.length>1){var opts=vs.slice().reverse().map(function(v,ri){var oi=vs.length-1-ri;return'<option value="'+oi+'"'+(oi===vi?' selected':'')+'>'+escHtml(v.label)+(oi===vs.length-1?' (latest)':'')+'</option>';}).join('');sh='<div class="version-selector"><label>🎬 Version:</label><select onchange="switchVersion(parseInt(this.value))">'+opts+'</select></div>';}var cb=vs.length>1?'<button class="btn-compare" onclick="enterCompareMode()">⚖️ Compare</button> ':'';var ph='',bh='';if(ytId){isVideoPortal=true;ph='<div class="video-wrapper"><div id="yt-player"></div></div>';bh='<a href="'+escHtml(url)+'" class="btn-download" target="_blank">↗ YouTube</a>';ensureYtApi(function(){setTimeout(function(){ytPlayer=new YT.Player('yt-player',{videoId:ytId,playerVars:{rel:0,fs:1,vq:'hd1080'},width:'100%',height:'100%'});},50);});}else if(vm){isVideoPortal=true;ph='<div class="video-wrapper"><iframe src="https://player.vimeo.com/video/'+vm[1]+'?title=0&byline=0&portrait=0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>';bh='<a href="'+escHtml(url)+'" class="btn-download" target="_blank">↗ Vimeo</a>';}else if(fm||om){isVideoPortal=true;var fid=fm?fm[1]:om[1];ph='<div class="video-wrapper"><iframe src="https://drive.google.com/file/d/'+fid+'/preview" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>';bh='<a href="https://drive.google.com/uc?export=download&id='+fid+'" class="btn-download" target="_blank">⬇ Download</a> <a href="'+escHtml(url)+'" class="btn-download" target="_blank" style="background:var(--teal-mid)">↗ Drive</a>';}else{db.innerHTML='<div class="drive-box-icon">📁</div><div class="drive-box-title">Your listing media is ready</div><a href="'+escHtml(url)+'" target="_blank" class="btn-drive">Open Drive Folder</a>';renderNotes();return;}db.innerHTML=sh+ph+'<div class="desktop-tip">💡 <strong>For the best experience, review on a desktop</strong> for maximum quality.</div><div style="text-align:center;margin-top:12px">'+cb+bh+'</div>';if(isVideoPortal)document.getElementById('note-input').placeholder='Pause the video and leave a note \u2014 the timestamp will be saved automatically.';if(isAdmin)document.getElementById('note-btn').textContent='Reply as Admin';renderNotes();}
 function switchVersion(i){var v=getVersions();if(v[i])loadVideo(v[i].url,i);}
 
 /* COMPARE */
@@ -431,7 +400,7 @@ function syncRestart(){if(!comparePlayerA||!comparePlayerB)return;comparePlayerA
 function setAudio(m){document.querySelectorAll('.audio-btn').forEach(function(b){b.classList.remove('active');});var el=document.getElementById('audio-'+m);if(el)el.classList.add('active');if(!comparePlayerA||!comparePlayerB)return;switch(m){case'a':comparePlayerA.unMute();comparePlayerA.setVolume(100);comparePlayerB.mute();break;case'b':comparePlayerA.mute();comparePlayerB.unMute();comparePlayerB.setVolume(100);break;case'both':comparePlayerA.unMute();comparePlayerA.setVolume(100);comparePlayerB.unMute();comparePlayerB.setVolume(100);break;case'mute':comparePlayerA.mute();comparePlayerB.mute();break;}}
 
 /* RENDER */
-function render(){var d=portalData;document.title=(d.client||'Client')+' \u2014 Reel Estate Media Portal';document.getElementById('portal-content').style.display='block';document.getElementById('p-client').textContent=d.client||'Your Listing';document.getElementById('p-type-address').textContent=[d.type,d.address].filter(Boolean).join(' \u00b7 ');var meta=[];if(d.date)meta.push('<div class="shoot-meta-item">📅 <strong>'+d.date+(d.time?' @ '+d.time:'')+'</strong></div>');if(d.status){var st=STATUS_INFO[d.status]||STATUS_INFO.delivered;meta.push('<div class="shoot-meta-item"><span class="status-chip" style="background:'+st.bg+';color:'+st.color+'">'+st.emoji+' '+st.label+'</span></div>');}document.getElementById('p-meta').innerHTML=meta.join('');renderTimeline();renderRevisionBar();renderApproval();var vs=getVersions();if(vs.length)loadVideo(vs[vs.length-1].url,vs.length-1);else{document.getElementById('drive-box').innerHTML='<div class="drive-box-icon">⏳</div><div class="drive-box-title">Files coming soon</div><div class="drive-box-sub">Your media is still being prepared.</div>';renderNotes();}loadPhotos();renderStaging();}
+function render(){var d=portalData;document.title=(d.client||'Client')+' \u2014 Reel Estate Media Portal';document.getElementById('portal-content').style.display='block';document.getElementById('p-client').textContent=d.client||'Your Listing';document.getElementById('p-type-address').textContent=[d.type,d.address].filter(Boolean).join(' \u00b7 ');var meta=[];if(d.date)meta.push('<div class="shoot-meta-item">📅 <strong>'+d.date+(d.time?' @ '+d.time:'')+'</strong></div>');if(d.status){var st=STATUS_INFO[d.status]||STATUS_INFO.delivered;meta.push('<div class="shoot-meta-item"><span class="status-chip" style="background:'+st.bg+';color:'+st.color+'">'+st.emoji+' '+st.label+'</span></div>');}document.getElementById('p-meta').innerHTML=meta.join('');renderClientBrand();renderTimeline();renderCountdown();renderRevisionBar();renderApproval();var vs=getVersions();if(vs.length)loadVideo(vs[vs.length-1].url,vs.length-1);else{document.getElementById('drive-box').innerHTML='<div class="drive-box-icon">⏳</div><div class="drive-box-title">Files coming soon</div><div class="drive-box-sub">Your media is still being prepared.</div>';renderNotes();}loadPhotos();renderStaging();}
 
 /* NOTES */
 function renderNotes(){var notes=getNotesForVersion(currentVersionIdx);var list=document.getElementById('notes-list');var vs=getVersions();var vl=vs[currentVersionIdx]?vs[currentVersionIdx].label:'';if(!notes.length){list.innerHTML='<div style="font-size:.8rem;color:var(--muted);padding:8px 0">No notes yet for '+escHtml(vl||'this version')+'. '+(isVideoPortal?'Pause the video and leave feedback below.':'Leave a note below.')+'</div>';return;}var html='';notes.forEach(function(n,idx){if(n.replyTo!==undefined&&n.replyTo!==null)return;var ia=n.from==='admin',ir=n.resolved===true;var cls=ia?'note-item admin-reply':'note-item';if(ir)cls+=' resolved';var fh=ia?'<div class="note-from from-admin">Reel Estate Media</div>':'<div class="note-from from-client">'+escHtml(portalData.client||'Client')+'</div>';var ts='';if(n.videoTime!==undefined&&n.videoTime!==null)ts='<span class="note-timestamp" onclick="seekTo('+n.videoTime+')" title="Jump">▶ '+formatTime(n.videoTime)+'</span>';var har=false;notes.forEach(function(r){if(r.replyTo===idx)har=true;});var aa=ir||har;var cd=isAdmin||(!ia&&!aa);var dh=cd?'<button class="note-delete" onclick="deleteNote('+idx+')" title="Delete">🗑</button>':'';var rb=isAdmin&&!ia?' <button class="btn-reply" onclick="startReply('+idx+')">↩ Reply</button>':'';var ch='';if(!ia){if(isAdmin){var bc=ir?'check-box checked':'check-box';ch='<button class="note-check" onclick="toggleResolved('+idx+')"><span class="'+bc+'">'+(ir?'✓':'')+'</span>'+(ir?'Done':'Mark done')+'</button> ';}else if(ir){ch='<span class="resolved-label">✓ Done</span> ';}}html+='<div class="'+cls+'">'+fh+ts+'<span class="note-text">'+escHtml(n.text)+'</span><div class="note-item-meta">'+ch+'<span>'+(n.date||'')+'</span>'+rb+dh+'</div></div>';notes.forEach(function(r,ri){if(r.replyTo!==idx)return;var ra=r.from==='admin';var rc=ra?'note-item admin-reply':'note-item';var rf=ra?'<div class="note-from from-admin">Reel Estate Media</div>':'<div class="note-from from-client">'+escHtml(portalData.client||'Client')+'</div>';var rd=(isAdmin||!ra)?'<button class="note-delete" onclick="deleteNote('+ri+')" title="Delete">🗑</button>':'';html+='<div class="note-reply-wrap"><div class="'+rc+'">'+rf+escHtml(r.text)+'<div class="note-item-meta"><span>'+(r.date||'')+'</span>'+rd+'</div></div></div>';});if(replyingToIdx===idx)html+='<div class="note-reply-input" id="reply-input-'+idx+'"><input type="text" id="reply-text-'+idx+'" placeholder="Write a reply\u2026" onkeydown="if(event.key===\'Enter\')sendReply('+idx+')"><button onclick="sendReply('+idx+')">Send</button></div>';});list.innerHTML=html;if(replyingToIdx>=0){var ri=document.getElementById('reply-text-'+replyingToIdx);if(ri)ri.focus();}}
