@@ -13,8 +13,6 @@
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); min-height:100vh; }
-
-/* HEADER */
 .header { background:var(--teal); padding:24px 40px; position:relative; overflow:hidden; }
 .header::after { content:"REM"; position:absolute; right:-10px; top:50%; transform:translateY(-50%); font-family:'Playfair Display',serif; font-size:8rem; font-weight:900; color:rgba(255,255,255,.04); pointer-events:none; }
 .header-inner { max-width:1100px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; position:relative; z-index:1; }
@@ -26,28 +24,57 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
 .portal-label { font-family:'Playfair Display',serif; font-style:italic; font-size:.85rem; color:var(--gold-light); display:block; }
 .portal-sub { font-size:.68rem; color:rgba(255,255,255,.4); font-family:'Barlow Condensed',sans-serif; letter-spacing:.1em; text-transform:uppercase; }
 .gold-rule { height:3px; background:linear-gradient(90deg,var(--gold),var(--gold-light) 50%,transparent); }
-
-/* MAIN */
 .main { max-width:1100px; margin:0 auto; padding:32px 24px 64px; }
-
-/* SHOOT CARD */
 .shoot-card { background:var(--cream); border-radius:14px; padding:28px 32px; margin-bottom:24px; box-shadow:0 4px 24px rgba(0,0,0,.08); }
 .shoot-client { font-family:'Playfair Display',serif; font-size:1.6rem; font-weight:700; margin-bottom:4px; }
 .shoot-meta { display:flex; gap:20px; flex-wrap:wrap; margin-top:12px; }
 .shoot-meta-item { display:flex; align-items:center; gap:6px; font-size:.82rem; color:var(--muted); }
 .shoot-meta-item strong { color:var(--ink); font-weight:600; }
 .status-chip { display:inline-flex; align-items:center; gap:5px; padding:4px 12px; border-radius:20px; font-size:.75rem; font-weight:700; }
-
-/* FILES */
 .section-title { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
 .section-title::after { content:""; flex:1; height:1px; background:var(--border); }
+
+/* PROGRESS TIMELINE */
+.timeline { display:flex; align-items:center; margin-bottom:24px; padding:16px 20px; background:var(--cream); border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.05); }
+.timeline-step { display:flex; flex-direction:column; align-items:center; flex:1; position:relative; }
+.timeline-dot { width:28px; height:28px; border-radius:50%; border:2px solid var(--border); background:#fff; display:flex; align-items:center; justify-content:center; font-size:.75rem; z-index:1; transition:.2s; }
+.timeline-dot.active { border-color:var(--teal); background:var(--teal); color:#fff; }
+.timeline-dot.done { border-color:var(--teal); background:var(--teal-pale); color:var(--teal); }
+.timeline-dot.current { border-color:var(--gold); background:var(--gold); color:#fff; box-shadow:0 0 0 4px rgba(201,168,76,.25); }
+.timeline-label { font-size:.65rem; font-weight:600; color:var(--muted); margin-top:6px; text-align:center; text-transform:uppercase; letter-spacing:.04em; }
+.timeline-label.current { color:var(--gold); font-weight:700; }
+.timeline-label.done { color:var(--teal); }
+.timeline-line { flex:1; height:2px; background:var(--border); margin:0 -4px; margin-top:-16px; }
+.timeline-line.done { background:var(--teal); }
+
+/* REVISION COUNTER */
+.revision-bar { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; background:#fff; border:1px solid var(--border); border-radius:8px; margin-bottom:16px; font-size:.8rem; }
+.revision-bar .rev-label { color:var(--muted); font-weight:500; }
+.revision-bar .rev-count { font-weight:700; color:var(--ink); }
+.revision-bar .rev-warn { color:#dc2626; font-weight:600; font-size:.75rem; }
+.revision-dots { display:flex; gap:4px; }
+.revision-dots .rev-dot { width:10px; height:10px; border-radius:50%; border:2px solid var(--border); }
+.revision-dots .rev-dot.used { background:var(--teal); border-color:var(--teal); }
+.revision-dots .rev-dot.current { background:var(--gold); border-color:var(--gold); }
+
+/* APPROVAL */
+.approval-box { background:var(--cream); border:2px solid var(--border); border-radius:12px; padding:20px 24px; margin-bottom:24px; text-align:center; }
+.approval-box h3 { font-family:'Playfair Display',serif; font-size:1rem; margin-bottom:8px; }
+.approval-box p { font-size:.82rem; color:var(--muted); margin-bottom:16px; line-height:1.5; }
+.approval-btns { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+.btn-approve { padding:10px 24px; background:var(--teal); color:#fff; border:none; border-radius:8px; font-size:.85rem; font-weight:700; cursor:pointer; font-family:inherit; transition:.15s; }
+.btn-approve:hover { background:var(--teal-mid); }
+.btn-changes { padding:10px 24px; background:#fff; color:var(--ink); border:2px solid var(--border); border-radius:8px; font-size:.85rem; font-weight:600; cursor:pointer; font-family:inherit; transition:.15s; }
+.btn-changes:hover { border-color:var(--teal); }
+.approved-banner { background:#dcfce7; border:2px solid #86efac; border-radius:12px; padding:20px 24px; margin-bottom:24px; text-align:center; }
+.approved-banner h3 { font-family:'Playfair Display',serif; color:#15803d; font-size:1.1rem; margin-bottom:4px; }
+.approved-banner p { font-size:.8rem; color:#166534; }
 
 /* VIDEO PLAYER */
 .video-wrapper { position:relative; width:100%; padding-bottom:56.25%; border-radius:12px; overflow:hidden; background:#000; box-shadow:0 4px 24px rgba(0,0,0,.15); margin-bottom:16px; }
 .video-wrapper iframe, .video-wrapper video { position:absolute; top:0; left:0; width:100%; height:100%; border:none; }
 .btn-download { display:inline-flex; align-items:center; gap:8px; background:var(--teal); color:#fff; padding:10px 22px; border-radius:8px; text-decoration:none; font-weight:600; font-size:.85rem; transition:.15s; margin-bottom:24px; }
 .btn-download:hover { background:var(--teal-mid); }
-
 .drive-box { background:#fff; border:2px solid var(--border); border-radius:12px; padding:20px 24px; margin-bottom:24px; text-align:center; }
 .drive-box-icon { font-size:2.5rem; margin-bottom:8px; }
 .drive-box-title { font-weight:600; font-size:.95rem; margin-bottom:4px; }
@@ -79,17 +106,6 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
 .note-item-meta { font-size:.7rem; color:var(--muted); margin-top:4px; display:flex; align-items:center; gap:8px; }
 .note-delete { background:none; border:none; color:var(--muted); cursor:pointer; font-size:.75rem; padding:2px 4px; opacity:.5; transition:.15s; }
 .note-delete:hover { opacity:1; color:#dc2626; }
-
-/* ADMIN LOGIN */
-.admin-bar { background:var(--gold); padding:8px 16px; border-radius:8px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; }
-.admin-bar span { font-size:.78rem; font-weight:700; color:var(--ink); }
-.admin-bar button { background:var(--teal); color:#fff; border:none; border-radius:6px; padding:4px 12px; font-size:.72rem; font-weight:600; cursor:pointer; font-family:inherit; }
-.admin-login-btn { background:none; border:1px solid var(--border); border-radius:6px; padding:4px 12px; font-size:.72rem; color:var(--muted); cursor:pointer; font-family:inherit; margin-top:8px; }
-.admin-login-btn:hover { border-color:var(--teal); color:var(--teal); }
-.admin-gate { background:var(--cream); border:1px solid var(--border); border-radius:10px; padding:16px 20px; margin-bottom:16px; text-align:center; }
-.admin-gate input { padding:8px 12px; border:1px solid var(--border); border-radius:6px; font-size:.85rem; font-family:inherit; margin-right:6px; outline:none; }
-.admin-gate input:focus { border-color:var(--teal); }
-.admin-gate .admin-submit { padding:8px 16px; background:var(--teal); color:#fff; border:none; border-radius:6px; font-size:.82rem; font-weight:600; cursor:pointer; font-family:inherit; }
 .note-timestamp { display:inline-block; background:var(--teal); color:#fff; font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:4px; cursor:pointer; margin-right:6px; font-family:'Barlow Condensed',sans-serif; letter-spacing:.04em; }
 .note-timestamp:hover { background:var(--teal-mid); }
 .desktop-tip { background:var(--teal-pale); border:1px solid var(--border); border-radius:8px; padding:10px 14px; font-size:.78rem; color:var(--muted); margin-top:12px; text-align:center; line-height:1.5; }
@@ -98,12 +114,6 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
 .version-selector label { font-size:.8rem; font-weight:600; color:var(--muted); white-space:nowrap; }
 .version-selector select { flex:1; padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-family:'Barlow',sans-serif; font-size:.85rem; background:#fff; color:var(--ink); cursor:pointer; outline:none; }
 .version-selector select:focus { border-color:var(--teal); box-shadow:0 0 0 3px rgba(26,77,62,.07); }
-
-/* COMPARISON MODE */
-.compare-bar { display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
-.compare-bar .btn-compare { padding:7px 14px; border-radius:8px; font-family:'Barlow',sans-serif; font-size:.8rem; font-weight:600; cursor:pointer; transition:.15s; border:1px solid var(--teal); background:none; color:var(--teal); }
-.compare-bar .btn-compare.active { background:var(--teal); color:#fff; }
-.compare-bar .btn-compare:hover { background:var(--teal-mid); color:#fff; }
 .compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
 .compare-grid .compare-col { text-align:center; }
 .compare-grid .compare-label { font-size:.75rem; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:.06em; }
@@ -113,22 +123,15 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
 .audio-controls .audio-btn.active { background:var(--teal); color:#fff; border-color:var(--teal); }
 .compare-playback { display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:12px; }
 .compare-playback button { padding:8px 18px; border-radius:8px; font-size:.82rem; font-weight:700; cursor:pointer; border:none; font-family:'Barlow',sans-serif; }
-
-@media(max-width:600px) {
-  .compare-grid { grid-template-columns:1fr; }
-  /* Fullscreen compare on mobile */
-  .drive-box.compare-active {
-    position:fixed; top:0; left:0; right:0; bottom:0; z-index:9999;
-    background:#000; border:none; border-radius:0; margin:0; padding:8px;
-    display:flex; flex-direction:column; justify-content:center;
-    overflow-y:auto;
-  }
-  .drive-box.compare-active .compare-grid { gap:6px; }
-  .drive-box.compare-active .video-wrapper { border-radius:6px; margin-bottom:4px; }
-  .drive-box.compare-active .compare-label { color:#999; }
-  .drive-box.compare-active .compare-playback button { padding:6px 14px; font-size:.75rem; }
-  .drive-box.compare-active .audio-controls .audio-btn { padding:4px 8px; font-size:.7rem; }
-}
+.admin-bar { background:var(--gold); padding:8px 16px; border-radius:8px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; }
+.admin-bar span { font-size:.78rem; font-weight:700; color:var(--ink); }
+.admin-bar button { background:var(--teal); color:#fff; border:none; border-radius:6px; padding:4px 12px; font-size:.72rem; font-weight:600; cursor:pointer; font-family:inherit; }
+.admin-login-btn { background:none; border:1px solid var(--border); border-radius:6px; padding:4px 12px; font-size:.72rem; color:var(--muted); cursor:pointer; font-family:inherit; margin-top:8px; }
+.admin-login-btn:hover { border-color:var(--teal); color:var(--teal); }
+.admin-gate { background:var(--cream); border:1px solid var(--border); border-radius:10px; padding:16px 20px; margin-bottom:16px; text-align:center; }
+.admin-gate input { padding:8px 12px; border:1px solid var(--border); border-radius:6px; font-size:.85rem; font-family:inherit; margin-right:6px; outline:none; }
+.admin-gate input:focus { border-color:var(--teal); }
+.admin-gate .admin-submit { padding:8px 16px; background:var(--teal); color:#fff; border:none; border-radius:6px; font-size:.82rem; font-weight:600; cursor:pointer; font-family:inherit; }
 .note-input { width:100%; border:1px solid var(--border); border-radius:8px; padding:10px 14px; font-family:'Barlow',sans-serif; font-size:.85rem; resize:vertical; min-height:80px; outline:none; transition:.15s; }
 .note-input:focus { border-color:var(--teal); box-shadow:0 0 0 3px rgba(26,77,62,.07); }
 .note-input::placeholder { color:#b0c4bc; }
@@ -136,24 +139,28 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
 .btn-note:hover { background:var(--teal-mid); }
 .btn-note:disabled { opacity:.5; pointer-events:none; }
 .note-success { display:none; color:#15803d; font-size:.78rem; margin-top:6px; }
-
-/* FOOTER */
 .footer { background:var(--teal); padding:18px 40px; position:relative; }
 .footer::before { content:""; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--gold),var(--gold-light),var(--gold)); }
 .footer-inner { max-width:1100px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; }
 .footer-copy { font-family:'Playfair Display',serif; font-style:italic; font-size:.8rem; color:rgba(255,255,255,.6); }
 .footer-tag { font-family:'Barlow Condensed',sans-serif; font-size:.6rem; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); }
-
-/* ERROR */
 .error-screen { text-align:center; padding:80px 24px; }
 .error-icon { font-size:3rem; margin-bottom:16px; }
 .error-title { font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:700; margin-bottom:8px; }
 .error-sub { font-size:.85rem; color:var(--muted); }
-
 @media(max-width:600px) {
   .header { padding:18px 20px; }
   .main { padding:20px 16px 48px; }
   .shoot-card { padding:20px; }
+  .compare-grid { grid-template-columns:1fr; }
+  .drive-box.compare-active { position:fixed; top:0; left:0; right:0; bottom:0; z-index:9999; background:#000; border:none; border-radius:0; margin:0; padding:8px; display:flex; flex-direction:column; justify-content:center; overflow-y:auto; }
+  .drive-box.compare-active .compare-grid { gap:6px; }
+  .drive-box.compare-active .video-wrapper { border-radius:6px; margin-bottom:4px; }
+  .drive-box.compare-active .compare-label { color:#999; }
+  .drive-box.compare-active .compare-playback button { padding:6px 14px; font-size:.75rem; }
+  .drive-box.compare-active .audio-controls .audio-btn { padding:4px 8px; font-size:.7rem; }
+  .timeline { flex-wrap:wrap; gap:4px; padding:12px 14px; }
+  .timeline-label { font-size:.58rem; }
 }
 </style>
 </head>
@@ -175,6 +182,7 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
   </div>
 </div>
 <div class="gold-rule"></div>
+<div class="gold-rule"></div>
 
 <div class="main" id="main">
   <div class="error-screen" id="error-screen" style="display:none">
@@ -191,16 +199,22 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
       <div class="shoot-meta" id="p-meta"></div>
     </div>
 
+    <!-- PROGRESS TIMELINE -->
+    <div class="timeline" id="timeline"></div>
+
+    <!-- REVISION COUNTER -->
+    <div class="revision-bar" id="revision-bar" style="display:none"></div>
+
+    <!-- APPROVAL -->
+    <div id="approval-area"></div>
+
     <!-- FILES -->
     <div class="section-title">Your Files</div>
     <div class="drive-box" id="drive-box">
       <div class="drive-box-icon">📁</div>
       <div class="drive-box-title">Your listing media is ready</div>
-      <div class="drive-box-sub">Click below to open your Google Drive folder. You can preview, download, and share all photos and videos from your shoot.</div>
-      <a id="drive-link" href="#" target="_blank" class="btn-drive">
-        <svg width="16" height="16" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/><path d="M43.65 25L29.9 1.2C28.55 2 27.4 3.1 26.6 4.5L1.2 48.5C.4 49.9 0 51.45 0 53h27.5z" fill="#00ac47"/><path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.85 11.2z" fill="#ea4335"/><path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.95 0H34.35c-1.55 0-3.1.45-4.45 1.2z" fill="#00832d"/><path d="M59.8 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.45 1.2h50.9c1.55 0 3.1-.4 4.45-1.2z" fill="#2684fc"/><path d="M73.4 26.5l-12.65-21.9c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25 59.8 53h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/></svg>
-        Open Drive Folder
-      </a>
+      <div class="drive-box-sub">Click below to open your Google Drive folder.</div>
+      <a id="drive-link" href="#" target="_blank" class="btn-drive">Open Drive Folder</a>
     </div>
 
     <!-- NOTES -->
@@ -239,29 +253,27 @@ body { font-family:'Barlow',sans-serif; background:#f0ede6; color:var(--ink); mi
 
 <script>
 var NOTES_KEY_PREFIX = 'rem_portal_notes_';
-var ADMIN_HASH_KEY = 'rem_portal_admin_hash';
+var APPROVAL_KEY_PREFIX = 'rem_portal_approval_';
 var ADMIN_SESSION_KEY = 'rem_portal_admin_session';
-// Default admin password hash (SHA-256 of "reelmedia") — you can change this
 var DEFAULT_ADMIN_HASH = '1dbb38a3aae7bdf38a75b6591b0618ad2b90e669f2af7f6cd3b7e7b49b73a6d6';
 var isAdmin = false;
-
 var STATUS_INFO = {
-  scheduled:{ label:'Scheduled', emoji:'📅', color:'#0284c7', bg:'#e0f2fe' },
-  shot:      { label:'Shot',      emoji:'📸', color:'#7c3aed', bg:'#ede9fe' },
-  editing:   { label:'Editing',   emoji:'✂️',  color:'#b45309', bg:'#fef9c3' },
-  delivered: { label:'Delivered', emoji:'✅', color:'#15803d', bg:'#dcfce7' },
+  scheduled:{ label:'Scheduled', emoji:'📅', color:'#0284c7', bg:'#e0f2fe', idx:0 },
+  shot:      { label:'Shot',      emoji:'📸', color:'#7c3aed', bg:'#ede9fe', idx:1 },
+  editing:   { label:'Editing',   emoji:'✂️',  color:'#b45309', bg:'#fef9c3', idx:2 },
+  review:    { label:'Review',    emoji:'🔍', color:'#d97706', bg:'#fef3c7', idx:3 },
+  delivered: { label:'Delivered', emoji:'✅', color:'#15803d', bg:'#dcfce7', idx:4 },
 };
-
+var TIMELINE_ORDER = ['scheduled','shot','editing','review','delivered'];
 var portalData = null;
 var ytPlayer = null;
 var isVideoPortal = false;
 var currentVersionIdx = -1;
 var ytApiLoaded = false;
 var compareMode = false;
-var comparePlayerA = null;
-var comparePlayerB = null;
-var compareIdxA = -1;
-var compareIdxB = -1;
+var comparePlayerA = null, comparePlayerB = null;
+var compareIdxA = -1, compareIdxB = -1;
+var replyingToIdx = -1;
 
 function init() {
   var hash = window.location.hash.slice(1);
@@ -270,7 +282,6 @@ function init() {
     var json = decodeURIComponent(escape(atob(hash)));
     portalData = JSON.parse(json);
     if (!portalData || !portalData.key) { showError(); return; }
-    // Check existing admin session
     if (sessionStorage.getItem(ADMIN_SESSION_KEY) === portalData.key) {
       isAdmin = true;
       document.getElementById('admin-bar').style.display = 'flex';
@@ -279,484 +290,256 @@ function init() {
     render();
   } catch(e) { showError(); }
 }
-
-function showError() {
-  document.getElementById('error-screen').style.display = 'block';
-}
-
-function formatTime(seconds) {
-  var s = Math.floor(seconds);
-  var m = Math.floor(s / 60);
-  s = s % 60;
-  return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
-}
-
-function seekTo(seconds) {
-  if (ytPlayer && ytPlayer.seekTo) {
-    ytPlayer.seekTo(seconds, true);
-    ytPlayer.pauseVideo();
-  }
-}
-
-function getVersions() {
-  var d = portalData;
-  if (d.versions && d.versions.length) return d.versions.slice();
-  if (d.drive) return [{ url: d.drive, label: 'Version 1' }];
-  return [];
-}
-
-function getNotesKey(versionIdx) {
-  var versions = getVersions();
-  if (versionIdx >= 0 && versionIdx < versions.length) {
-    return NOTES_KEY_PREFIX + portalData.key + '_v' + versionIdx;
-  }
-  return NOTES_KEY_PREFIX + portalData.key;
-}
-
-function getYtId(url) {
-  var m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/);
-  return m ? m[1] : null;
-}
-
-function ensureYtApi(cb) {
-  if (ytApiLoaded) { cb(); return; }
-  var tag = document.createElement('script');
-  tag.src = 'https://www.youtube.com/iframe_api';
-  document.head.appendChild(tag);
-  window.onYouTubeIframeAPIReady = function() { ytApiLoaded = true; cb(); };
-}
+function showError() { document.getElementById('error-screen').style.display = 'block'; }
+function formatTime(s) { var sec=Math.floor(s); var m=Math.floor(sec/60); sec=sec%60; return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'); }
+function seekTo(s) { if(ytPlayer&&ytPlayer.seekTo){ytPlayer.seekTo(s,true);ytPlayer.pauseVideo();} }
+function getVersions() { var d=portalData; if(d.versions&&d.versions.length)return d.versions.slice(); if(d.drive)return[{url:d.drive,label:'Version 1'}]; return[]; }
+function getNotesKey(vi) { return NOTES_KEY_PREFIX+portalData.key+'_v'+vi; }
+function getYtId(url) { var m=url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/); return m?m[1]:null; }
+function ensureYtApi(cb) { if(ytApiLoaded){cb();return;} var t=document.createElement('script');t.src='https://www.youtube.com/iframe_api';document.head.appendChild(t);window.onYouTubeIframeAPIReady=function(){ytApiLoaded=true;cb();}; }
+async function hashStr(s) { var b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)); return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0');}).join(''); }
 
 /* == ADMIN == */
-async function hashStr(str) {
-  var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
-}
-
-function showAdminLogin() {
-  document.getElementById('admin-gate').style.display = 'block';
-  document.getElementById('admin-login-toggle').style.display = 'none';
-  document.getElementById('admin-pw').focus();
-}
-
+function showAdminLogin() { document.getElementById('admin-gate').style.display='block'; document.getElementById('admin-login-toggle').style.display='none'; document.getElementById('admin-pw').focus(); }
 async function loginAdmin() {
-  var pw = document.getElementById('admin-pw').value;
-  var hash = await hashStr(pw);
-  // Check stored hash or use default
-  var storedHash = localStorage.getItem(ADMIN_HASH_KEY);
-  var validHash = storedHash || DEFAULT_ADMIN_HASH;
-  if (hash === validHash) {
-    isAdmin = true;
-    sessionStorage.setItem(ADMIN_SESSION_KEY, portalData.key);
-    document.getElementById('admin-gate').style.display = 'none';
-    document.getElementById('admin-bar').style.display = 'flex';
-    document.getElementById('admin-login-area').style.display = 'none';
-    document.getElementById('admin-error').style.display = 'none';
-    document.getElementById('note-btn').textContent = 'Reply as Admin';
-    renderNotes();
+  var h=await hashStr(document.getElementById('admin-pw').value);
+  if(h===DEFAULT_ADMIN_HASH) {
+    isAdmin=true; sessionStorage.setItem(ADMIN_SESSION_KEY,portalData.key);
+    document.getElementById('admin-gate').style.display='none';
+    document.getElementById('admin-bar').style.display='flex';
+    document.getElementById('admin-login-area').style.display='none';
+    document.getElementById('admin-error').style.display='none';
+    document.getElementById('note-btn').textContent='Reply as Admin';
+    renderNotes(); renderApproval();
   } else {
-    document.getElementById('admin-error').style.display = 'block';
-    document.getElementById('admin-pw').value = '';
-    document.getElementById('admin-pw').focus();
+    document.getElementById('admin-error').style.display='block';
+    document.getElementById('admin-pw').value=''; document.getElementById('admin-pw').focus();
   }
 }
-
 function logoutAdmin() {
-  isAdmin = false;
-  sessionStorage.removeItem(ADMIN_SESSION_KEY);
-  document.getElementById('admin-bar').style.display = 'none';
-  document.getElementById('admin-login-area').style.display = 'block';
-  document.getElementById('admin-login-toggle').style.display = 'inline-block';
-  document.getElementById('note-btn').textContent = 'Send Note';
-  renderNotes();
+  isAdmin=false; sessionStorage.removeItem(ADMIN_SESSION_KEY);
+  document.getElementById('admin-bar').style.display='none';
+  document.getElementById('admin-login-area').style.display='block';
+  document.getElementById('admin-login-toggle').style.display='inline-block';
+  document.getElementById('note-btn').textContent='Send Note';
+  renderNotes(); renderApproval();
 }
 
-/* == VIDEO LOADING == */
-function loadVideo(url, versionIdx) {
-  compareMode = false;
-  currentVersionIdx = versionIdx;
-  ytPlayer = null;
-  var driveBox = document.getElementById('drive-box');
-  var ytId = getYtId(url);
-  var fileMatch = url.match(/drive\.google\.com\/file\/d\/([\w-]+)/);
-  var openMatch = url.match(/drive\.google\.com\/open\?id=([\w-]+)/);
-  var vmMatch   = url.match(/vimeo\.com\/(\d+)/);
-  var versions = getVersions();
+/* == TIMELINE == */
+function renderTimeline() {
+  var el=document.getElementById('timeline');
+  var rawStatus=portalData.status||'scheduled';
+  // Map old statuses
+  if(rawStatus==='delivered') rawStatus='delivered';
+  var curIdx=TIMELINE_ORDER.indexOf(rawStatus);
+  if(curIdx===-1) curIdx=0;
+  // Check if approved
+  var approval=getApproval();
+  if(approval.approved) curIdx=4; // delivered
 
-  var selectorHtml = '';
-  if (versions.length > 1) {
-    var opts = versions.slice().reverse().map(function(v, ri) {
-      var oi = versions.length - 1 - ri;
-      var sel = oi === versionIdx ? ' selected' : '';
-      var ltag = oi === versions.length - 1 ? ' (latest)' : '';
-      return '<option value="' + oi + '"' + sel + '>' + escHtml(v.label) + ltag + '</option>';
-    }).join('');
-    selectorHtml = '<div class="version-selector"><label>🎬 Version:</label><select onchange="switchVersion(parseInt(this.value))">' + opts + '</select></div>';
-  }
-
-  var compareBtn = versions.length > 1 ? '<button class="btn-compare" onclick="enterCompareMode()">⚖️ Compare Versions</button> ' : '';
-  var playerHtml = '';
-  var buttonsHtml = '';
-
-  if (ytId) {
-    isVideoPortal = true;
-    playerHtml = '<div class="video-wrapper"><div id="yt-player"></div></div>';
-    buttonsHtml = '<a href="' + escHtml(url) + '" class="btn-download" target="_blank">↗ Open on YouTube</a>';
-    ensureYtApi(function() {
-      setTimeout(function() {
-        ytPlayer = new YT.Player('yt-player', {
-          videoId: ytId, playerVars: { rel: 0, fs: 1, vq: 'hd1080' }, width: '100%', height: '100%',
-        });
-      }, 50);
-    });
-  } else if (vmMatch) {
-    isVideoPortal = true;
-    playerHtml = '<div class="video-wrapper"><iframe src="https://player.vimeo.com/video/' + vmMatch[1] + '?title=0&byline=0&portrait=0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>';
-    buttonsHtml = '<a href="' + escHtml(url) + '" class="btn-download" target="_blank">↗ Open on Vimeo</a>';
-  } else if (fileMatch || openMatch) {
-    isVideoPortal = true;
-    var fid = fileMatch ? fileMatch[1] : openMatch[1];
-    playerHtml = '<div class="video-wrapper"><iframe src="https://drive.google.com/file/d/' + fid + '/preview" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>';
-    buttonsHtml = '<a href="https://drive.google.com/uc?export=download&id=' + fid + '" class="btn-download" target="_blank">⬇ Download</a> <a href="' + escHtml(url) + '" class="btn-download" target="_blank" style="background:var(--teal-mid)">↗ Open in Drive</a>';
-  } else {
-    driveBox.innerHTML = '<div class="drive-box-icon">📁</div><div class="drive-box-title">Your listing media is ready</div><div class="drive-box-sub">Click below to open your Google Drive folder.</div><a href="' + escHtml(url) + '" target="_blank" class="btn-drive">Open Drive Folder</a>';
-    renderNotes(); return;
-  }
-
-  driveBox.innerHTML = selectorHtml + playerHtml
-    + '<div class="desktop-tip">💡 <strong>For the best experience, review on a desktop</strong> so you can change the video quality to maximum.</div>'
-    + '<div style="text-align:center;margin-top:12px">' + compareBtn + buttonsHtml + '</div>';
-
-  if (isVideoPortal) document.getElementById('note-input').placeholder = 'Pause the video and leave a note \u2014 the timestamp will be saved automatically.';
-  if (isAdmin) document.getElementById('note-btn').textContent = 'Reply as Admin';
-  renderNotes();
-}
-
-function switchVersion(idx) {
-  var versions = getVersions();
-  if (versions[idx]) loadVideo(versions[idx].url, idx);
-}
-
-/* == COMPARE MODE == */
-function enterCompareMode() {
-  var versions = getVersions();
-  if (versions.length < 2) return;
-  compareMode = true; ytPlayer = null; comparePlayerA = null; comparePlayerB = null;
-  compareIdxA = versions.length - 2;
-  compareIdxB = versions.length - 1;
-  document.getElementById('drive-box').classList.add('compare-active');
-  renderCompare();
-}
-
-function exitCompareMode() {
-  compareMode = false; comparePlayerA = null; comparePlayerB = null;
-  document.getElementById('drive-box').classList.remove('compare-active');
-  var versions = getVersions();
-  loadVideo(versions[versions.length - 1].url, versions.length - 1);
-}
-
-function renderCompare() {
-  var versions = getVersions();
-  var driveBox = document.getElementById('drive-box');
-  function buildSel(name, selIdx) {
-    return versions.slice().reverse().map(function(v, ri) {
-      var oi = versions.length - 1 - ri;
-      var sel = oi === selIdx ? ' selected' : '';
-      var ltag = oi === versions.length - 1 ? ' (latest)' : '';
-      return '<option value="' + oi + '"' + sel + '>' + escHtml(v.label) + ltag + '</option>';
-    }).join('');
-  }
-  var ytIdA = getYtId(versions[compareIdxA].url);
-  var ytIdB = getYtId(versions[compareIdxB].url);
-
-  var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
-    + '<span style="font-weight:700;font-size:.85rem">⚖️ Compare Versions</span>'
-    + '<button onclick="exitCompareMode()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 12px;font-size:.78rem;cursor:pointer;font-family:inherit">✕ Exit</button></div>';
-
-  html += '<div class="compare-grid">'
-    + '<div class="compare-col"><div class="compare-label"><select onchange="changeCompareA(parseInt(this.value))" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:.78rem;font-family:inherit">' + buildSel('A', compareIdxA) + '</select></div><div class="video-wrapper"><div id="cmp-player-a"></div></div></div>'
-    + '<div class="compare-col"><div class="compare-label"><select onchange="changeCompareB(parseInt(this.value))" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:.78rem;font-family:inherit">' + buildSel('B', compareIdxB) + '</select></div><div class="video-wrapper"><div id="cmp-player-b"></div></div></div></div>';
-
-  if (ytIdA && ytIdB) {
-    html += '<div class="compare-playback">'
-      + '<button onclick="syncPlay()" style="background:var(--teal);color:#fff">▶ Play Both</button>'
-      + '<button onclick="syncPause()" style="background:var(--teal-mid);color:#fff">⏸ Pause Both</button>'
-      + '<button onclick="syncRestart()" style="background:#6b7280;color:#fff">⏮ Restart</button></div>';
-    html += '<div class="audio-controls"><span style="font-size:.75rem;font-weight:600;color:var(--muted)">Audio:</span>'
-      + '<button class="audio-btn active" id="audio-a" onclick="setAudio(\'a\')">🔊 ' + escHtml(versions[compareIdxA].label) + '</button>'
-      + '<button class="audio-btn" id="audio-b" onclick="setAudio(\'b\')">🔊 ' + escHtml(versions[compareIdxB].label) + '</button>'
-      + '<button class="audio-btn" id="audio-both" onclick="setAudio(\'both\')">🔊 Both</button>'
-      + '<button class="audio-btn" id="audio-mute" onclick="setAudio(\'mute\')">🔇 Mute</button></div>';
-  }
-  driveBox.innerHTML = html;
-
-  if (ytIdA && ytIdB) {
-    ensureYtApi(function() {
-      setTimeout(function() {
-        comparePlayerA = new YT.Player('cmp-player-a', {
-          videoId: ytIdA, playerVars: { rel:0,fs:1,vq:'hd1080' }, width:'100%', height:'100%',
-          events: { onReady: function(e){ e.target.setVolume(100); } }
-        });
-        comparePlayerB = new YT.Player('cmp-player-b', {
-          videoId: ytIdB, playerVars: { rel:0,fs:1,vq:'hd1080' }, width:'100%', height:'100%',
-          events: { onReady: function(e){ e.target.setVolume(0); } }
-        });
-      }, 50);
-    });
-  }
-}
-
-function changeCompareA(idx) { compareIdxA = idx; renderCompare(); }
-function changeCompareB(idx) { compareIdxB = idx; renderCompare(); }
-
-function syncPlay() {
-  if (!comparePlayerA || !comparePlayerB) return;
-  var t = comparePlayerA.getCurrentTime ? comparePlayerA.getCurrentTime() : 0;
-  comparePlayerB.seekTo(t, true);
-  requestAnimationFrame(function() {
-    comparePlayerA.playVideo();
-    comparePlayerB.playVideo();
+  var html='';
+  TIMELINE_ORDER.forEach(function(key,i) {
+    var info=STATUS_INFO[key];
+    var dotCls='timeline-dot';
+    var lblCls='timeline-label';
+    if(i<curIdx) { dotCls+=' done'; lblCls+=' done'; }
+    else if(i===curIdx) { dotCls+=' current'; lblCls+=' current'; }
+    if(i>0) html+='<div class="timeline-line'+(i<=curIdx?' done':'')+'"></div>';
+    html+='<div class="timeline-step"><div class="'+dotCls+'">'+(i<curIdx?'✓':info.emoji)+'</div><div class="'+lblCls+'">'+info.label+'</div></div>';
   });
+  el.innerHTML=html;
 }
-function syncPause() {
-  requestAnimationFrame(function() {
-    if (comparePlayerA && comparePlayerA.pauseVideo) comparePlayerA.pauseVideo();
-    if (comparePlayerB && comparePlayerB.pauseVideo) comparePlayerB.pauseVideo();
-  });
-}
-function syncRestart() {
-  if (!comparePlayerA || !comparePlayerB) return;
-  comparePlayerA.seekTo(0, true);
-  comparePlayerB.seekTo(0, true);
-  requestAnimationFrame(function() {
-    comparePlayerA.pauseVideo();
-    comparePlayerB.pauseVideo();
-  });
-}
-function setAudio(mode) {
-  document.querySelectorAll('.audio-btn').forEach(function(b){ b.classList.remove('active'); });
-  var el = document.getElementById('audio-' + mode);
-  if (el) el.classList.add('active');
-  if (!comparePlayerA || !comparePlayerB) return;
-  switch(mode) {
-    case 'a':    comparePlayerA.unMute(); comparePlayerA.setVolume(100); comparePlayerB.mute(); break;
-    case 'b':    comparePlayerA.mute(); comparePlayerB.unMute(); comparePlayerB.setVolume(100); break;
-    case 'both': comparePlayerA.unMute(); comparePlayerA.setVolume(100); comparePlayerB.unMute(); comparePlayerB.setVolume(100); break;
-    case 'mute': comparePlayerA.mute(); comparePlayerB.mute(); break;
+
+/* == REVISION COUNTER == */
+function renderRevisionBar() {
+  var el=document.getElementById('revision-bar');
+  var versions=getVersions();
+  var max=portalData.maxRevisions||3;
+  var used=Math.max(0,versions.length-1); // first version isn't a revision
+  if(versions.length<=1) { el.style.display='none'; return; }
+  el.style.display='flex';
+  var dots='';
+  for(var i=0;i<max;i++) {
+    var cls='rev-dot';
+    if(i<used) cls+=' used';
+    else if(i===used) cls+=' current';
+    dots+='<span class="'+cls+'"></span>';
   }
+  var warn='';
+  if(used>=max) warn='<span class="rev-warn">Additional revisions may incur a fee</span>';
+  el.innerHTML='<div><span class="rev-label">Revisions: </span><span class="rev-count">'+used+' of '+max+' included</span> '+warn+'</div><div class="revision-dots">'+dots+'</div>';
 }
 
-/* == RENDER == */
-function render() {
-  var d = portalData;
-  document.title = (d.client || 'Client') + ' \u2014 Reel Estate Media Portal';
-  document.getElementById('portal-content').style.display = 'block';
-  document.getElementById('p-client').textContent = d.client || 'Your Listing';
-  var typeAddress = [d.type, d.address].filter(Boolean).join(' \u00b7 ');
-  document.getElementById('p-type-address').textContent = typeAddress;
-
-  var meta = [];
-  if (d.date) meta.push('<div class="shoot-meta-item">📅 <strong>' + d.date + (d.time ? ' @ ' + d.time : '') + '</strong></div>');
-  if (d.status) {
-    var st = STATUS_INFO[d.status] || STATUS_INFO.delivered;
-    meta.push('<div class="shoot-meta-item"><span class="status-chip" style="background:' + st.bg + ';color:' + st.color + '">' + st.emoji + ' ' + st.label + '</span></div>');
-  }
-  document.getElementById('p-meta').innerHTML = meta.join('');
-
-  var versions = getVersions();
-  if (versions.length) {
-    loadVideo(versions[versions.length - 1].url, versions.length - 1);
-  } else {
-    document.getElementById('drive-box').innerHTML = '<div class="drive-box-icon">⏳</div><div class="drive-box-title">Files coming soon</div><div class="drive-box-sub">Your media is still being prepared. Check back shortly or contact us if you have questions.</div>';
-    renderNotes();
-  }
+/* == APPROVAL == */
+function getApproval() {
+  try { return JSON.parse(localStorage.getItem(APPROVAL_KEY_PREFIX+portalData.key)||'{}'); } catch(e){ return {}; }
 }
+function saveApproval(data) {
+  localStorage.setItem(APPROVAL_KEY_PREFIX+portalData.key, JSON.stringify(data));
+}
+function renderApproval() {
+  var el=document.getElementById('approval-area');
+  var approval=getApproval();
+  var versions=getVersions();
+  if(!versions.length) { el.innerHTML=''; return; }
 
-/* == NOTES (per version, with admin replies and delete) == */
-var replyingToIdx = -1;
-
-function renderNotes() {
-  var key = getNotesKey(currentVersionIdx);
-  var notes = [];
-  try { notes = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
-
-  var legacyKey = NOTES_KEY_PREFIX + portalData.key;
-  var legacyNotes = [];
-  try { legacyNotes = JSON.parse(localStorage.getItem(legacyKey) || '[]'); } catch(e) {}
-  if (currentVersionIdx === 0 && !notes.length && legacyNotes.length) notes = legacyNotes;
-
-  var list = document.getElementById('notes-list');
-  var versions = getVersions();
-  var vLabel = versions[currentVersionIdx] ? versions[currentVersionIdx].label : '';
-
-  if (!notes.length) {
-    list.innerHTML = '<div style="font-size:.8rem;color:var(--muted);padding:8px 0">No notes yet for ' + escHtml(vLabel || 'this version') + '. ' + (isVideoPortal ? 'Pause the video and leave feedback below.' : 'Leave a note below if you need any adjustments.') + '</div>';
+  if(approval.approved) {
+    el.innerHTML='<div class="approved-banner"><h3>✅ Approved</h3><p>This version was approved on '+escHtml(approval.date||'')+'. Your final media is ready for delivery.</p></div>';
+    renderTimeline();
     return;
   }
 
-  // Group: top-level notes and their replies
-  var html = '';
-  notes.forEach(function(n, idx) {
-    // Skip replies — they render under their parent
-    if (n.replyTo !== undefined && n.replyTo !== null) return;
+  if(approval.changesRequested && !isAdmin) {
+    el.innerHTML='<div class="approval-box"><h3>🔄 Changes Requested</h3><p>You requested changes on '+escHtml(approval.date||'')+'. We\'re working on the next version — check back soon!</p></div>';
+    return;
+  }
 
-    var isAdminNote = n.from === 'admin';
-    var isResolved = n.resolved === true;
-    var cls = isAdminNote ? 'note-item admin-reply' : 'note-item';
-    if (isResolved) cls += ' resolved';
-    var fromHtml = isAdminNote
-      ? '<div class="note-from from-admin">Reel Estate Media</div>'
-      : '<div class="note-from from-client">' + escHtml(portalData.client || 'Client') + '</div>';
-    var tsHtml = '';
-    if (n.videoTime !== undefined && n.videoTime !== null) {
-      tsHtml = '<span class="note-timestamp" onclick="seekTo(' + n.videoTime + ')" title="Jump to this moment">▶ ' + formatTime(n.videoTime) + '</span>';
+  // Show approval buttons for client (not admin)
+  if(!isAdmin) {
+    el.innerHTML='<div class="approval-box"><h3>Ready to approve?</h3><p>Review the current version above. When you\'re happy with everything, approve it. Need adjustments? Request changes and leave a note below.</p>'
+      +'<div class="approval-btns"><button class="btn-approve" onclick="approveVersion()">✅ Approve</button>'
+      +'<button class="btn-changes" onclick="requestChanges()">🔄 Request Changes</button></div></div>';
+  } else {
+    if(approval.changesRequested) {
+      el.innerHTML='<div class="approval-box" style="border-color:#f59e0b"><h3>🔄 Client Requested Changes</h3><p>Requested on '+escHtml(approval.date||'')+'. Upload a new version and clear this status when ready.</p>'
+        +'<div class="approval-btns"><button class="btn-approve" onclick="clearChangeRequest()">✓ Clear — New Version Ready</button></div></div>';
+    } else {
+      el.innerHTML='<div style="font-size:.78rem;color:var(--muted);text-align:center;margin-bottom:16px">Waiting for client to review and approve.</div>';
     }
-    // Check if admin has interacted (replied or resolved)
-    var hasAdminReply = false;
-    notes.forEach(function(r) { if (r.replyTo === idx) hasAdminReply = true; });
-    var adminActed = isResolved || hasAdminReply;
-    // Admin can always delete. Client can only delete their own AND only if admin hasn't acted on it.
-    var canDelete = isAdmin || (!isAdminNote && !adminActed);
-    var delHtml = canDelete ? '<button class="note-delete" onclick="deleteNote(' + idx + ')" title="Delete note">🗑</button>' : '';
-    var replyBtn = isAdmin && !isAdminNote ? ' <button class="btn-reply" onclick="startReply(' + idx + ')">↩ Reply</button>' : '';
-
-    // Checklist: admin sees a clickable checkbox, client sees resolved badge
-    var checkHtml = '';
-    if (!isAdminNote) {
-      if (isAdmin) {
-        var boxCls = isResolved ? 'check-box checked' : 'check-box';
-        checkHtml = '<button class="note-check" onclick="toggleResolved(' + idx + ')"><span class="' + boxCls + '">' + (isResolved ? '✓' : '') + '</span>' + (isResolved ? 'Done' : 'Mark done') + '</button> ';
-      } else if (isResolved) {
-        checkHtml = '<span class="resolved-label">✓ Done</span> ';
-      }
-    }
-
-    html += '<div class="' + cls + '">' + fromHtml + tsHtml + '<span class="note-text">' + escHtml(n.text) + '</span>'
-      + '<div class="note-item-meta">' + checkHtml + '<span>' + (n.date || '') + '</span>' + replyBtn + delHtml + '</div></div>';
-
-    // Render replies to this note
-    notes.forEach(function(r, ri) {
-      if (r.replyTo !== idx) return;
-      var rIsAdmin = r.from === 'admin';
-      var rCls = rIsAdmin ? 'note-item admin-reply' : 'note-item';
-      var rFrom = rIsAdmin
-        ? '<div class="note-from from-admin">Reel Estate Media</div>'
-        : '<div class="note-from from-client">' + escHtml(portalData.client || 'Client') + '</div>';
-      var rCanDel = isAdmin || !rIsAdmin;
-      var rDelHtml = rCanDel ? '<button class="note-delete" onclick="deleteNote(' + ri + ')" title="Delete">🗑</button>' : '';
-      html += '<div class="note-reply-wrap"><div class="' + rCls + '">' + rFrom + escHtml(r.text)
-        + '<div class="note-item-meta"><span>' + (r.date || '') + '</span>' + rDelHtml + '</div></div></div>';
-    });
-
-    // Show reply input if replying to this note
-    if (replyingToIdx === idx) {
-      html += '<div class="note-reply-input" id="reply-input-' + idx + '">'
-        + '<input type="text" id="reply-text-' + idx + '" placeholder="Write a reply…" onkeydown="if(event.key===\'Enter\')sendReply(' + idx + ')">'
-        + '<button onclick="sendReply(' + idx + ')">Send</button></div>';
-    }
-  });
-
-  list.innerHTML = html;
-
-  // Focus reply input if open
-  if (replyingToIdx >= 0) {
-    var ri = document.getElementById('reply-text-' + replyingToIdx);
-    if (ri) ri.focus();
   }
 }
-
-function startReply(idx) {
-  replyingToIdx = replyingToIdx === idx ? -1 : idx;
-  renderNotes();
+function approveVersion() {
+  if(!confirm('Approve this version? This will finalize the project.')) return;
+  saveApproval({ approved:true, date:new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric'}) });
+  renderApproval(); renderTimeline();
+}
+function requestChanges() {
+  saveApproval({ changesRequested:true, date:new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric'}) });
+  renderApproval();
+  document.getElementById('note-input').focus();
+}
+function clearChangeRequest() {
+  saveApproval({});
+  renderApproval();
 }
 
-function toggleResolved(idx) {
-  var key = getNotesKey(currentVersionIdx);
-  var notes = [];
-  try { notes = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
-  if (notes[idx]) {
-    notes[idx].resolved = !notes[idx].resolved;
-    localStorage.setItem(key, JSON.stringify(notes));
-    renderNotes();
+/* == VIDEO == */
+function loadVideo(url,versionIdx) {
+  compareMode=false; currentVersionIdx=versionIdx; ytPlayer=null;
+  var driveBox=document.getElementById('drive-box');
+  var ytId=getYtId(url);
+  var fileMatch=url.match(/drive\.google\.com\/file\/d\/([\w-]+)/);
+  var openMatch=url.match(/drive\.google\.com\/open\?id=([\w-]+)/);
+  var vmMatch=url.match(/vimeo\.com\/(\d+)/);
+  var versions=getVersions();
+  var selectorHtml='';
+  if(versions.length>1) {
+    var opts=versions.slice().reverse().map(function(v,ri){var oi=versions.length-1-ri;var sel=oi===versionIdx?' selected':'';var lt=oi===versions.length-1?' (latest)':'';return'<option value="'+oi+'"'+sel+'>'+escHtml(v.label)+lt+'</option>';}).join('');
+    selectorHtml='<div class="version-selector"><label>🎬 Version:</label><select onchange="switchVersion(parseInt(this.value))">'+opts+'</select></div>';
   }
-}
-
-function sendReply(parentIdx) {
-  var input = document.getElementById('reply-text-' + parentIdx);
-  if (!input) return;
-  var text = input.value.trim();
-  if (!text) return;
-
-  var key = getNotesKey(currentVersionIdx);
-  var notes = [];
-  try { notes = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
-
-  notes.push({
-    text: text,
-    date: new Date().toLocaleDateString('en-CA', { year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' }),
-    from: isAdmin ? 'admin' : 'client',
-    replyTo: parentIdx
-  });
-  localStorage.setItem(key, JSON.stringify(notes));
-  replyingToIdx = -1;
+  var compareBtn=versions.length>1?'<button class="btn-compare" onclick="enterCompareMode()">⚖️ Compare</button> ':'';
+  var playerHtml='',buttonsHtml='';
+  if(ytId) {
+    isVideoPortal=true;
+    playerHtml='<div class="video-wrapper"><div id="yt-player"></div></div>';
+    buttonsHtml='<a href="'+escHtml(url)+'" class="btn-download" target="_blank">↗ Open on YouTube</a>';
+    ensureYtApi(function(){setTimeout(function(){ytPlayer=new YT.Player('yt-player',{videoId:ytId,playerVars:{rel:0,fs:1,vq:'hd1080'},width:'100%',height:'100%'});},50);});
+  } else if(vmMatch) {
+    isVideoPortal=true;
+    playerHtml='<div class="video-wrapper"><iframe src="https://player.vimeo.com/video/'+vmMatch[1]+'?title=0&byline=0&portrait=0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>';
+    buttonsHtml='<a href="'+escHtml(url)+'" class="btn-download" target="_blank">↗ Open on Vimeo</a>';
+  } else if(fileMatch||openMatch) {
+    isVideoPortal=true; var fid=fileMatch?fileMatch[1]:openMatch[1];
+    playerHtml='<div class="video-wrapper"><iframe src="https://drive.google.com/file/d/'+fid+'/preview" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>';
+    buttonsHtml='<a href="https://drive.google.com/uc?export=download&id='+fid+'" class="btn-download" target="_blank">⬇ Download</a> <a href="'+escHtml(url)+'" class="btn-download" target="_blank" style="background:var(--teal-mid)">↗ Open in Drive</a>';
+  } else {
+    driveBox.innerHTML='<div class="drive-box-icon">📁</div><div class="drive-box-title">Your listing media is ready</div><div class="drive-box-sub">Click below to open your Google Drive folder.</div><a href="'+escHtml(url)+'" target="_blank" class="btn-drive">Open Drive Folder</a>';
+    renderNotes(); return;
+  }
+  driveBox.innerHTML=selectorHtml+playerHtml+'<div class="desktop-tip">💡 <strong>For the best experience, review on a desktop</strong> so you can change the video quality to maximum.</div><div style="text-align:center;margin-top:12px">'+compareBtn+buttonsHtml+'</div>';
+  if(isVideoPortal) document.getElementById('note-input').placeholder='Pause the video and leave a note \u2014 the timestamp will be saved automatically.';
+  if(isAdmin) document.getElementById('note-btn').textContent='Reply as Admin';
   renderNotes();
 }
+function switchVersion(idx) { var v=getVersions(); if(v[idx]) loadVideo(v[idx].url,idx); }
 
-function deleteNote(idx) {
-  if (!confirm('Delete this note?')) return;
-  var key = getNotesKey(currentVersionIdx);
-  var notes = [];
-  try { notes = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
-  // Also remove any replies to this note
-  var toRemove = [idx];
-  notes.forEach(function(n, i) { if (n.replyTo === idx) toRemove.push(i); });
-  toRemove.sort(function(a,b){ return b - a; }); // Remove from end first
-  toRemove.forEach(function(i) { notes.splice(i, 1); });
-  // Fix replyTo indexes after removal
-  notes.forEach(function(n) {
-    if (n.replyTo !== undefined && n.replyTo !== null) {
-      var shift = 0;
-      toRemove.forEach(function(ri) { if (ri < n.replyTo) shift++; });
-      n.replyTo = n.replyTo - shift;
-    }
+/* == COMPARE == */
+function enterCompareMode() { var v=getVersions(); if(v.length<2)return; compareMode=true;ytPlayer=null;comparePlayerA=null;comparePlayerB=null; compareIdxA=v.length-2;compareIdxB=v.length-1; document.getElementById('drive-box').classList.add('compare-active'); renderCompare(); }
+function exitCompareMode() { compareMode=false;comparePlayerA=null;comparePlayerB=null; document.getElementById('drive-box').classList.remove('compare-active'); var v=getVersions(); loadVideo(v[v.length-1].url,v.length-1); }
+function renderCompare() {
+  var versions=getVersions(); var driveBox=document.getElementById('drive-box');
+  function bSel(selIdx){return versions.slice().reverse().map(function(v,ri){var oi=versions.length-1-ri;var sel=oi===selIdx?' selected':'';var lt=oi===versions.length-1?' (latest)':'';return'<option value="'+oi+'"'+sel+'>'+escHtml(v.label)+lt+'</option>';}).join('');}
+  var ytIdA=getYtId(versions[compareIdxA].url),ytIdB=getYtId(versions[compareIdxB].url);
+  var html='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-weight:700;font-size:.85rem">⚖️ Compare</span><button onclick="exitCompareMode()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 12px;font-size:.78rem;cursor:pointer;font-family:inherit">✕ Exit</button></div>';
+  html+='<div class="compare-grid"><div class="compare-col"><div class="compare-label"><select onchange="changeCompareA(parseInt(this.value))" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:.78rem;font-family:inherit">'+bSel(compareIdxA)+'</select></div><div class="video-wrapper"><div id="cmp-player-a"></div></div></div><div class="compare-col"><div class="compare-label"><select onchange="changeCompareB(parseInt(this.value))" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:.78rem;font-family:inherit">'+bSel(compareIdxB)+'</select></div><div class="video-wrapper"><div id="cmp-player-b"></div></div></div></div>';
+  if(ytIdA&&ytIdB){html+='<div class="compare-playback"><button onclick="syncPlay()" style="background:var(--teal);color:#fff">▶ Play Both</button><button onclick="syncPause()" style="background:var(--teal-mid);color:#fff">⏸ Pause</button><button onclick="syncRestart()" style="background:#6b7280;color:#fff">⏮ Restart</button></div><div class="audio-controls"><span style="font-size:.75rem;font-weight:600;color:var(--muted)">Audio:</span><button class="audio-btn active" id="audio-a" onclick="setAudio(\'a\')">🔊 '+escHtml(versions[compareIdxA].label)+'</button><button class="audio-btn" id="audio-b" onclick="setAudio(\'b\')">🔊 '+escHtml(versions[compareIdxB].label)+'</button><button class="audio-btn" id="audio-both" onclick="setAudio(\'both\')">🔊 Both</button><button class="audio-btn" id="audio-mute" onclick="setAudio(\'mute\')">🔇 Mute</button></div>';}
+  driveBox.innerHTML=html;
+  if(ytIdA&&ytIdB){ensureYtApi(function(){setTimeout(function(){comparePlayerA=new YT.Player('cmp-player-a',{videoId:ytIdA,playerVars:{rel:0,fs:1,vq:'hd1080'},width:'100%',height:'100%',events:{onReady:function(e){e.target.setVolume(100);}}});comparePlayerB=new YT.Player('cmp-player-b',{videoId:ytIdB,playerVars:{rel:0,fs:1,vq:'hd1080'},width:'100%',height:'100%',events:{onReady:function(e){e.target.setVolume(0);}}});},50);});}
+}
+function changeCompareA(i){compareIdxA=i;renderCompare();}
+function changeCompareB(i){compareIdxB=i;renderCompare();}
+function syncPlay(){if(!comparePlayerA||!comparePlayerB)return;var t=comparePlayerA.getCurrentTime?comparePlayerA.getCurrentTime():0;comparePlayerB.seekTo(t,true);requestAnimationFrame(function(){comparePlayerA.playVideo();comparePlayerB.playVideo();});}
+function syncPause(){requestAnimationFrame(function(){if(comparePlayerA&&comparePlayerA.pauseVideo)comparePlayerA.pauseVideo();if(comparePlayerB&&comparePlayerB.pauseVideo)comparePlayerB.pauseVideo();});}
+function syncRestart(){if(!comparePlayerA||!comparePlayerB)return;comparePlayerA.seekTo(0,true);comparePlayerB.seekTo(0,true);requestAnimationFrame(function(){comparePlayerA.pauseVideo();comparePlayerB.pauseVideo();});}
+function setAudio(m){document.querySelectorAll('.audio-btn').forEach(function(b){b.classList.remove('active');});var el=document.getElementById('audio-'+m);if(el)el.classList.add('active');if(!comparePlayerA||!comparePlayerB)return;switch(m){case'a':comparePlayerA.unMute();comparePlayerA.setVolume(100);comparePlayerB.mute();break;case'b':comparePlayerA.mute();comparePlayerB.unMute();comparePlayerB.setVolume(100);break;case'both':comparePlayerA.unMute();comparePlayerA.setVolume(100);comparePlayerB.unMute();comparePlayerB.setVolume(100);break;case'mute':comparePlayerA.mute();comparePlayerB.mute();break;}}
+
+/* == RENDER == */
+function render() {
+  var d=portalData;
+  document.title=(d.client||'Client')+' \u2014 Reel Estate Media Portal';
+  document.getElementById('portal-content').style.display='block';
+  document.getElementById('p-client').textContent=d.client||'Your Listing';
+  document.getElementById('p-type-address').textContent=[d.type,d.address].filter(Boolean).join(' \u00b7 ');
+  var meta=[];
+  if(d.date)meta.push('<div class="shoot-meta-item">📅 <strong>'+d.date+(d.time?' @ '+d.time:'')+'</strong></div>');
+  if(d.status){var st=STATUS_INFO[d.status]||STATUS_INFO.delivered;meta.push('<div class="shoot-meta-item"><span class="status-chip" style="background:'+st.bg+';color:'+st.color+'">'+st.emoji+' '+st.label+'</span></div>');}
+  document.getElementById('p-meta').innerHTML=meta.join('');
+  renderTimeline();
+  renderRevisionBar();
+  renderApproval();
+  var versions=getVersions();
+  if(versions.length){loadVideo(versions[versions.length-1].url,versions.length-1);}
+  else{document.getElementById('drive-box').innerHTML='<div class="drive-box-icon">⏳</div><div class="drive-box-title">Files coming soon</div><div class="drive-box-sub">Your media is still being prepared. Check back shortly or contact us if you have questions.</div>';renderNotes();}
+}
+
+/* == NOTES == */
+function renderNotes() {
+  var key=getNotesKey(currentVersionIdx); var notes=[];
+  try{notes=JSON.parse(localStorage.getItem(key)||'[]');}catch(e){}
+  var legacyKey=NOTES_KEY_PREFIX+portalData.key; var legacyNotes=[];
+  try{legacyNotes=JSON.parse(localStorage.getItem(legacyKey)||'[]');}catch(e){}
+  if(currentVersionIdx===0&&!notes.length&&legacyNotes.length) notes=legacyNotes;
+  var list=document.getElementById('notes-list');
+  var versions=getVersions();
+  var vLabel=versions[currentVersionIdx]?versions[currentVersionIdx].label:'';
+  if(!notes.length){list.innerHTML='<div style="font-size:.8rem;color:var(--muted);padding:8px 0">No notes yet for '+escHtml(vLabel||'this version')+'. '+(isVideoPortal?'Pause the video and leave feedback below.':'Leave a note below if you need any adjustments.')+'</div>';return;}
+  var html='';
+  notes.forEach(function(n,idx){
+    if(n.replyTo!==undefined&&n.replyTo!==null) return;
+    var isAdminNote=n.from==='admin'; var isResolved=n.resolved===true;
+    var cls=isAdminNote?'note-item admin-reply':'note-item'; if(isResolved)cls+=' resolved';
+    var fromHtml=isAdminNote?'<div class="note-from from-admin">Reel Estate Media</div>':'<div class="note-from from-client">'+escHtml(portalData.client||'Client')+'</div>';
+    var tsHtml=''; if(n.videoTime!==undefined&&n.videoTime!==null) tsHtml='<span class="note-timestamp" onclick="seekTo('+n.videoTime+')" title="Jump to this moment">▶ '+formatTime(n.videoTime)+'</span>';
+    var hasAdminReply=false; notes.forEach(function(r){if(r.replyTo===idx)hasAdminReply=true;});
+    var adminActed=isResolved||hasAdminReply;
+    var canDelete=isAdmin||(!isAdminNote&&!adminActed);
+    var delHtml=canDelete?'<button class="note-delete" onclick="deleteNote('+idx+')" title="Delete">🗑</button>':'';
+    var replyBtn=isAdmin&&!isAdminNote?' <button class="btn-reply" onclick="startReply('+idx+')">↩ Reply</button>':'';
+    var checkHtml='';
+    if(!isAdminNote){if(isAdmin){var boxCls=isResolved?'check-box checked':'check-box';checkHtml='<button class="note-check" onclick="toggleResolved('+idx+')"><span class="'+boxCls+'">'+(isResolved?'✓':'')+'</span>'+(isResolved?'Done':'Mark done')+'</button> ';}else if(isResolved){checkHtml='<span class="resolved-label">✓ Done</span> ';}}
+    html+='<div class="'+cls+'">'+fromHtml+tsHtml+'<span class="note-text">'+escHtml(n.text)+'</span><div class="note-item-meta">'+checkHtml+'<span>'+(n.date||'')+'</span>'+replyBtn+delHtml+'</div></div>';
+    notes.forEach(function(r,ri){if(r.replyTo!==idx)return;var rA=r.from==='admin';var rC=rA?'note-item admin-reply':'note-item';var rF=rA?'<div class="note-from from-admin">Reel Estate Media</div>':'<div class="note-from from-client">'+escHtml(portalData.client||'Client')+'</div>';var rD=(isAdmin||!rA)?'<button class="note-delete" onclick="deleteNote('+ri+')" title="Delete">🗑</button>':'';html+='<div class="note-reply-wrap"><div class="'+rC+'">'+rF+escHtml(r.text)+'<div class="note-item-meta"><span>'+(r.date||'')+'</span>'+rD+'</div></div></div>';});
+    if(replyingToIdx===idx) html+='<div class="note-reply-input" id="reply-input-'+idx+'"><input type="text" id="reply-text-'+idx+'" placeholder="Write a reply\u2026" onkeydown="if(event.key===\'Enter\')sendReply('+idx+')"><button onclick="sendReply('+idx+')">Send</button></div>';
   });
-  localStorage.setItem(key, JSON.stringify(notes));
-  renderNotes();
+  list.innerHTML=html;
+  if(replyingToIdx>=0){var ri=document.getElementById('reply-text-'+replyingToIdx);if(ri)ri.focus();}
 }
-
-function submitNote() {
-  var input = document.getElementById('note-input');
-  var text = input.value.trim();
-  if (!text) return;
-  var key = getNotesKey(currentVersionIdx);
-  var notes = [];
-  try { notes = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
-
-  var videoTime = null;
-  if (ytPlayer && ytPlayer.getCurrentTime) videoTime = ytPlayer.getCurrentTime();
-
-  var versions = getVersions();
-  var vLabel = versions[currentVersionIdx] ? versions[currentVersionIdx].label : '';
-
-  notes.push({
-    text: text,
-    date: new Date().toLocaleDateString('en-CA', { year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' }),
-    videoTime: videoTime,
-    version: vLabel,
-    from: isAdmin ? 'admin' : 'client'
-  });
-  localStorage.setItem(key, JSON.stringify(notes));
-  input.value = '';
-  renderNotes();
-  var s = document.getElementById('note-success');
-  s.textContent = isAdmin ? '✓ Reply sent!' : '✓ Note sent!';
-  s.style.display = 'block';
-  setTimeout(function(){ s.style.display = 'none'; }, 3000);
-}
-
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
+function startReply(i){replyingToIdx=replyingToIdx===i?-1:i;renderNotes();}
+function toggleResolved(i){var k=getNotesKey(currentVersionIdx);var n=[];try{n=JSON.parse(localStorage.getItem(k)||'[]');}catch(e){}if(n[i]){n[i].resolved=!n[i].resolved;localStorage.setItem(k,JSON.stringify(n));renderNotes();}}
+function sendReply(pi){var inp=document.getElementById('reply-text-'+pi);if(!inp)return;var t=inp.value.trim();if(!t)return;var k=getNotesKey(currentVersionIdx);var n=[];try{n=JSON.parse(localStorage.getItem(k)||'[]');}catch(e){}n.push({text:t,date:new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'}),from:isAdmin?'admin':'client',replyTo:pi});localStorage.setItem(k,JSON.stringify(n));replyingToIdx=-1;renderNotes();}
+function deleteNote(idx){if(!confirm('Delete this note?'))return;var k=getNotesKey(currentVersionIdx);var n=[];try{n=JSON.parse(localStorage.getItem(k)||'[]');}catch(e){}var rem=[idx];n.forEach(function(x,i){if(x.replyTo===idx)rem.push(i);});rem.sort(function(a,b){return b-a;});rem.forEach(function(i){n.splice(i,1);});n.forEach(function(x){if(x.replyTo!==undefined&&x.replyTo!==null){var shift=0;rem.forEach(function(ri){if(ri<x.replyTo)shift++;});x.replyTo=x.replyTo-shift;}});localStorage.setItem(k,JSON.stringify(n));renderNotes();}
+function submitNote(){var inp=document.getElementById('note-input');var t=inp.value.trim();if(!t)return;var k=getNotesKey(currentVersionIdx);var n=[];try{n=JSON.parse(localStorage.getItem(k)||'[]');}catch(e){}var vt=null;if(ytPlayer&&ytPlayer.getCurrentTime)vt=ytPlayer.getCurrentTime();var vs=getVersions();var vl=vs[currentVersionIdx]?vs[currentVersionIdx].label:'';n.push({text:t,date:new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'}),videoTime:vt,version:vl,from:isAdmin?'admin':'client'});localStorage.setItem(k,JSON.stringify(n));inp.value='';renderNotes();var s=document.getElementById('note-success');s.textContent=isAdmin?'✓ Reply sent!':'✓ Note sent!';s.style.display='block';setTimeout(function(){s.style.display='none';},3000);}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 init();
 </script>
 </body>

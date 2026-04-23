@@ -1276,6 +1276,10 @@ label { font-size: .8rem; font-weight: 600; color: var(--text2); text-transform:
                 <option value="delivered">✅ Delivered</option>
               </select>
             </div>
+            <div class="form-field" style="margin:0">
+              <label>Included Revisions</label>
+              <input class="input" id="new-shoot-revisions" type="number" min="1" max="10" value="3" placeholder="3">
+            </div>
           </div>
           <div class="form-field" style="margin-bottom:8px">
             <label>Video / Media Versions</label>
@@ -3615,6 +3619,7 @@ function addShootEntry() {
   document.querySelectorAll('#new-shoot-type-wrap input[type=checkbox]').forEach(function(c){ c.checked = false; });
   document.getElementById('new-shoot-address').value = '';
   document.getElementById('new-shoot-status').value  = 'scheduled';
+  document.getElementById('new-shoot-revisions').value = '3';
   document.getElementById('new-version-url').value   = '';
   document.getElementById('shoot-save-btn').textContent = 'Save Shoot';
   renderShootVersionsList();
@@ -3639,6 +3644,7 @@ function editShootEntry(id) {
   });
   document.getElementById('new-shoot-address').value = s.address || '';
   document.getElementById('new-shoot-status').value  = s.status  || 'scheduled';
+  document.getElementById('new-shoot-revisions').value = s.maxRevisions || '3';
   document.getElementById('new-version-url').value   = '';
   document.getElementById('shoot-save-btn').textContent = 'Update Shoot';
   renderShootVersionsList();
@@ -3688,14 +3694,15 @@ function saveShootEntry() {
   const type = typeArr.join(', ');
   const address   = document.getElementById('new-shoot-address').value.trim();
   const status    = document.getElementById('new-shoot-status').value || 'scheduled';
+  const maxRevisions = parseInt(document.getElementById('new-shoot-revisions').value) || 3;
   if (!date) { showToast('Please pick a shoot date'); return; }
   // Use latest version URL as driveLink for backward compatibility
   var driveLink = _editShootVersions.length ? _editShootVersions[_editShootVersions.length - 1].url : '';
   if (editingShootId) {
     const s = currentEditShoots.find(x => x.id === editingShootId);
-    if (s) { s.date = date; s.time = time; s.type = type; s.address = address; s.status = status; s.driveLink = driveLink; s.versions = _editShootVersions.slice(); s.portalUrl = ''; }
+    if (s) { s.date = date; s.time = time; s.type = type; s.address = address; s.status = status; s.driveLink = driveLink; s.versions = _editShootVersions.slice(); s.portalUrl = ''; s.maxRevisions = maxRevisions; }
   } else {
-    const newShoot = { id: genId(), date, time, type, address, status, driveLink, versions: _editShootVersions.slice(), portalKey: genId() };
+    const newShoot = { id: genId(), date, time, type, address, status, driveLink, versions: _editShootVersions.slice(), portalKey: genId(), maxRevisions: maxRevisions };
     currentEditShoots.push(newShoot);
     const timeStr = time ? ' @ ' + time : '';
     const typeStr = type ? ' — ' + type : '';
@@ -3769,6 +3776,7 @@ function getPortalUrl(shoot) {
     biz:     'Reel Estate Media',
     contact: 'hello@reelestatemedia.com',
     status:  shoot.status || 'delivered',
+    maxRevisions: shoot.maxRevisions || 3,
   };
   const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
   const base = 'https://reelestatemedia.com/portal.html';
