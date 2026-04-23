@@ -1330,6 +1330,8 @@ label { font-size: .8rem; font-weight: 600; color: var(--text2); text-transform:
             </div>
           </div>
           <div style="display:flex;gap:8px;align-items:center">
+            <button type="button" class="btn btn-primary btn-sm" id="shoot-save-btn" onclick="saveShootEntry()">Save Shoot</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="cancelShootEntry()">Cancel</button>
           </div>
         </div>
       </div>
@@ -3816,21 +3818,24 @@ function deleteShootEntry(id) {
   autoSaveCurrentLead();
 }
 function autoSaveCurrentLead() {
-  // Persist current edit state to the leads array and sync to Supabase
   if (!editingId) return;
   var lead = leads.find(function(l){ return l.id === editingId; });
   if (!lead) return;
-  lead.shoots = currentEditShoots.slice();
-  lead.meetings = currentEditMeetings.slice();
-  lead.interactions = currentEditInteractions.slice();
-  lead.properties = currentEditProperties.slice();
-  // Update form fields too
-  lead.name = document.getElementById('f-name').value.trim() || lead.name;
-  lead.brokerage = document.getElementById('f-brokerage').value.trim();
-  lead.phone = document.getElementById('f-phone').value.trim();
-  lead.email = document.getElementById('f-email').value.trim();
-  lead.ig = document.getElementById('f-ig').value.trim();
-  lead.notes = document.getElementById('f-notes').value.trim();
+  lead.shoots = JSON.parse(JSON.stringify(currentEditShoots));
+  lead.meetings = JSON.parse(JSON.stringify(currentEditMeetings));
+  lead.interactions = JSON.parse(JSON.stringify(currentEditInteractions));
+  lead.properties = JSON.parse(JSON.stringify(currentEditProperties));
+  // Only update form fields if the modal is open
+  var nameEl = document.getElementById('f-name');
+  if (nameEl && nameEl.value.trim()) {
+    lead.name = nameEl.value.trim();
+    lead.brokerage = document.getElementById('f-brokerage').value.trim();
+    lead.phone = document.getElementById('f-phone').value.trim();
+    lead.email = document.getElementById('f-email').value.trim();
+    lead.ig = document.getElementById('f-ig').value.trim();
+    lead.notes = document.getElementById('f-notes').value.trim();
+  }
+  console.log('Auto-saving lead:', lead.name, 'shoots:', lead.shoots.length);
   saveLeads();
 }
 function advanceShootStatus(id) {
