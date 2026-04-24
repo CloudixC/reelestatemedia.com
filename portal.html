@@ -391,7 +391,39 @@ function renderRevisionBar(){var el=document.getElementById('revision-bar');var 
 function renderApproval(){var el=document.getElementById('approval-area');var ap=getApproval();var v=getVersions();if(!v.length){el.innerHTML='';return;}if(ap.approved){el.innerHTML='<div class="approved-banner"><h3>✅ Approved</h3><p>Approved on '+escHtml(ap.date||'')+'.'+(ap.auto?' (Auto-approved — review window expired)':' Your final media is ready for delivery.')+'</p></div>';renderTimeline();return;}if(ap.changesRequested&&!isAdmin){el.innerHTML='<div class="approval-box"><h3>🔄 Changes Requested</h3><p>You requested changes on '+escHtml(ap.date||'')+'. We\'re working on the next version!</p></div>';return;}if(!isAdmin){el.innerHTML='<div class="approval-box"><h3>Ready to approve?</h3><p>Review the current version. When you\'re happy, approve it. Need adjustments? Request changes.</p><div class="approval-btns"><button class="btn-approve" onclick="approveVersion()">✅ Approve</button><button class="btn-changes" onclick="requestChanges()">🔄 Request Changes</button></div></div>';}else{if(ap.changesRequested){el.innerHTML='<div class="approval-box" style="border-color:#f59e0b"><h3>🔄 Client Requested Changes</h3><p>Requested on '+escHtml(ap.date||'')+'. Upload a new version and clear when ready.</p><div class="approval-btns"><button class="btn-approve" onclick="clearChangeRequest()">✓ Clear — New Version Ready</button></div></div>';}else{el.innerHTML='<div style="font-size:.78rem;color:var(--muted);text-align:center;margin-bottom:16px">Waiting for client to review and approve.</div>';}}}
 async function approveVersion(){if(!confirm('Approve this version? This will finalize the project.'))return;await saveApprovalData({approved:true,date:new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric'})});renderApproval();renderTimeline();renderCountdown();}
 async function requestChanges(){await saveApprovalData({changesRequested:true,date:new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric'})});renderApproval();document.getElementById('note-input').focus();}
-async function clearChangeRequest(){await saveApprovalData({});renderApproval();}
+async function clearChangeRequest(){await saveApprovalData({});renderApproval();renderTimeline();renderCountdown();}
+
+// ── AUTO-REFRESH: poll Supabase every 30s for data/status/approval changes ──
+var _lastDataHash='';
+function hashObj(o){return JSON.stringify(o);}
+setInterval(async function(){
+  if(!portalSlug)return;
+  try{
+    var rows=await sbGet('portal_data','?slug=eq.'+encodeURIComponent(portalSlug)+'&limit=1');
+    if(!rows||!rows.length)return;
+    var newData=rows[0].data;
+    var newApproval=rows[0].approval||{};
+    var newHash=hashObj({status:newData.status,approval:newApproval,versions:newData.versions});
+    if(!_lastDataHash){_lastDataHash=newHash;return;}
+    if(newHash!==_lastDataHash){
+      _lastDataHash=newHash;
+      // Update in-memory data
+      portalData.status=newData.status;
+      portalData._approval=newApproval;
+      portalData.versions=newData.versions;
+      portalData.reviewDeadline=newData.reviewDeadline;
+      // Re-render affected sections
+      var st=STATUS_INFO[newData.status]||STATUS_INFO.delivered;
+      document.getElementById('p-meta').innerHTML='<div class="shoot-meta-item"><span class="status-chip" style="background:'+st.bg+';color:'+st.color+'">'+st.emoji+' '+st.label+'</span></div>';
+      renderTimeline();
+      renderApproval();
+      renderCountdown();
+      // If versions changed, reload video
+      var vs=getVersions();
+      if(vs.length)loadVideo(vs[vs.length-1].url,vs.length-1);
+    }
+  }catch(e){console.warn('Auto-refresh error:',e);}
+},30000);
 
 /* PHOTOS */
 async function loadPhotos(){var folder=portalData.photosFolder;if(!folder)return;var fm=folder.match(/drive\.google\.com\/drive\/folders\/([\w-]+)/);if(!fm)return;document.getElementById('photos-section').style.display='block';document.getElementById('gallery-grid').innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)">Loading photos\u2026</div>';try{var url='https://www.googleapis.com/drive/v3/files?q=%27'+fm[1]+'%27+in+parents+and+mimeType+contains+%27image%27&fields=files(id,name,thumbnailLink,webContentLink)&key='+GAPI_KEY+'&pageSize=100';var r=await fetch(url);var data=await r.json();if(!data.files||!data.files.length){document.getElementById('gallery-grid').innerHTML='<div style="color:var(--muted);font-size:.8rem">No photos found. Make sure the folder is shared publicly.</div>';return;}portalData._photos=data.files;document.getElementById('download-area').style.display='block';renderGallery();}catch(e){document.getElementById('gallery-grid').innerHTML='<div style="color:#dc2626;font-size:.8rem">Could not load photos.</div>';}}

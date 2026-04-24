@@ -1215,6 +1215,10 @@ label { font-size: .8rem; font-weight: 600; color: var(--text2); text-transform:
             <label>Brokerage</label>
             <input class="input" id="site-brokerage" type="text" placeholder="RE/MAX, Keller Williams…">
           </div>
+          <div class="form-field" style="margin:0">
+            <label>Agent Photo URL</label>
+            <input class="input" id="site-agent-photo" type="url" placeholder="https://drive.google.com/… or any image URL">
+          </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:10px">
           <div class="form-field" style="margin:0">
@@ -5668,6 +5672,7 @@ function openNewPropertySite() {
   document.getElementById('site-price').value = '';
   document.getElementById('site-agent').value = '';
   document.getElementById('site-brokerage').value = '';
+  document.getElementById('site-agent-photo').value = '';
   document.getElementById('site-beds').value = '';
   document.getElementById('site-baths').value = '';
   document.getElementById('site-sqft').value = '';
@@ -5695,6 +5700,7 @@ async function createPropertySite() {
     price: document.getElementById('site-price').value.trim(),
     client: lead ? lead.name : document.getElementById('site-agent').value.trim(),
     brokerage: lead ? lead.brokerage : document.getElementById('site-brokerage').value.trim(),
+    agentPhoto: document.getElementById('site-agent-photo').value.trim(),
     phone: lead ? lead.phone : '',
     email: lead ? lead.email : '',
     beds: document.getElementById('site-beds').value,
