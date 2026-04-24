@@ -1374,8 +1374,8 @@ label { font-size: .8rem; font-weight: 600; color: var(--text2); text-transform:
       <!-- SHOOTS LOG -->
       <div class="form-field full">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <label>Shoots</label>
-          <button type="button" class="btn btn-ghost btn-sm" onclick="addShootEntry()">+ Add Shoot</button>
+          <label>Projects</label>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="addShootEntry()">+ Add Project</button>
         </div>
         <div id="shoots-list"></div>
         <div id="shoot-new-entry" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-top:8px">
@@ -3246,10 +3246,13 @@ function clearPromo() {
   updateQuoteTotals();
 }
 
+var _editPayments = [];
+var METHOD_LABELS = { etransfer:'e-Transfer', cash:'Cash', cheque:'Cheque' };
+
 function updateQuoteTotals() {
   const sub      = lineItems.reduce((s,l) => s + l.qty*l.price, 0);
   const useTax   = document.getElementById('q-tax-toggle')?.checked !== false;
-  const dep      = parseFloat(document.getElementById('q-deposit')?.value) || 0;
+  const dep      = _editPayments.reduce((s,p) => s + (parseFloat(p.amount) || 0), 0);
 
   // Promo discount
   let discount = 0;
@@ -3292,6 +3295,66 @@ function updateQuoteTotals() {
   if (remRow) remRow.style.color = rem > 0 ? '#dc2626' : '#15803d';
 }
 
+function renderPayments() {
+  var el = document.getElementById('q-payment-list');
+  if (!el) return;
+  if (!_editPayments.length) {
+    el.innerHTML = '<div style="font-size:.75rem;color:var(--text3);padding:2px 0">No payments recorded.</div>';
+    return;
+  }
+  el.innerHTML = _editPayments.map(function(p, i) {
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;margin-bottom:4px">'
+      + '<span style="font-weight:700;color:#15803d;font-size:.82rem">$' + parseFloat(p.amount).toFixed(2) + '</span>'
+      + '<span style="font-size:.72rem;color:var(--text2)">' + (METHOD_LABELS[p.method] || p.method || '—') + '</span>'
+      + '<span style="font-size:.72rem;color:var(--text3);margin-left:auto">' + (p.date || '—') + '</span>'
+      + '<button onclick="removePayment(' + i + ')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:.85rem;padding:0 2px">×</button>'
+      + '</div>';
+  }).join('');
+}
+
+function showAddPayment() {
+  document.getElementById('q-payment-form').style.display = 'block';
+  // Pre-fill with today's date and remaining amount
+  document.getElementById('q-pay-date').value = new Date().toISOString().slice(0, 10);
+  var sub = lineItems.reduce(function(s,l) { return s + l.qty*l.price; }, 0);
+  var useTax = document.getElementById('q-tax-toggle')?.checked !== false;
+  var discount = 0;
+  if (activePromo && sub > 0) {
+    discount = activePromo.type === 'pct' ? sub * (activePromo.value / 100) : Math.min(activePromo.value, sub);
+  }
+  var afterDiscount = Math.max(0, sub - discount);
+  var tax = useTax ? afterDiscount * 0.13 : 0;
+  var tot = afterDiscount + tax;
+  var paid = _editPayments.reduce(function(s,p) { return s + (parseFloat(p.amount) || 0); }, 0);
+  var rem = Math.max(0, tot - paid);
+  document.getElementById('q-pay-amount').value = rem > 0 ? rem.toFixed(2) : '';
+  document.getElementById('q-pay-amount').focus();
+}
+
+function hideAddPayment() {
+  document.getElementById('q-payment-form').style.display = 'none';
+}
+
+function addPaymentEntry() {
+  var amount = parseFloat(document.getElementById('q-pay-amount').value);
+  if (!amount || amount <= 0) { showToast('Enter a payment amount'); return; }
+  var method = document.getElementById('q-pay-method').value;
+  var date = document.getElementById('q-pay-date').value;
+  _editPayments.push({ id: genId(), amount: amount, method: method, date: date });
+  renderPayments();
+  updateQuoteTotals();
+  hideAddPayment();
+  document.getElementById('q-pay-amount').value = '';
+  document.getElementById('q-pay-method').value = '';
+}
+
+function removePayment(idx) {
+  if (!confirm('Remove this payment record?')) return;
+  _editPayments.splice(idx, 1);
+  renderPayments();
+  updateQuoteTotals();
+}
+
 /* ============================================================
    OPEN / SAVE QUOTE
    ============================================================ */
@@ -3301,9 +3364,11 @@ function openNewQuote() {
   renderPackageButtons();
   renderLineItems();
   updateQuoteTotals();
-  ['q-client','q-brokerage','q-email','q-phone','q-address','q-notes','q-deposit','q-pay-method','q-pay-date'].forEach(id => {
+  ['q-client','q-brokerage','q-email','q-phone','q-address','q-notes'].forEach(id => {
     const el = document.getElementById(id); if(el) el.value = '';
   });
+  _editPayments = [];
+  renderPayments();
   const dateEl = document.getElementById('q-date');
   if (dateEl) dateEl.value = '';
   document.getElementById('q-doctype').value = 'Quote';
@@ -3384,9 +3449,15 @@ function openEditQuote(id) {
   document.getElementById('q-phone').value     = q.phone || '';
   document.getElementById('q-address').value   = q.address || '';
   document.getElementById('q-notes').value     = q.notes || '';
-  document.getElementById('q-deposit').value   = q.deposit || '';
-  document.getElementById('q-pay-method').value = q.payMethod || '';
-  document.getElementById('q-pay-date').value   = q.payDate || '';
+  // Load payment ledger (backward compat: migrate old deposit to payment entry)
+  if (q.payments && q.payments.length) {
+    _editPayments = JSON.parse(JSON.stringify(q.payments));
+  } else if (q.deposit && parseFloat(q.deposit) > 0) {
+    _editPayments = [{ id: genId(), amount: parseFloat(q.deposit), method: q.payMethod || '', date: q.payDate || '' }];
+  } else {
+    _editPayments = [];
+  }
+  renderPayments();
   document.getElementById('q-date').value      = q.shootDate || '';
   document.getElementById('q-doctype').value   = q.docType || 'Quote';
   // Restore tax toggle
@@ -3418,7 +3489,7 @@ function saveQuote() {
   const afterDiscount = Math.max(0, sub - discount);
   const tax  = useTax ? afterDiscount * 0.13 : 0;
   const tot  = afterDiscount + tax;
-  const dep  = parseFloat(document.getElementById('q-deposit').value) || 0;
+  const dep  = _editPayments.reduce((s,p) => s + (parseFloat(p.amount) || 0), 0);
   const data = {
     client,
     brokerage: document.getElementById('q-brokerage').value.trim(),
@@ -3427,8 +3498,7 @@ function saveQuote() {
     address:   document.getElementById('q-address').value.trim(),
     notes:     document.getElementById('q-notes').value.trim(),
     deposit:   dep,
-    payMethod: document.getElementById('q-pay-method').value,
-    payDate:   document.getElementById('q-pay-date').value,
+    payments:  JSON.parse(JSON.stringify(_editPayments)),
     shootDate: document.getElementById('q-date').value,
     docType:   document.getElementById('q-doctype').value,
     leadId:    (document.getElementById('quote-modal').__leadId || (editingQuoteId ? (quotes.find(x=>x.id===editingQuoteId)||{}).leadId : null) || null),
@@ -3531,9 +3601,15 @@ function buildInvoiceHTML(q) {
       + "</tr>";
   }).join("");
 
-  var depositRow = q.deposit > 0
-    ? "<div class=\"totals-row\"><span class=\"totals-key\">Deposit Paid</span><span class=\"totals-val\" style=\"color:#15803d\">&#8722;$" + parseFloat(q.deposit).toFixed(2) + "</span></div>"
-    : "";
+  var depositRow = '';
+  if (q.payments && q.payments.length) {
+    depositRow = q.payments.map(function(p) {
+      var label = 'Payment' + (p.date ? ' (' + p.date + ')' : '') + (p.method ? ' — ' + (METHOD_LABELS[p.method]||p.method) : '');
+      return "<div class=\"totals-row\"><span class=\"totals-key\">" + esc(label) + "</span><span class=\"totals-val\" style=\"color:#15803d\">&#8722;$" + parseFloat(p.amount).toFixed(2) + "</span></div>";
+    }).join('');
+  } else if (q.deposit > 0) {
+    depositRow = "<div class=\"totals-row\"><span class=\"totals-key\">Payment Received</span><span class=\"totals-val\" style=\"color:#15803d\">&#8722;$" + parseFloat(q.deposit).toFixed(2) + "</span></div>";
+  }
 
   var promoRow = (q.discount > 0 && q.promoCode)
     ? "<div class=\"totals-row\"><span class=\"totals-key\" style=\"color:#15803d\">" + esc(q.promoCode) + " discount</span><span class=\"totals-val\" style=\"color:#15803d\">&#8722;$" + parseFloat(q.discount).toFixed(2) + "</span></div>"
@@ -4101,7 +4177,7 @@ function saveShootEntry() {
   const photosFolder = document.getElementById('new-shoot-photos').value.trim();
   const clientLogo = document.getElementById('new-shoot-client-logo').value.trim();
   const reviewDeadline = document.getElementById('new-shoot-deadline').value;
-  if (!date) { showToast('Please pick a shoot date'); return; }
+  if (!date && !projectName) { showToast('Please add a project name or shoot date'); return; }
   // Use latest version URL as driveLink for backward compatibility
   var driveLink = _editShootVersions.length ? _editShootVersions[_editShootVersions.length - 1].url : '';
   if (editingShootId) {
@@ -4112,10 +4188,10 @@ function saveShootEntry() {
   } else {
     const newShoot = { id: genId(), date, time, type, address, status, driveLink, versions: _editShootVersions.slice(), portalKey: genId(), maxRevisions: maxRevisions, photosFolder: photosFolder, stagingPairs: _editStagingPairs.slice(), clientLogo: clientLogo, reviewDeadline: reviewDeadline, projectName: projectName };
     currentEditShoots.push(newShoot);
-    const timeStr = time ? ' @ ' + time : '';
-    const nameStr = projectName ? ' — ' + projectName : (type ? ' — ' + type : '');
+    const nameStr = projectName ? projectName : (type || 'Project');
+    const dateStr = date ? date + (time ? ' @ ' + time : '') : '';
     currentEditInteractions.unshift({ id: genId(), datetime: nowLocal(), type: 'Shoot',
-      note: 'Shoot booked: ' + date + timeStr + nameStr + (address ? ' at ' + address : '') });
+      note: 'Project added: ' + nameStr + (dateStr ? ' — ' + dateStr : '') + (address ? ' at ' + address : '') });
     renderInteractionLog();
   }
   editingShootId = null;
@@ -4433,11 +4509,11 @@ function renderShootsList() {
   const el = document.getElementById('shoots-list');
   if (!el) return;
   if (!currentEditShoots.length) {
-    el.innerHTML = '<div style="font-size:.78rem;color:var(--text3);padding:4px 0">No shoots scheduled.</div>';
+    el.innerHTML = '<div style="font-size:.78rem;color:var(--text3);padding:4px 0">No projects yet.</div>';
     return;
   }
   const order = ['scheduled','shot','editing','review','revising','approved','delivered'];
-  el.innerHTML = currentEditShoots.slice().sort((a,b) => a.date > b.date ? 1 : -1).map(s => {
+  el.innerHTML = currentEditShoots.slice().sort((a,b) => (a.date||'9999') > (b.date||'9999') ? 1 : -1).map(s => {
     const st  = SHOOT_STATUSES[s.status || 'scheduled'];
     const cur = order.indexOf(s.status || 'scheduled');
     const nextSt = cur < order.length-1 ? SHOOT_STATUSES[order[cur+1]] : null;
@@ -4446,7 +4522,7 @@ function renderShootsList() {
     ).join('');
     return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:8px">'
       + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
-      + '<div><span style="font-weight:600;font-size:.88rem">' + (s.projectName ? '<span style="color:var(--teal)">' + esc(s.projectName) + '</span> · ' : '') + s.date + (s.time ? ' <span style="color:var(--text3);font-weight:400;font-size:.8rem">@ ' + s.time + '</span>' : '') + '</span>'
+      + '<div><span style="font-weight:600;font-size:.88rem">' + (s.projectName ? '<span style="color:var(--teal)">' + esc(s.projectName) + '</span>' + (s.date ? ' · ' : '') : '') + (s.date ? s.date : '') + (s.time ? ' <span style="color:var(--text3);font-weight:400;font-size:.8rem">@ ' + s.time + '</span>' : '') + '</span>'
       + (s.type ? ' <span style="font-size:.72rem;color:#0284c7;font-weight:600;background:#e0f2fe;padding:1px 6px;border-radius:4px">' + esc(s.type) + '</span>' : '') + '</div>'
       + '<span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:10px;background:' + st.bg + ';color:' + st.color + '">' + st.emoji + ' ' + st.label + '</span>'
       + '</div>'
@@ -6025,23 +6101,38 @@ async function deleteSite(slug) {
           <div id="q-promo-msg" style="font-size:.75rem;margin-top:6px;display:none"></div>
         </div>
 
-        <!-- Deposit -->
+        <!-- Payment Ledger -->
         <div class="form-field">
-          <label>Deposit Paid ($)</label>
-          <input class="input" id="q-deposit" type="number" min="0" step="0.01" placeholder="0.00" oninput="updateQuoteTotals()">
-        </div>
-        <div class="form-field">
-          <label>Payment Method</label>
-          <select class="select" id="q-pay-method">
-            <option value="">— Select —</option>
-            <option value="etransfer">Interac e-Transfer</option>
-            <option value="cash">Cash</option>
-            <option value="cheque">Cheque</option>
-          </select>
-        </div>
-        <div class="form-field">
-          <label>Payment Date</label>
-          <input class="input" id="q-pay-date" type="date">
+          <label style="display:flex;align-items:center;justify-content:space-between">
+            Payments
+            <button type="button" class="btn btn-ghost btn-sm" onclick="showAddPayment()" style="font-size:.7rem">+ Record Payment</button>
+          </label>
+          <div id="q-payment-list" style="margin-top:6px"></div>
+          <div id="q-payment-form" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-top:6px">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+              <div class="form-field" style="margin:0">
+                <label style="font-size:.7rem">Amount ($)</label>
+                <input class="input" id="q-pay-amount" type="number" min="0" step="0.01" placeholder="0.00">
+              </div>
+              <div class="form-field" style="margin:0">
+                <label style="font-size:.7rem">Method</label>
+                <select class="select" id="q-pay-method">
+                  <option value="">— Select —</option>
+                  <option value="etransfer">Interac e-Transfer</option>
+                  <option value="cash">Cash</option>
+                  <option value="cheque">Cheque</option>
+                </select>
+              </div>
+              <div class="form-field" style="margin:0">
+                <label style="font-size:.7rem">Date</label>
+                <input class="input" id="q-pay-date" type="date">
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end">
+              <button type="button" class="btn btn-ghost btn-sm" onclick="hideAddPayment()">Cancel</button>
+              <button type="button" class="btn btn-primary btn-sm" onclick="addPaymentEntry()">Add Payment</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -6050,7 +6141,7 @@ async function deleteSite(slug) {
         <div class="totals-row" id="qt-promo-row" style="display:none;color:#15803d"><span id="qt-promo-label">Promo</span><span id="qt-promo-amt">−$0.00</span></div>
         <div class="totals-row" id="qt-tax-row"><span id="qt-tax-label">HST (13%)</span><span id="qt-tax">$0.00</span></div>
         <div class="totals-row grand"><span>Total</span><span id="qt-total">$0.00</span></div>
-        <div class="totals-row" style="color:#0284c7"><span>Deposit</span><span id="qt-deposit">$0.00</span></div>
+        <div class="totals-row" style="color:#0284c7"><span>Paid</span><span id="qt-deposit">$0.00</span></div>
         <div class="totals-row" style="font-weight:600" id="qt-remaining-row"><span>Remaining</span><span id="qt-remaining">$0.00</span></div>
       </div>
     </div>
