@@ -1381,6 +1381,16 @@ label { font-size: .8rem; font-weight: 600; color: var(--text2); text-transform:
         <div id="shoot-new-entry" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-top:8px">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
             <div class="form-field" style="margin:0">
+              <label>Project Name</label>
+              <input class="input" id="new-shoot-name" type="text" placeholder="e.g. Listing Video, Social Reel, Drone Shots…">
+            </div>
+            <div class="form-field" style="margin:0">
+              <label>Address</label>
+              <input class="input" id="new-shoot-address" type="text" placeholder="Property address">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+            <div class="form-field" style="margin:0">
               <label>Date</label>
               <input class="input" id="new-shoot-date" type="date">
             </div>
@@ -1404,10 +1414,6 @@ label { font-size: .8rem; font-weight: 600; color: var(--text2); text-transform:
                 <label class="shoot-type-chip"><input type="checkbox" value="Agent Branding"> Agent Branding</label>
                 <label class="shoot-type-chip"><input type="checkbox" value="Social Content"> Social Content</label>
               </div>
-            </div>
-            <div class="form-field" style="margin:0">
-              <label>Address</label>
-              <input class="input" id="new-shoot-address" type="text" placeholder="Property address">
             </div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
@@ -3967,8 +3973,10 @@ function addShootEntry() {
   document.getElementById('shoot-new-entry').style.display = 'block';
   document.getElementById('new-shoot-date').value    = '';
   document.getElementById('new-shoot-time').value    = '';
+  document.getElementById('new-shoot-name').value    = '';
   document.querySelectorAll('#new-shoot-type-wrap input[type=checkbox]').forEach(function(c){ c.checked = false; });
   document.getElementById('new-shoot-address').value = '';
+  document.getElementById('new-shoot-name').value    = '';
   document.getElementById('new-shoot-status').value  = 'scheduled';
   document.getElementById('new-shoot-revisions').value = '3';
   document.getElementById('new-version-url').value   = '';
@@ -3995,6 +4003,7 @@ function editShootEntry(id) {
   document.getElementById('shoot-new-entry').style.display = 'block';
   document.getElementById('new-shoot-date').value    = s.date    || '';
   document.getElementById('new-shoot-time').value    = s.time    || '';
+  document.getElementById('new-shoot-name').value    = s.projectName || '';
   // Populate type checkboxes
   var savedTypes = (s.type || '').split(', ').filter(Boolean);
   document.querySelectorAll('#new-shoot-type-wrap input[type=checkbox]').forEach(function(c){
@@ -4082,6 +4091,7 @@ function renderStagingPairsList() {
 function saveShootEntry() {
   const date      = document.getElementById('new-shoot-date').value;
   const time      = document.getElementById('new-shoot-time').value;
+  const projectName = document.getElementById('new-shoot-name').value.trim();
   var typeArr = [];
   document.querySelectorAll('#new-shoot-type-wrap input[type=checkbox]:checked').forEach(function(c){ typeArr.push(c.value); });
   const type = typeArr.join(', ');
@@ -4096,16 +4106,16 @@ function saveShootEntry() {
   var driveLink = _editShootVersions.length ? _editShootVersions[_editShootVersions.length - 1].url : '';
   if (editingShootId) {
     const s = currentEditShoots.find(x => x.id === editingShootId);
-    if (s) { s.date = date; s.time = time; s.type = type; s.address = address; s.status = status; s.driveLink = driveLink; s.versions = _editShootVersions.slice(); s.maxRevisions = maxRevisions; s.photosFolder = photosFolder; s.stagingPairs = _editStagingPairs.slice(); s.clientLogo = clientLogo; s.reviewDeadline = reviewDeadline;
+    if (s) { s.date = date; s.time = time; s.type = type; s.address = address; s.status = status; s.driveLink = driveLink; s.versions = _editShootVersions.slice(); s.maxRevisions = maxRevisions; s.photosFolder = photosFolder; s.stagingPairs = _editStagingPairs.slice(); s.clientLogo = clientLogo; s.reviewDeadline = reviewDeadline; s.projectName = projectName;
       if (s.portalSlug) syncPortalData(s.id);
     }
   } else {
-    const newShoot = { id: genId(), date, time, type, address, status, driveLink, versions: _editShootVersions.slice(), portalKey: genId(), maxRevisions: maxRevisions, photosFolder: photosFolder, stagingPairs: _editStagingPairs.slice(), clientLogo: clientLogo, reviewDeadline: reviewDeadline };
+    const newShoot = { id: genId(), date, time, type, address, status, driveLink, versions: _editShootVersions.slice(), portalKey: genId(), maxRevisions: maxRevisions, photosFolder: photosFolder, stagingPairs: _editStagingPairs.slice(), clientLogo: clientLogo, reviewDeadline: reviewDeadline, projectName: projectName };
     currentEditShoots.push(newShoot);
     const timeStr = time ? ' @ ' + time : '';
-    const typeStr = type ? ' — ' + type : '';
+    const nameStr = projectName ? ' — ' + projectName : (type ? ' — ' + type : '');
     currentEditInteractions.unshift({ id: genId(), datetime: nowLocal(), type: 'Shoot',
-      note: 'Shoot booked: ' + date + timeStr + typeStr + (address ? ' at ' + address : '') });
+      note: 'Shoot booked: ' + date + timeStr + nameStr + (address ? ' at ' + address : '') });
     renderInteractionLog();
   }
   editingShootId = null;
@@ -4295,6 +4305,7 @@ function buildPortalData(shoot) {
     stagingPairs: shoot.stagingPairs || [],
     clientLogo: shoot.clientLogo || '',
     reviewDeadline: shoot.reviewDeadline || '',
+    projectName: shoot.projectName || '',
   };
 }
 async function savePortalToSupabase(slug, data) {
@@ -4435,7 +4446,7 @@ function renderShootsList() {
     ).join('');
     return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:8px">'
       + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
-      + '<div><span style="font-weight:600;font-size:.88rem">' + s.date + (s.time ? ' <span style="color:var(--text3);font-weight:400;font-size:.8rem">@ ' + s.time + '</span>' : '') + '</span>'
+      + '<div><span style="font-weight:600;font-size:.88rem">' + (s.projectName ? '<span style="color:var(--teal)">' + esc(s.projectName) + '</span> · ' : '') + s.date + (s.time ? ' <span style="color:var(--text3);font-weight:400;font-size:.8rem">@ ' + s.time + '</span>' : '') + '</span>'
       + (s.type ? ' <span style="font-size:.72rem;color:#0284c7;font-weight:600;background:#e0f2fe;padding:1px 6px;border-radius:4px">' + esc(s.type) + '</span>' : '') + '</div>'
       + '<span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:10px;background:' + st.bg + ';color:' + st.color + '">' + st.emoji + ' ' + st.label + '</span>'
       + '</div>'
@@ -4462,7 +4473,9 @@ function renderShootsList() {
           + '</div>'
         : '')
       + (s.portalSlug && portalApprovalCache[s.portalSlug] && portalApprovalCache[s.portalSlug].approved
-        ? '<div style="background:#dcfce7;border:1px solid #86efac;border-radius:8px;padding:8px 12px;margin-top:6px;font-size:.75rem;color:#15803d;font-weight:600">✅ Client Approved' + (portalApprovalCache[s.portalSlug].date ? ' on ' + esc(portalApprovalCache[s.portalSlug].date) : '') + '</div>'
+        ? (function(){ var a=portalApprovalCache[s.portalSlug]; var at=a.approvedAt?new Date(a.approvedAt):null; var inGrace=at&&(new Date()-at)<900000&&!a.auto; return inGrace
+          ? '<div style="background:#fef9c3;border:1px solid #fbbf24;border-radius:8px;padding:8px 12px;margin-top:6px;font-size:.75rem;color:#92400e;font-weight:600">✅ Client Approved (⏱ grace period — client can still undo)</div>'
+          : '<div style="background:#dcfce7;border:1px solid #86efac;border-radius:8px;padding:8px 12px;margin-top:6px;font-size:.75rem;color:#15803d;font-weight:600">✅ Client Approved' + (a.date ? ' on ' + esc(a.date) : '') + ' — locked</div>'; })()
         : '')
       + renderShootChecklist(s)
       + '</div>';
