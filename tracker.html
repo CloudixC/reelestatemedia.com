@@ -1867,6 +1867,11 @@ function loadLeads() {
     renderLeads();
     renderCalendar();
     updateStats();
+    // Fetch portal approval statuses from Supabase
+    fetchPortalApprovals().then(function() {
+      // Re-render if any shoot modal is open
+      if (currentEditShoots.length) renderShootsList();
+    });
   });
 }
 function saveLeads() {
@@ -4343,6 +4348,39 @@ async function syncPortalData(shootId) {
   await savePortalToSupabase(s.portalSlug, data);
   showToast('Portal synced ✓');
 }
+
+// ── PORTAL APPROVAL TRACKING ──
+var portalApprovalCache = {};
+
+async function fetchPortalApprovals() {
+  // Collect all portal slugs from all leads
+  var slugs = [];
+  leads.forEach(function(l) {
+    (l.shoots || []).forEach(function(s) {
+      if (s.portalSlug) slugs.push(s.portalSlug);
+    });
+  });
+  if (!slugs.length) return;
+  // Fetch approval data for all portal slugs
+  try {
+    var rows = await sbFetch('GET', 'portal_data', null, '?select=slug,approval&slug=in.(' + slugs.map(encodeURIComponent).join(',') + ')');
+    if (rows && rows.length) {
+      rows.forEach(function(r) {
+        portalApprovalCache[r.slug] = r.approval || {};
+      });
+    }
+  } catch(e) { console.warn('Failed to fetch portal approvals:', e); }
+}
+
+async function clearPortalChangesRequested(shootId) {
+  var s = currentEditShoots.find(function(x) { return x.id === shootId; });
+  if (!s || !s.portalSlug) return;
+  if (!confirm('Clear the changes request and let the client approve again?')) return;
+  await sbFetch('PATCH', 'portal_data', { approval: {}, updated_at: new Date().toISOString() }, '?slug=eq.' + encodeURIComponent(s.portalSlug));
+  portalApprovalCache[s.portalSlug] = {};
+  renderShootsList();
+  showToast('Changes request cleared ✓');
+}
 async function copyPortalLink(shootId) {
   var s = currentEditShoots.find(function(x){ return x.id === shootId; });
   if (!s) return;
@@ -4417,6 +4455,15 @@ function renderShootsList() {
       + (s.address ? '<button onclick="generatePropertyWebsite(\'' + s.id + '\')" style="background:#059669;color:#fff;border:none;border-radius:5px;padding:3px 8px;font-size:.72rem;font-weight:600;cursor:pointer">🏠 Property Site</button>' : '')
       + '<button onclick="deleteShootEntry(\'' + s.id + '\')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:1rem;padding:3px 4px;margin-left:auto">×</button>'
       + '</div>'
+      + (s.portalSlug && portalApprovalCache[s.portalSlug] && portalApprovalCache[s.portalSlug].changesRequested
+        ? '<div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:8px 12px;margin-top:6px;display:flex;align-items:center;justify-content:space-between;gap:8px">'
+          + '<div style="font-size:.75rem;color:#92400e;font-weight:600">🔄 Client Requested Changes' + (portalApprovalCache[s.portalSlug].date ? ' <span style="font-weight:400">on ' + esc(portalApprovalCache[s.portalSlug].date) + '</span>' : '') + '</div>'
+          + '<button onclick="clearPortalChangesRequested(\'' + s.id + '\')" style="background:#f59e0b;color:#fff;border:none;border-radius:5px;padding:3px 10px;font-size:.7rem;font-weight:600;cursor:pointer;white-space:nowrap">✓ Clear &amp; Re-open</button>'
+          + '</div>'
+        : '')
+      + (s.portalSlug && portalApprovalCache[s.portalSlug] && portalApprovalCache[s.portalSlug].approved
+        ? '<div style="background:#dcfce7;border:1px solid #86efac;border-radius:8px;padding:8px 12px;margin-top:6px;font-size:.75rem;color:#15803d;font-weight:600">✅ Client Approved' + (portalApprovalCache[s.portalSlug].date ? ' on ' + esc(portalApprovalCache[s.portalSlug].date) : '') + '</div>'
+        : '')
       + renderShootChecklist(s)
       + '</div>';
   }).join('');
