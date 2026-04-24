@@ -388,8 +388,9 @@ function renderTimeline(){var el=document.getElementById('timeline');var raw=por
 function renderRevisionBar(){var el=document.getElementById('revision-bar');var v=getVersions();var max=portalData.maxRevisions||3;var used=Math.max(0,v.length-1);if(v.length<=1){el.style.display='none';return;}el.style.display='flex';var dots='';for(var i=0;i<max;i++){var c='rev-dot';if(i<used)c+=' used';else if(i===used)c+=' current';dots+='<span class="'+c+'"></span>';}var w='';if(used>=max)w='<span class="rev-warn">Additional revisions may incur a fee</span>';el.innerHTML='<div><span class="rev-label">Revisions: </span><span class="rev-count">'+used+' of '+max+' included</span> '+w+'</div><div class="revision-dots">'+dots+'</div>';}
 
 /* APPROVAL */
-function renderApproval(){var el=document.getElementById('approval-area');var ap=getApproval();var v=getVersions();if(!v.length){el.innerHTML='';return;}if(ap.approved){el.innerHTML='<div class="approved-banner"><h3>✅ Approved</h3><p>Approved on '+escHtml(ap.date||'')+'.'+(ap.auto?' (Auto-approved — review window expired)':' Your final media is ready for delivery.')+'</p></div>';renderTimeline();return;}if(ap.changesRequested&&!isAdmin){el.innerHTML='<div class="approval-box"><h3>🔄 Changes Requested</h3><p>You requested changes on '+escHtml(ap.date||'')+'. We\'re working on the next version!</p></div>';return;}if(!isAdmin){el.innerHTML='<div class="approval-box"><h3>Ready to approve?</h3><p>Review the current version. When you\'re happy, approve it. Need adjustments? Request changes.</p><div class="approval-btns"><button class="btn-approve" onclick="approveVersion()">✅ Approve</button><button class="btn-changes" onclick="requestChanges()">🔄 Request Changes</button></div></div>';}else{if(ap.changesRequested){el.innerHTML='<div class="approval-box" style="border-color:#f59e0b"><h3>🔄 Client Requested Changes</h3><p>Requested on '+escHtml(ap.date||'')+'. Upload a new version and clear when ready.</p><div class="approval-btns"><button class="btn-approve" onclick="clearChangeRequest()">✓ Clear — New Version Ready</button></div></div>';}else{el.innerHTML='<div style="font-size:.78rem;color:var(--muted);text-align:center;margin-bottom:16px">Waiting for client to review and approve.</div>';}}}
-async function approveVersion(){if(!confirm('Approve this version? This will finalize the project.'))return;await saveApprovalData({approved:true,date:new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric'})});renderApproval();renderTimeline();renderCountdown();}
+function renderApproval(){var el=document.getElementById('approval-area');var ap=getApproval();var v=getVersions();if(!v.length){el.innerHTML='';return;}if(ap.approved){var GRACE_MS=15*60*1000;var approvedAt=ap.approvedAt?new Date(ap.approvedAt):null;var now=new Date();var inGrace=approvedAt&&(now-approvedAt)<GRACE_MS&&!ap.auto;if(inGrace){var remaining=GRACE_MS-(now-approvedAt);var mins=Math.floor(remaining/60000);var secs=Math.floor((remaining%60000)/1000);el.innerHTML='<div class="approval-box" style="border-color:#059669"><h3>✅ Approved</h3><p>Approved on '+escHtml(ap.date||'')+'. Changed your mind?</p><div style="font-size:.85rem;color:#b45309;font-weight:600;margin:8px 0" id="grace-timer">⏱ '+mins+'m '+secs+'s left to undo</div><div class="approval-btns"><button class="btn-changes" onclick="undoApproval()">↩ Undo Approval</button></div><p style="font-size:.72rem;color:var(--muted);margin-top:8px">After the window closes, approval is final and your files will be prepared for delivery.</p></div>';if(!window._graceInterval){window._graceInterval=setInterval(function(){var r2=GRACE_MS-(new Date()-approvedAt);if(r2<=0){clearInterval(window._graceInterval);window._graceInterval=null;renderApproval();return;}var m2=Math.floor(r2/60000);var s2=Math.floor((r2%60000)/1000);var gt=document.getElementById('grace-timer');if(gt)gt.textContent='⏱ '+m2+'m '+s2+'s left to undo';},1000);}renderTimeline();return;}el.innerHTML='<div class="approved-banner"><h3>✅ Approved</h3><p>Approved on '+escHtml(ap.date||'')+'.'+(ap.auto?' (Auto-approved — review window expired)':' Your final media is ready for delivery.')+'</p></div>';renderTimeline();return;}if(ap.changesRequested&&!isAdmin){el.innerHTML='<div class="approval-box"><h3>🔄 Changes Requested</h3><p>You requested changes on '+escHtml(ap.date||'')+'. We\'re working on the next version!</p></div>';return;}if(!isAdmin){el.innerHTML='<div class="approval-box"><h3>Ready to approve?</h3><p>Review the current version. When you\'re happy, approve it. Need adjustments? Request changes.</p><div class="approval-btns"><button class="btn-approve" onclick="approveVersion()">✅ Approve</button><button class="btn-changes" onclick="requestChanges()">🔄 Request Changes</button></div></div>';}else{if(ap.changesRequested){el.innerHTML='<div class="approval-box" style="border-color:#f59e0b"><h3>🔄 Client Requested Changes</h3><p>Requested on '+escHtml(ap.date||'')+'. Upload a new version and clear when ready.</p><div class="approval-btns"><button class="btn-approve" onclick="clearChangeRequest()">✓ Clear — New Version Ready</button></div></div>';}else{el.innerHTML='<div style="font-size:.78rem;color:var(--muted);text-align:center;margin-bottom:16px">Waiting for client to review and approve.</div>';}}}
+async function approveVersion(){if(!confirm('Approve this version? This will finalize the project.'))return;await saveApprovalData({approved:true,date:new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric'}),approvedAt:new Date().toISOString()});renderApproval();renderTimeline();renderCountdown();}
+async function undoApproval(){if(!confirm('Undo your approval? You\'ll be able to request changes or re-approve.'))return;if(window._graceInterval){clearInterval(window._graceInterval);window._graceInterval=null;}await saveApprovalData({});renderApproval();renderTimeline();renderCountdown();}
 async function requestChanges(){await saveApprovalData({changesRequested:true,date:new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric'})});renderApproval();document.getElementById('note-input').focus();}
 async function clearChangeRequest(){await saveApprovalData({});renderApproval();renderTimeline();renderCountdown();}
 
@@ -481,13 +482,34 @@ await queueNotification('testimonial',{client:portalData.client,rating:testimoni
 document.getElementById('testimonial-area').innerHTML='<div class="testimonial-thanks"><h3>🙏 Thank you!</h3><p>Your testimonial has been received. We truly appreciate your feedback.</p></div>';}
 
 /* NOTIFICATIONS */
-async function queueNotification(type,data){await sbPost('notification_queue',{type:type,slug:portalSlug,data:data,sent:false,created_at:new Date().toISOString()});}
+async function queueNotification(type,data){data.clientEmail=portalData.email||'';data.clientName=portalData.client||'';data.portalUrl='https://reelestatemedia.com/portal.html#'+portalSlug;await sbPost('notification_queue',{type:type,slug:portalSlug,data:data,sent:false,created_at:new Date().toISOString()});}
 
 // Queue notifications on key actions
 var _origSaveNotes=saveNotesForVersion;
-saveNotesForVersion=async function(vi,n){await _origSaveNotes(vi,n);var last=n[n.length-1];if(last)await queueNotification(last.from==='admin'?'admin_reply':'client_note',{client:portalData.client,text:last.text,version:'v'+vi});};
+saveNotesForVersion=async function(vi,n){await _origSaveNotes(vi,n);var last=n[n.length-1];if(last)await queueNotification(last.from==='admin'?'admin_reply':'client_note',{text:last.text,version:'v'+vi});};
 var _origSaveApproval=saveApprovalData;
-saveApprovalData=async function(d){await _origSaveApproval(d);if(d.approved)await queueNotification('approved',{client:portalData.client});if(d.changesRequested)await queueNotification('changes_requested',{client:portalData.client});};
+saveApprovalData=async function(d){await _origSaveApproval(d);if(d.approved)await queueNotification('approved',{});if(d.changesRequested)await queueNotification('changes_requested',{});};
+
+// Queue client notification when admin uploads a new version
+function hookVersionUpload(){
+  var lastVersionCount=0;
+  try{lastVersionCount=getVersions().length;}catch(e){}
+  setInterval(function(){
+    try{
+      var current=getVersions().length;
+      if(lastVersionCount===0){lastVersionCount=current;return;}
+      if(current>lastVersionCount&&isAdmin){
+        lastVersionCount=current;
+        queueNotification('new_version',{versionNumber:current});
+      }
+    }catch(e){}
+  },3000);
+}
+setTimeout(hookVersionUpload,5000);
+
+// Queue client notification when admin clears changes request
+var _origClearChanges=clearChangeRequest;
+clearChangeRequest=async function(){await _origClearChanges();await queueNotification('revision_ready',{});};
 
 function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
