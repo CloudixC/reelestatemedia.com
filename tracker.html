@@ -961,6 +961,14 @@ label { font-size: .8rem; font-weight: 600; color: var(--text2); text-transform:
             <div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Shoots This Month</div>
             <div style="font-size:1.3rem;font-weight:700;color:#0284c7" id="rev-shoots-month">0</div>
           </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px">
+            <div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Total Expenses</div>
+            <div style="font-size:1.3rem;font-weight:700;color:#dc2626" id="rev-total-expenses">$0</div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px">
+            <div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Net Profit (YTD)</div>
+            <div style="font-size:1.3rem;font-weight:700;color:#15803d" id="rev-net-profit">$0</div>
+          </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px">
@@ -1533,6 +1541,18 @@ label { font-size: .8rem; font-weight: 600; color: var(--text2); text-transform:
       <button class="btn btn-ghost btn-sm" id="btn-property-site" style="display:none;color:#059669;border-color:#6ee7b7" onclick="quickPropertySite()">
         🏠 Property Site
       </button>
+      <button class="btn btn-ghost btn-sm" id="btn-reminder-email" style="display:none;color:#f59e0b;border-color:#fcd34d" onclick="generateReminderEmail(editingId)">
+        📅 Day-Before Reminder
+      </button>
+      <button class="btn btn-ghost btn-sm" id="btn-gallery-ready" style="display:none;color:#7c3aed;border-color:#c4b5fd" onclick="generateGalleryReadyEmail(editingId)">
+        🎬 Gallery Ready
+      </button>
+      <button class="btn btn-ghost btn-sm" id="btn-rebook" style="display:none;color:#c9a84c;border-color:#c9a84c" onclick="rebookClient(editingId)">
+        🔄 Rebook (10% off)
+      </button>
+      <button class="btn btn-ghost btn-sm" id="btn-contract" style="display:none;color:#1e6b54;border-color:#1e6b54" onclick="generateContract(editingId)">
+        📝 Contract
+      </button>
       <button class="btn btn-primary btn-lg" id="save-lead-btn" onclick="saveLead()">Add Lead</button>
     </div>
 
@@ -2063,6 +2083,20 @@ function updateRevenueDashboard() {
   });
   document.getElementById('rev-shoots-month').textContent = shootsThisMonth;
 
+  // Expenses & Profit
+  var totalExpensesYTD = 0;
+  quotes.forEach(function(q) {
+    var yr = (q.createdAt || q.payDate || '').slice(0,4);
+    if (yr !== thisYear) return;
+    (q.expenses||[]).forEach(function(e){ totalExpensesYTD += (parseFloat(e.amount)||0); });
+  });
+  var fmt2 = function(v) { return '$' + (v >= 1000 ? (v/1000).toFixed(1)+'k' : v.toFixed(0)); };
+  document.getElementById('rev-total-expenses').textContent = fmt2(totalExpensesYTD);
+  var netProfit = revThisYear - totalExpensesYTD;
+  var profitEl = document.getElementById('rev-net-profit');
+  profitEl.textContent = fmt2(netProfit);
+  profitEl.style.color = netProfit >= 0 ? '#15803d' : '#dc2626';
+
   // Monthly chart (last 6 months)
   var chartEl = document.getElementById('rev-chart-monthly');
   var months = [];
@@ -2157,7 +2191,7 @@ function renderListView() {
           ${filtered.map(l => {
             return `
             <tr data-id="${l.id}" onclick="rowClick(event,'${l.id}')" oncontextmenu="rowContext(event,'${l.id}')" ontouchstart="rowTouchStart(event,'${l.id}')" ontouchend="rowTouchEnd(event)" ontouchmove="rowTouchMove()">
-              <td class="td-name">${esc(l.name||'—')} <span style="font-size:.7rem;color:var(--text3);font-weight:400;margin-left:4px">···</span></td>
+              <td class="td-name">${esc(l.name||'—')}${(function(){ var info = getClientLoyaltyInfo(l.id); return info.isVIP ? ' <span title="VIP Client · '+info.shoots+' completed shoots · $'+info.revenue.toFixed(0)+' lifetime" style="font-size:.65rem;background:#fef3c7;color:#92400e;padding:1px 5px;border-radius:4px;font-weight:700;vertical-align:middle">👑 VIP</span>' : (info.shoots > 0 ? ' <span style="font-size:.6rem;color:var(--text3);font-weight:400;vertical-align:middle">'+info.shoots+' shoots</span>' : ''); })()} <span style="font-size:.7rem;color:var(--text3);font-weight:400;margin-left:4px">···</span></td>
               <td class="col-hide-sm">${esc(l.brokerage||'—')}</td>
               <td class="td-mono col-hide-sm">${l.ig ? `<a href="https://instagram.com/${l.ig.replace('@','')}" target="_blank" style="color:var(--text2);text-decoration:none" onclick="event.stopPropagation()" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text2)'">${esc(l.ig)}</a>` : '—'}</td>
               <td class="td-mono col-hide-sm">${l.phone ? `<a href="tel:${l.phone}" style="color:var(--text2);text-decoration:none" onclick="event.stopPropagation()">${esc(l.phone)}</a>` : '—'}</td>
@@ -2205,7 +2239,7 @@ function renderKanban() {
         ${colLeads.map(l => `
           <div class="kanban-card" id="kcard-${l.id}" draggable="true"
             ondragstart="kDragStart(event,'${l.id}')" ondragend="kDragEnd(event)">
-            <div class="kc-name">${esc(l.name||'Unknown')}</div>
+            <div class="kc-name">${esc(l.name||'Unknown')}${(function(){ var info = getClientLoyaltyInfo(l.id); return info.isVIP ? ' <span style="font-size:.6rem;background:#fef3c7;color:#92400e;padding:1px 4px;border-radius:3px;font-weight:700">👑 VIP</span>' : ''; })()}</div>
             <div class="kc-brokerage">${esc(l.brokerage||'—')}</div>
             <div class="kc-meta">
               ${l.ig ? `<div class="kc-tag">${esc(l.ig)}</div>` : ''}
@@ -2592,6 +2626,10 @@ function openAddModal() {
   document.getElementById('btn-confirm-email').style.display = 'none';
   document.getElementById('btn-review-req').style.display = 'none';
   document.getElementById('btn-property-site').style.display = 'none';
+  document.getElementById('btn-reminder-email').style.display = 'none';
+  document.getElementById('btn-gallery-ready').style.display = 'none';
+  document.getElementById('btn-rebook').style.display = 'none';
+  document.getElementById('btn-contract').style.display = 'none';
   document.getElementById('lead-dossier-section').style.display = 'none';
   document.getElementById('lead-bundle-section').style.display = 'none';
   if (document.getElementById('quote-modal')) document.getElementById('quote-modal').__leadId = null;
@@ -2630,6 +2668,10 @@ function openEditModal(id) {
   document.getElementById('btn-confirm-email').style.display = 'inline-flex';
   document.getElementById('btn-review-req').style.display = 'inline-flex';
   document.getElementById('btn-property-site').style.display = 'inline-flex';
+  document.getElementById('btn-reminder-email').style.display = 'inline-flex';
+  document.getElementById('btn-gallery-ready').style.display = 'inline-flex';
+  document.getElementById('btn-rebook').style.display = 'inline-flex';
+  document.getElementById('btn-contract').style.display = 'inline-flex';
   renderLeadQuotesPanel(id);
   document.getElementById('lead-dossier-section').style.display = 'block';
   renderLeadDossier(id);
@@ -3219,6 +3261,7 @@ const PROMO_CODES = {
   'FLAT50':     { type: 'flat', value: 50,  label: '$50 off'                    },
   'REFERRAL':   { type: 'pct',  value: 15,  label: '15% off — Referral Bonus'  },
   'BUNDLE20':   { type: 'pct',  value: 20,  label: '20% off — Bundle Deal'     },
+  'LOYAL10':    { type: 'pct',  value: 10,  label: '10% off — Loyalty Rebook'  },
 };
 let activePromo = null;
 
@@ -3293,6 +3336,7 @@ function updateQuoteTotals() {
   document.getElementById('qt-remaining').textContent= '$' + rem.toFixed(2);
   const remRow = document.getElementById('qt-remaining-row');
   if (remRow) remRow.style.color = rem > 0 ? '#dc2626' : '#15803d';
+  updateExpenseTotals();
 }
 
 function renderPayments() {
@@ -3369,6 +3413,8 @@ function openNewQuote() {
   });
   _editPayments = [];
   renderPayments();
+  _editExpenses = [];
+  renderExpenses();
   const dateEl = document.getElementById('q-date');
   if (dateEl) dateEl.value = '';
   document.getElementById('q-doctype').value = 'Quote';
@@ -3458,6 +3504,9 @@ function openEditQuote(id) {
     _editPayments = [];
   }
   renderPayments();
+  // Load expenses
+  _editExpenses = q.expenses ? JSON.parse(JSON.stringify(q.expenses)) : [];
+  renderExpenses();
   document.getElementById('q-date').value      = q.shootDate || '';
   document.getElementById('q-doctype').value   = q.docType || 'Quote';
   // Restore tax toggle
@@ -3499,6 +3548,7 @@ function saveQuote() {
     notes:     document.getElementById('q-notes').value.trim(),
     deposit:   dep,
     payments:  JSON.parse(JSON.stringify(_editPayments)),
+    expenses:  JSON.parse(JSON.stringify(_editExpenses)),
     shootDate: document.getElementById('q-date').value,
     docType:   document.getElementById('q-doctype').value,
     leadId:    (document.getElementById('quote-modal').__leadId || (editingQuoteId ? (quotes.find(x=>x.id===editingQuoteId)||{}).leadId : null) || null),
@@ -3553,7 +3603,7 @@ function renderQuotesList() {
       <div class="quote-card-left">
         <div class="quote-card-num">${esc(q.quoteNum||'—')}</div>
         <div class="quote-card-name">${esc(q.client||'Unknown')}</div>
-        <div class="quote-card-meta">${esc(q.brokerage||'')}${q.shootDate ? ' · 📷 '+q.shootDate : ''}${q.address ? ' · '+esc(q.address) : ''}</div>
+        <div class="quote-card-meta">${esc(q.brokerage||'')}${q.shootDate ? ' · 📷 '+q.shootDate : ''}${q.address ? ' · '+esc(q.address) : ''}${(q.expenses && q.expenses.length) ? (() => { var exp = q.expenses.reduce((s,e) => s+(parseFloat(e.amount)||0), 0); var profit = (parseFloat(q.deposit)||0) - exp; return ' · <span style="color:'+(profit>=0?'#15803d':'#dc2626')+';font-weight:600">Profit: $'+profit.toFixed(0)+'</span>'; })() : ''}</div>
       </div>
       <div class="quote-card-right">
         <span class="badge ${badgeCls}">${badgeLabel}</span>
@@ -4540,6 +4590,7 @@ function renderShootsList() {
       + (s.portalSlug ? '<button onclick="copyPortalLink(\'' + s.id + '\')" style="background:none;border:1px solid #7c3aed;border-radius:5px;padding:3px 8px;font-size:.72rem;font-weight:600;cursor:pointer;color:#7c3aed">📋 Copy Link</button>' : '')
       + ((s.driveLink || (s.versions && s.versions.length)) && !s.portalSlug ? '<button onclick="generatePortalLink(\'' + s.id + '\')" style="background:#7c3aed;color:#fff;border:none;border-radius:5px;padding:3px 8px;font-size:.72rem;font-weight:600;cursor:pointer">🔗 Create Portal</button>' : '')
       + (s.address ? '<button onclick="generatePropertyWebsite(\'' + s.id + '\')" style="background:#059669;color:#fff;border:none;border-radius:5px;padding:3px 8px;font-size:.72rem;font-weight:600;cursor:pointer">🏠 Property Site</button>' : '')
+      + '<button onclick="togglePortfolioFeature(\'' + s.id + '\')" style="background:' + (s.featured ? '#c9a84c' : 'none') + ';color:' + (s.featured ? '#fff' : '#c9a84c') + ';border:1px solid #c9a84c;border-radius:5px;padding:3px 8px;font-size:.72rem;font-weight:600;cursor:pointer">' + (s.featured ? '⭐ Featured' : '☆ Portfolio') + '</button>'
       + '<button onclick="deleteShootEntry(\'' + s.id + '\')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:1rem;padding:3px 4px;margin-left:auto">×</button>'
       + '</div>'
       + (s.portalSlug && portalApprovalCache[s.portalSlug] && portalApprovalCache[s.portalSlug].changesRequested
@@ -4596,6 +4647,9 @@ function renderLeadDossier(leadId) {
     + statBox('📷', shoots.length || '0', 'Shoots')
     + statBox('📅', meetings.length || '0', 'Meetings')
     + '</div>'
+
+    // Loyalty tier
+    + (function(){ var info = getClientLoyaltyInfo(leadId); if (!info.shoots) return ''; var tier = info.isVIP ? '👑 VIP Client' : (info.shoots >= 2 ? '⭐ Repeat Client' : '🌱 New Client'); var tierColor = info.isVIP ? '#92400e' : (info.shoots >= 2 ? '#7c3aed' : '#6b7280'); var tierBg = info.isVIP ? '#fef3c7' : (info.shoots >= 2 ? '#f5f3ff' : 'var(--surface2)'); return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 12px;background:'+tierBg+';border-radius:8px"><span style="font-size:.82rem;font-weight:700;color:'+tierColor+'">'+tier+'</span><span style="font-size:.72rem;color:var(--text3)">'+info.shoots+' completed · $'+info.revenue.toFixed(0)+' lifetime value</span></div>'; })()
 
     // Health + last contact
     + '<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">'
@@ -4817,6 +4871,174 @@ function addToGoogleCalendar(leadId, shootId) {
     + '&details=' + details;
   window.open(url, '_blank');
   showToast('Opening Google Calendar ✓');
+}
+
+/* ============================================================
+   FEATURE 10: CLIENT REBOOKING & LOYALTY SYSTEM
+   ============================================================ */
+function getClientLoyaltyInfo(leadId) {
+  var l = leads.find(function(x){ return x.id === leadId; });
+  if (!l) return { shoots: 0, revenue: 0, isVIP: false };
+  var completedShoots = (l.shoots || []).filter(function(s){ return s.status === 'delivered' || s.status === 'approved'; }).length;
+  var leadQuotes = quotes.filter(function(q){ return q.leadId === leadId; });
+  var totalRevenue = leadQuotes.reduce(function(sum, q){ return sum + (parseFloat(q.deposit) || 0); }, 0);
+  return { shoots: completedShoots, revenue: totalRevenue, isVIP: completedShoots >= 3 };
+}
+
+function rebookClient(leadId) {
+  var l = leads.find(function(x){ return x.id === leadId; });
+  if (!l) { showToast('Lead not found'); return; }
+  saveLead();
+  closeModal('lead-modal');
+  openNewQuote();
+  document.getElementById('q-client').value    = l.name     || '';
+  document.getElementById('q-brokerage').value = l.brokerage|| '';
+  document.getElementById('q-email').value     = l.email    || '';
+  document.getElementById('q-phone').value     = l.phone    || '';
+  document.getElementById('quote-modal').__leadId = leadId;
+  // Auto-apply LOYAL10 promo
+  document.getElementById('q-promo-input').value = 'LOYAL10';
+  applyPromo();
+  // Log interaction
+  l.interactions = l.interactions || [];
+  l.interactions.unshift({ id: genId(), datetime: nowLocal(), type: 'Rebook', note: 'Rebook initiated with 10% loyalty discount' });
+  saveLeads();
+  showToast('Rebook started — LOYAL10 discount applied ✓');
+}
+
+/* ============================================================
+   FEATURE 11: POST-SHOOT EMAIL TEMPLATES
+   ============================================================ */
+function generateReminderEmail(leadId) {
+  var l = leads.find(function(x){ return x.id === leadId; });
+  if (!l) { showToast('Lead not found'); return; }
+  var upcomingShoots = (l.shoots||[]).filter(function(s){ return s.status === 'scheduled'; });
+  var shoot = upcomingShoots.length ? upcomingShoots[0] : null;
+  var shootDate = shoot ? shoot.date : 'tomorrow';
+  var shootTime = shoot ? (shoot.time || 'TBD') : 'TBD';
+  var shootAddr = shoot ? (shoot.address || 'TBD') : 'TBD';
+  var subject = 'Reminder: Shoot Tomorrow — ' + shootDate + ' | Reel Estate Media';
+  var body = 'Hi ' + (l.name||'').split(' ')[0] + ',\n\n'
+    + 'Just a friendly reminder — your shoot is tomorrow!\n\n'
+    + '📅 Date: ' + shootDate + '\n'
+    + '🕐 Time: ' + shootTime + '\n'
+    + '📍 Address: ' + shootAddr + '\n\n'
+    + 'QUICK PREP CHECKLIST:\n'
+    + '✓ All lights ON (including closets, under-cabinet)\n'
+    + '✓ Blinds and curtains open\n'
+    + '✓ Counters cleared (kitchen + bathrooms)\n'
+    + '✓ Personal items and clutter stored away\n'
+    + '✓ Beds made, pillows fluffed\n'
+    + '✓ Toilet lids down\n'
+    + '✓ Cars out of driveway\n'
+    + '✓ Pets secured or off-site\n\n'
+    + 'I\'ll arrive 5 minutes early. See you there!\n\n'
+    + 'Sir Jag\nReel Estate Media\n416.257.6131';
+  var mailto = 'mailto:' + encodeURIComponent(l.email || '') + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  window.open(mailto);
+  l.interactions = l.interactions || [];
+  l.interactions.unshift({ id: genId(), datetime: nowLocal(), type: 'Email', note: 'Day-before reminder sent' });
+  saveLeads();
+  showToast('Reminder email opened ✓');
+}
+
+function generateGalleryReadyEmail(leadId) {
+  var l = leads.find(function(x){ return x.id === leadId; });
+  if (!l) { showToast('Lead not found'); return; }
+  // Find the most recent shoot with a portal link
+  var shoot = (l.shoots||[]).slice().reverse().find(function(s){ return s.portalUrl; });
+  var portalLink = shoot ? shoot.portalUrl : '[Portal link will be generated — add media to the shoot first]';
+  var subject = 'Your Media is Ready! | Reel Estate Media';
+  var body = 'Hi ' + (l.name||'').split(' ')[0] + ',\n\n'
+    + 'Great news — your media is ready for review!\n\n'
+    + '🎬 View your gallery here:\n' + portalLink + '\n\n'
+    + 'From the portal you can:\n'
+    + '• Watch your video in full quality\n'
+    + '• Leave timestamped feedback on specific moments\n'
+    + '• Approve or request changes\n'
+    + '• Download your final files once approved\n\n'
+    + 'Tip: Review on desktop for the best experience — you can adjust video quality to maximum.\n\n'
+    + 'Let me know if you have any questions!\n\n'
+    + 'Sir Jag\nReel Estate Media\nhello@reelestatemedia.com\n416.257.6131';
+  var mailto = 'mailto:' + encodeURIComponent(l.email || '') + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  window.open(mailto);
+  l.interactions = l.interactions || [];
+  l.interactions.unshift({ id: genId(), datetime: nowLocal(), type: 'Email', note: 'Gallery ready email sent' });
+  saveLeads();
+  showToast('Gallery ready email opened ✓');
+}
+
+/* ============================================================
+   FEATURE 12: EXPENSE & PROFIT TRACKER
+   ============================================================ */
+var _editExpenses = [];
+
+function renderExpenses() {
+  var el = document.getElementById('q-expense-list');
+  if (!el) return;
+  if (!_editExpenses.length) {
+    el.innerHTML = '<div style="font-size:.78rem;color:var(--text3);padding:4px 0">No expenses logged yet</div>';
+    updateExpenseTotals();
+    return;
+  }
+  el.innerHTML = _editExpenses.map(function(exp) {
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:4px">'
+      + '<div style="display:flex;align-items:center;gap:8px">'
+      + '<span style="font-size:.82rem;font-weight:500">' + esc(exp.category||'Other') + '</span>'
+      + (exp.note ? '<span style="font-size:.72rem;color:var(--text3)">· ' + esc(exp.note) + '</span>' : '')
+      + '</div>'
+      + '<div style="display:flex;align-items:center;gap:8px">'
+      + '<span style="font-size:.82rem;font-weight:600;color:#dc2626">−$' + (parseFloat(exp.amount)||0).toFixed(2) + '</span>'
+      + '<button class="btn btn-ghost btn-sm btn-icon" onclick="removeExpense(\'' + exp.id + '\')" style="padding:2px;color:var(--text3)" title="Remove">✕</button>'
+      + '</div></div>';
+  }).join('');
+  updateExpenseTotals();
+}
+
+function showAddExpense() {
+  document.getElementById('q-expense-form').style.display = 'block';
+  document.getElementById('q-exp-amount').value = '';
+  document.getElementById('q-exp-category').value = 'Gas / Mileage';
+  document.getElementById('q-exp-note').value = '';
+  document.getElementById('q-exp-amount').focus();
+}
+function hideAddExpense() {
+  document.getElementById('q-expense-form').style.display = 'none';
+}
+function addExpenseEntry() {
+  var amt = parseFloat(document.getElementById('q-exp-amount').value);
+  if (!amt || amt <= 0) { showToast('Enter a valid amount'); return; }
+  _editExpenses.push({
+    id: genId(),
+    amount: amt,
+    category: document.getElementById('q-exp-category').value,
+    note: document.getElementById('q-exp-note').value.trim(),
+    date: nowLocal().slice(0,10)
+  });
+  hideAddExpense();
+  renderExpenses();
+}
+function removeExpense(id) {
+  _editExpenses = _editExpenses.filter(function(e){ return e.id !== id; });
+  renderExpenses();
+}
+
+function updateExpenseTotals() {
+  var totalExp = _editExpenses.reduce(function(s, e){ return s + (parseFloat(e.amount)||0); }, 0);
+  var expTotalEl = document.getElementById('qt-expenses-total');
+  var profitEl   = document.getElementById('qt-profit');
+  var profitRow  = document.getElementById('qt-profit-row');
+  var expRow     = document.getElementById('qt-expenses-row');
+  if (expTotalEl) expTotalEl.textContent = '−$' + totalExp.toFixed(2);
+  if (expRow) expRow.style.display = totalExp > 0 ? 'flex' : 'none';
+  // Compute profit = paid - expenses
+  var paid = _editPayments.reduce(function(s,p){ return s + (parseFloat(p.amount)||0); }, 0);
+  var profit = paid - totalExp;
+  if (profitEl) {
+    profitEl.textContent = '$' + profit.toFixed(2);
+    profitEl.style.color = profit >= 0 ? '#15803d' : '#dc2626';
+  }
+  if (profitRow) profitRow.style.display = (totalExp > 0 || paid > 0) ? 'flex' : 'none';
 }
 
 /* ============================================================
@@ -5502,6 +5724,141 @@ function hideCtxMenu() {
   ctxLeadId = null;
 }
 
+/* ============================================================
+   FEATURE 13: CONTRACT & TERMS GENERATOR
+   ============================================================ */
+function generateContract(leadId) {
+  var l = leads.find(function(x){ return x.id === leadId; });
+  if (!l) { showToast('Lead not found'); return; }
+  // Find the most recent quote for this lead
+  var leadQuotes = quotes.filter(function(q){ return q.leadId === leadId; });
+  var q = leadQuotes.length ? leadQuotes[leadQuotes.length - 1] : null;
+  var shootDate = '___________';
+  var shootAddr = '___________';
+  var shoot = (l.shoots||[]).filter(function(s){ return s.date; }).sort(function(a,b){ return a.date > b.date ? 1 : -1; })[0];
+  if (shoot) { shootDate = shoot.date; shootAddr = shoot.address || '___________'; }
+  var services = q ? (q.lineItems||[]).map(function(li){ return li.desc + ' × ' + li.qty; }).join(', ') : '___________';
+  var totalAmt = q ? '$' + (q.total||0).toFixed(2) : '___________';
+  var depositAmt = q ? '$' + (q.deposit||0).toFixed(2) : '___________';
+  var maxRevisions = shoot ? (shoot.maxRevisions || 3) : 3;
+  var todayStr = new Date().toLocaleDateString('en-CA');
+
+  var CSS = 'body{font-family:Barlow,sans-serif;margin:0;padding:0;color:#1a1a1a;font-size:13px;line-height:1.6}'
+    + '.page{width:816px;min-height:1056px;padding:48px 54px;box-sizing:border-box;background:#fff}'
+    + '.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;padding-bottom:20px;border-bottom:3px solid #1a4d3e}'
+    + '.brand{font-family:Playfair Display,serif;font-size:22px;font-weight:700;color:#1a4d3e}'
+    + '.brand-sub{font-size:11px;color:#666;margin-top:4px;letter-spacing:.08em;text-transform:uppercase}'
+    + '.doc-title{font-family:Playfair Display,serif;font-size:28px;font-weight:700;color:#1a4d3e;margin-bottom:20px}'
+    + '.section-title{font-size:13px;font-weight:700;color:#1a4d3e;text-transform:uppercase;letter-spacing:.08em;margin:24px 0 10px;padding-bottom:6px;border-bottom:1px solid #e5e5e0}'
+    + '.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;margin-bottom:16px}'
+    + '.info-label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.06em}'
+    + '.info-val{font-size:13px;font-weight:500}'
+    + '.clause{margin-bottom:10px;padding-left:16px;text-indent:-16px}'
+    + '.clause b{color:#1a4d3e}'
+    + '.sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:32px}'
+    + '.sig-box{border-top:2px solid #1a4d3e;padding-top:8px}'
+    + '.sig-label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.06em}'
+    + '.sig-line{height:36px;border-bottom:1px solid #ccc;margin:12px 0 4px}'
+    + '.footer{margin-top:auto;padding-top:20px;text-align:center;font-size:10px;color:#999;border-top:1px solid #e5e5e0}';
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=816">'
+    + '<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">'
+    + '<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>'
+    + '<style>' + CSS + '</style>'
+    + '<script>document.fonts.ready.then(function(){document.body.setAttribute("fonts-loaded","1")});<\/script>'
+    + '</head><body><div class="page" id="contract-root">'
+    + '<div class="header"><div><div class="brand">Reel Estate Media</div><div class="brand-sub">Where Listings Become Cinematic</div></div>'
+    + '<div style="text-align:right;font-size:11px;color:#666">hello@reelestatemedia.com<br>416 · 257 · 6131<br>Toronto, ON</div></div>'
+    + '<div class="doc-title">Service Agreement</div>'
+    + '<div class="section-title">Parties</div>'
+    + '<div class="info-grid">'
+    + '<div><div class="info-label">Provider</div><div class="info-val">Reel Estate Media (Sir Jag)</div></div>'
+    + '<div><div class="info-label">Client</div><div class="info-val">' + esc(l.name||'') + (l.brokerage ? ' · ' + esc(l.brokerage) : '') + '</div></div>'
+    + '<div><div class="info-label">Client Email</div><div class="info-val">' + esc(l.email||'') + '</div></div>'
+    + '<div><div class="info-label">Client Phone</div><div class="info-val">' + esc(l.phone||'') + '</div></div>'
+    + '</div>'
+    + '<div class="section-title">Project Details</div>'
+    + '<div class="info-grid">'
+    + '<div><div class="info-label">Services</div><div class="info-val">' + esc(services) + '</div></div>'
+    + '<div><div class="info-label">Shoot Date</div><div class="info-val">' + esc(shootDate) + '</div></div>'
+    + '<div><div class="info-label">Property Address</div><div class="info-val">' + esc(shootAddr) + '</div></div>'
+    + '<div><div class="info-label">Total Fee</div><div class="info-val">' + esc(totalAmt) + '</div></div>'
+    + '<div><div class="info-label">Deposit Paid</div><div class="info-val">' + esc(depositAmt) + '</div></div>'
+    + '<div><div class="info-label">Included Revisions</div><div class="info-val">' + maxRevisions + '</div></div>'
+    + '</div>'
+    + '<div class="section-title">Terms & Conditions</div>'
+    + '<div class="clause"><b>1. Payment.</b> A 50% deposit is required to confirm the booking. The remaining balance is due within 48 hours of delivery. Payment is accepted via Interac e-Transfer to hello@reelestatemedia.com.</div>'
+    + '<div class="clause"><b>2. Cancellation.</b> Cancellations made less than 24 hours before the scheduled shoot will incur a $75 cancellation fee. Rescheduling with 24+ hours notice is free (one time).</div>'
+    + '<div class="clause"><b>3. Revisions.</b> Up to ' + maxRevisions + ' rounds of revisions are included. Additional revisions will be billed at $50 per round.</div>'
+    + '<div class="clause"><b>4. Delivery.</b> Final edited media will be delivered within 24–48 hours of the shoot via a secure online portal. Raw/unedited files are not included unless specified.</div>'
+    + '<div class="clause"><b>5. Usage Rights.</b> Upon full payment, the Client receives a non-exclusive license to use the media for listing marketing, social media, and personal branding. Reel Estate Media retains the right to use the work in its portfolio and marketing materials.</div>'
+    + '<div class="clause"><b>6. Liability.</b> Reel Estate Media is not responsible for property condition, staging, or weather. If conditions prevent the shoot, a free reschedule will be offered.</div>'
+    + '<div class="clause"><b>7. Property Access.</b> The Client is responsible for ensuring property access, staging readiness, and any required permissions for drone/aerial footage.</div>'
+    + '<div class="sig-grid">'
+    + '<div class="sig-box"><div class="sig-label">Client Signature</div><div class="sig-line"></div><div class="info-val">' + esc(l.name||'') + '</div><div class="info-label">Date: _______________</div></div>'
+    + '<div class="sig-box"><div class="sig-label">Provider Signature</div><div class="sig-line"></div><div class="info-val">Sir Jag — Reel Estate Media</div><div class="info-label">Date: ' + todayStr + '</div></div>'
+    + '</div>'
+    + '<div class="footer">Reel Estate Media · hello@reelestatemedia.com · 416.257.6131 · reelestatemedia.com</div>'
+    + '</div></body></html>';
+
+  // Render in hidden iframe and capture as PNG (same pattern as invoice)
+  showToast('Generating contract…');
+  var iframe = document.createElement('iframe');
+  iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:816px;height:1056px;border:none;visibility:hidden;';
+  document.body.appendChild(iframe);
+  var iDoc = iframe.contentDocument || iframe.contentWindow.document;
+  iDoc.open(); iDoc.write(html); iDoc.close();
+  var iWin = iframe.contentWindow;
+
+  function captureContract() {
+    iWin.html2canvas(iDoc.getElementById('contract-root'), {
+      scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff',
+      width: 816, height: 1056, logging: false
+    }).then(function(canvas) {
+      var link = document.createElement('a');
+      link.download = 'contract-' + (l.name||'client').toLowerCase().replace(/\s+/g,'-') + '.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      setTimeout(function(){ document.body.removeChild(iframe); }, 500);
+      showToast('Contract downloaded ✓');
+    }).catch(function(err) {
+      document.body.removeChild(iframe);
+      showToast('Error generating contract');
+      console.error(err);
+    });
+  }
+
+  function loadAndCapture() {
+    var script = iDoc.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    script.onload = function() {
+      function waitFonts() {
+        if (iDoc.body.getAttribute('fonts-loaded') === '1') { captureContract(); }
+        else { setTimeout(waitFonts, 100); }
+      }
+      waitFonts();
+    };
+    iDoc.body.appendChild(script);
+  }
+  setTimeout(loadAndCapture, 300);
+
+  // Log interaction
+  l.interactions = l.interactions || [];
+  l.interactions.unshift({ id: genId(), datetime: nowLocal(), type: 'Contract', note: 'Service agreement generated' });
+  saveLeads();
+}
+
+/* ============================================================
+   FEATURE 14: PORTFOLIO TOGGLE ON SHOOTS
+   ============================================================ */
+function togglePortfolioFeature(shootId) {
+  var shoot = currentEditShoots.find(function(s){ return s.id === shootId; });
+  if (!shoot) return;
+  shoot.featured = !shoot.featured;
+  renderShootsList();
+  showToast(shoot.featured ? 'Marked as featured ✓' : 'Removed from portfolio');
+}
+
 // dismiss on any click/scroll outside
 document.addEventListener('click',  e => { if (!e.target.closest('#ctx-menu')) hideCtxMenu(); });
 document.addEventListener('scroll', hideCtxMenu, true);
@@ -6134,6 +6491,44 @@ async function deleteSite(slug) {
             </div>
           </div>
         </div>
+
+        <!-- Expense Tracker -->
+        <div class="form-field">
+          <label style="display:flex;align-items:center;justify-content:space-between">
+            <span>Expenses <span style="font-weight:400;color:var(--text3);font-size:.72rem">(gas, parking, gear…)</span></span>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="showAddExpense()" style="font-size:.7rem">+ Add Expense</button>
+          </label>
+          <div id="q-expense-list" style="margin-top:6px"></div>
+          <div id="q-expense-form" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-top:6px">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+              <div class="form-field" style="margin:0">
+                <label style="font-size:.7rem">Amount ($)</label>
+                <input class="input" id="q-exp-amount" type="number" min="0" step="0.01" placeholder="0.00">
+              </div>
+              <div class="form-field" style="margin:0">
+                <label style="font-size:.7rem">Category</label>
+                <select class="select" id="q-exp-category">
+                  <option>Gas / Mileage</option>
+                  <option>Parking</option>
+                  <option>Equipment Rental</option>
+                  <option>Editing Time</option>
+                  <option>Props / Staging</option>
+                  <option>Subcontractor</option>
+                  <option>Software</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div class="form-field" style="margin:0">
+                <label style="font-size:.7rem">Note <span style="color:var(--text3)">(optional)</span></label>
+                <input class="input" id="q-exp-note" type="text" placeholder="e.g. 401 toll">
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end">
+              <button type="button" class="btn btn-ghost btn-sm" onclick="hideAddExpense()">Cancel</button>
+              <button type="button" class="btn btn-primary btn-sm" onclick="addExpenseEntry()">Add Expense</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="totals-box">
@@ -6143,6 +6538,8 @@ async function deleteSite(slug) {
         <div class="totals-row grand"><span>Total</span><span id="qt-total">$0.00</span></div>
         <div class="totals-row" style="color:#0284c7"><span>Paid</span><span id="qt-deposit">$0.00</span></div>
         <div class="totals-row" style="font-weight:600" id="qt-remaining-row"><span>Remaining</span><span id="qt-remaining">$0.00</span></div>
+        <div class="totals-row" id="qt-expenses-row" style="display:none;color:#dc2626;border-top:1px dashed var(--border);margin-top:4px;padding-top:6px"><span>Expenses</span><span id="qt-expenses-total">−$0.00</span></div>
+        <div class="totals-row" id="qt-profit-row" style="display:none;font-weight:700;font-size:.95rem"><span>Profit</span><span id="qt-profit">$0.00</span></div>
       </div>
     </div>
 
@@ -6155,6 +6552,9 @@ async function deleteSite(slug) {
       <button class="btn btn-primary" onclick="printInvoice()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Save as Image
+      </button>
+      <button class="btn btn-ghost" style="color:#1e6b54;border-color:#1e6b54" onclick="generateContractFromQuote()">
+        📝 Contract
       </button>
     </div>
   </div>
