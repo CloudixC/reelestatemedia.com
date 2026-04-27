@@ -28,19 +28,28 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display'
 .gn-cta{font-size:.73rem;font-weight:500;color:#fff;background:var(--teal-mid);padding:6px 14px;border-radius:20px;text-decoration:none;border:none;cursor:pointer;transition:background .2s;flex-shrink:0}
 .gn-cta:hover{background:var(--teal-light)}
 
-/* Dropdowns */
-.gn-dropdown{position:absolute;top:var(--nav-h);left:0;right:0;background:rgba(22,22,23,.98);backdrop-filter:saturate(180%) blur(40px);-webkit-backdrop-filter:saturate(180%) blur(40px);padding:32px 0 40px;opacity:0;visibility:hidden;transform:translateY(-8px);transition:opacity .25s,visibility .25s,transform .25s;pointer-events:none}
+/* Dropdowns — Apple style */
+.gn-dropdown{position:fixed;top:var(--nav-h);left:0;right:0;z-index:999;background:rgba(251,251,253,.98);backdrop-filter:saturate(180%) blur(40px);-webkit-backdrop-filter:saturate(180%) blur(40px);padding:40px 0 48px;opacity:0;visibility:hidden;transform:translateY(-8px);transition:opacity .25s,visibility .25s,transform .25s;pointer-events:none;border-bottom:1px solid var(--border)}
 .gn-dropdown.open{opacity:1;visibility:visible;transform:translateY(0);pointer-events:auto}
-.gn-dd-inner{max-width:820px;margin:0 auto;padding:0 32px}
-.gn-dd-title{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue','Segoe UI',sans-serif;font-size:1.6rem;color:#fff;margin-bottom:6px}
-.gn-dd-sub{font-size:.78rem;color:rgba(255,255,255,.45);margin-bottom:24px}
-.gn-dd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
-.gn-dd-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px 18px;cursor:pointer;transition:background .2s,border-color .2s,transform .15s}
-.gn-dd-card:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.15);transform:translateY(-2px)}
-.gn-dd-card-name{font-size:.82rem;font-weight:600;color:#fff;margin-bottom:4px}
-.gn-dd-card-price{font-size:.72rem;color:var(--gold);margin-bottom:6px}
-.gn-dd-card-desc{font-size:.68rem;color:rgba(255,255,255,.4);line-height:1.45}
-.gn-dd-card.featured{border-color:var(--gold);background:rgba(201,168,76,.08)}
+.gn-dd-inner{max-width:980px;margin:0 auto;padding:0 44px;display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:40px}
+.gn-dd-col{}
+.gn-dd-col-title{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue','Segoe UI',sans-serif;font-size:.72rem;color:var(--ink-sub);margin-bottom:16px;letter-spacing:.02em}
+.gn-dd-col a,.gn-dd-col div.gn-dd-link{
+  display:block;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue','Segoe UI',sans-serif;
+  font-size:.88rem;font-weight:600;color:var(--ink);
+  text-decoration:none;padding:4px 0;cursor:pointer;transition:color .15s;line-height:1.6;
+}
+.gn-dd-col a:hover,.gn-dd-col div.gn-dd-link:hover{color:var(--teal)}
+.gn-dd-col a.gn-dd-link-sm,.gn-dd-col div.gn-dd-link-sm{
+  font-size:.82rem;font-weight:400;color:var(--ink-sub);
+}
+.gn-dd-col a.gn-dd-link-sm:hover,.gn-dd-col div.gn-dd-link-sm:hover{color:var(--ink)}
+.gn-dd-col .gn-dd-link-lg{
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue','Segoe UI',sans-serif;
+  font-size:1.55rem;font-weight:600;color:var(--ink);padding:2px 0;line-height:1.4;
+}
+.gn-dd-col .gn-dd-link-lg:hover{color:var(--teal)}
+.gn-dd-price-tag{font-size:.68rem;color:var(--gold);font-weight:400;margin-left:6px}
 
 /* Mobile burger */
 .gn-burger{display:none;width:36px;height:36px;border:none;background:none;cursor:pointer;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:0}
@@ -49,21 +58,72 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display'
 .gn-burger.open span:nth-child(2){opacity:0}
 .gn-burger.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
 
-/* Mobile menu */
-.gn-mobile-menu{display:none;position:fixed;top:var(--nav-h);left:0;right:0;bottom:0;background:rgba(22,22,23,.98);backdrop-filter:saturate(180%) blur(40px);overflow-y:auto;z-index:999}
-.gn-mobile-menu.open{display:block;animation:fadeIn .25s ease}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.gn-mm-section{border-bottom:1px solid rgba(255,255,255,.08)}
-.gn-mm-header{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;cursor:pointer;font-size:.88rem;font-weight:500;color:rgba(255,255,255,.9)}
-.gn-mm-header svg{transition:transform .25s;color:rgba(255,255,255,.3)}
-.gn-mm-section.open .gn-mm-header svg{transform:rotate(180deg)}
-.gn-mm-items{display:none;padding:0 28px 16px}
-.gn-mm-section.open .gn-mm-items{display:block}
-.gn-mm-item{padding:10px 0;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04)}
-.gn-mm-item:last-child{border-bottom:none}
-.gn-mm-item-name{font-size:.82rem;color:#fff;font-weight:500}
-.gn-mm-item-price{font-size:.72rem;color:var(--gold);margin-top:2px}
-.gn-mm-cta{display:block;margin:20px 28px;padding:14px;background:var(--teal-mid);color:#fff;text-align:center;border-radius:12px;font-size:.88rem;font-weight:600;text-decoration:none;border:none;cursor:pointer;width:calc(100% - 56px)}
+/* Mobile menu — Apple style slide navigation */
+.gn-mobile-menu{
+  display:none;position:fixed;top:var(--nav-h);left:0;right:0;bottom:0;
+  background:#fff;overflow:hidden;z-index:999;
+}
+.gn-mobile-menu.open{display:block;animation:mmFadeIn .25s ease}
+@keyframes mmFadeIn{from{opacity:0}to{opacity:1}}
+
+/* Two panels: main list and sub-list, slide between them */
+.mm-panel{
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  overflow-y:auto;padding:8px 0;
+  transition:transform .35s cubic-bezier(.4,0,.2,1);
+}
+.mm-panel-main{transform:translateX(0)}
+.mm-panel-sub{transform:translateX(100%)}
+.gn-mobile-menu.mm-in-sub .mm-panel-main{transform:translateX(-30%)}
+.gn-mobile-menu.mm-in-sub .mm-panel-sub{transform:translateX(0)}
+
+.mm-link{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 32px;cursor:pointer;
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue','Segoe UI',sans-serif;
+  font-size:1.1rem;font-weight:600;color:var(--ink);
+  transition:color .15s;
+}
+.mm-link:hover{color:var(--teal)}
+.mm-link svg{color:var(--ink-sub);flex-shrink:0}
+
+/* Sub panel */
+.mm-sub-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 32px;border-bottom:1px solid var(--border);margin-bottom:4px;
+}
+.mm-sub-back{
+  display:flex;align-items:center;gap:6px;cursor:pointer;
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue','Segoe UI',sans-serif;
+  font-size:.82rem;font-weight:400;color:var(--ink-sub);
+  background:none;border:none;padding:0;
+}
+.mm-sub-back:hover{color:var(--ink)}
+.mm-sub-close{
+  width:28px;height:28px;display:flex;align-items:center;justify-content:center;
+  background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--ink-sub);
+}
+.mm-sub-title{
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue','Segoe UI',sans-serif;
+  font-size:.72rem;color:var(--ink-sub);padding:12px 32px 4px;letter-spacing:.02em;
+}
+.mm-sub-link{
+  display:block;padding:10px 32px;cursor:pointer;
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue','Segoe UI',sans-serif;
+  font-size:1.05rem;font-weight:600;color:var(--ink);
+  transition:color .15s;
+}
+.mm-sub-link:hover{color:var(--teal)}
+.mm-sub-link-sm{font-size:.88rem;font-weight:400;color:var(--ink-sub)}
+.mm-sub-link-sm:hover{color:var(--ink)}
+
+.mm-cta{
+  display:block;margin:24px 32px 16px;padding:14px;
+  background:var(--teal);color:#fff;text-align:center;
+  border-radius:12px;font-size:.95rem;font-weight:600;
+  text-decoration:none;border:none;cursor:pointer;
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue','Segoe UI',sans-serif;
+}
 
 @media(max-width:900px){
   .gn-links{display:none}
@@ -168,6 +228,38 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display'
   .duo-card .section-img img{max-height:300px}
 }
 
+/* ── Testimonial card ── */
+.testimonial-card{
+  display:flex;flex-direction:column;justify-content:center;
+  padding:48px 40px;
+}
+.testimonial-card .tq{
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue','Segoe UI',sans-serif;
+  font-size:1.5rem;font-weight:400;line-height:1.4;letter-spacing:-.01em;
+  color:#fff;margin-bottom:28px;
+  position:relative;
+}
+.testimonial-card .tq::before{
+  content:'"';position:absolute;top:-.3em;left:-.6em;
+  font-size:4rem;color:var(--gold);opacity:.3;font-weight:700;
+  line-height:1;
+}
+.testimonial-card .ta{display:flex;align-items:center;gap:14px}
+.testimonial-card .ta-avatar{
+  width:44px;height:44px;border-radius:50%;
+  background:var(--teal-mid);display:flex;align-items:center;justify-content:center;
+  font-size:1rem;font-weight:600;color:#fff;flex-shrink:0;
+}
+.testimonial-card .ta-name{font-size:.85rem;font-weight:600;color:#fff}
+.testimonial-card .ta-role{font-size:.72rem;color:rgba(255,255,255,.4);margin-top:1px}
+.testimonial-card .ta-stars{display:flex;gap:2px;margin-top:12px}
+.testimonial-card .ta-stars span{color:var(--gold);font-size:.8rem}
+
+@media(max-width:734px){
+  .testimonial-card{padding:36px 24px}
+  .testimonial-card .tq{font-size:1.2rem}
+}
+
 /* ═══════════════════════════════════════
    BOOKING MODAL
    ═══════════════════════════════════════ */
@@ -263,25 +355,192 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display'
 </nav>
 
 <!-- Dropdown panels -->
-<div class="gn-dropdown" id="dd-photography"><div class="gn-dd-inner"><div class="gn-dd-title">Photography</div><div class="gn-dd-sub">HDR photography that makes every room look its best.</div><div class="gn-dd-grid" id="ddg-photography"></div></div></div>
-<div class="gn-dropdown" id="dd-video"><div class="gn-dd-inner"><div class="gn-dd-title">Video</div><div class="gn-dd-sub">Cinematic walkthroughs that stop the scroll.</div><div class="gn-dd-grid" id="ddg-video"></div></div></div>
-<div class="gn-dropdown" id="dd-social"><div class="gn-dd-inner"><div class="gn-dd-title">Social Content</div><div class="gn-dd-sub">Reels, talking heads, and content for your personal brand.</div><div class="gn-dd-grid" id="ddg-social"></div></div></div>
-<div class="gn-dropdown" id="dd-touring"><div class="gn-dd-inner"><div class="gn-dd-title">Tours & Plans</div><div class="gn-dd-sub">Matterport 3D, floor plans, twilight — everything beyond photos.</div><div class="gn-dd-grid" id="ddg-touring"></div></div></div>
-<div class="gn-dropdown" id="dd-branding"><div class="gn-dd-inner"><div class="gn-dd-title">Agent Branding</div><div class="gn-dd-sub">Headshots, personal brand sessions, and intro reels.</div><div class="gn-dd-grid" id="ddg-branding"></div></div></div>
-<div class="gn-dropdown" id="dd-packages"><div class="gn-dd-inner"><div class="gn-dd-title">Packages & Retainers</div><div class="gn-dd-sub">Bundles, monthly plans, and listing launch packages.</div><div class="gn-dd-grid" id="ddg-packages"></div></div></div>
-<div class="gn-dropdown" id="dd-specialty"><div class="gn-dd-inner"><div class="gn-dd-title">More Services</div><div class="gn-dd-sub">Marketing, virtual staging, luxury, commercial, and more.</div><div class="gn-dd-grid" id="ddg-specialty"></div></div></div>
+<div class="gn-dropdown" id="dd-photography">
+  <div class="gn-dd-inner">
+    <div class="gn-dd-col">
+      <div class="gn-dd-col-title">Explore Photography</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('photos')">All Photography</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('photos')">Basic Listing</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('photos')">Standard Listing</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('photos')">Premium Listing</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('photos')">Luxury Estate</div>
+    </div>
+    <div class="gn-dd-col">
+      <div class="gn-dd-col-title">Book Photography</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBookingWith('photos')">Book a Shoot</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBookingWith('photos')">Photo + Video Bundles</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBookingWith('twilight')">Twilight Add-On</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBooking()">Neighbourhood Shots</div>
+    </div>
+    <div class="gn-dd-col">
+      <div class="gn-dd-col-title">More from Photography</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBookingWith('virtualstaging')">Virtual Staging</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBookingWith('floorplans')">Floor Plans</div>
+      <div class="gn-dd-link gn-dd-link-sm" onclick="closeAllDropdowns();openBooking()">Build Your Own Package</div>
+    </div>
+  </div>
+</div>
 
-<!-- Mobile menu -->
+<div class="gn-dropdown" id="dd-video">
+  <div class="gn-dd-inner">
+    <div class="gn-dd-col">
+      <div class="gn-dd-col-title">Explore Video</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('video')">All Video</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('video')">Basic Walkthrough</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('video')">Cinematic Listing</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('video')">Luxury Property Film</div>
+    </div>
+    <div class="gn-dd-col">
+      <div class="gn-dd-col-title">Bundles</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBookingWith('photos')">Starter Bundle</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBookingWith('photos')">Pro Bundle</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBookingWith('photos')">Luxury Bundle</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBookingWith('photos')">Signature Cinematic</div>
+    </div>
+    <div class="gn-dd-col">
+      <div class="gn-dd-col-title">More from Video</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBookingWith('social')">Social Media Reels</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBooking()">Agent Intro Reel</div>
+      <div class="gn-dd-link gn-dd-link-sm" onclick="closeAllDropdowns();openBooking()">Build Your Own Package</div>
+    </div>
+  </div>
+</div>
+
+<div class="gn-dropdown" id="dd-social">
+  <div class="gn-dd-inner">
+    <div class="gn-dd-col">
+      <div class="gn-dd-col-title">Explore Social Content</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('social')">All Social Content</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('social')">Single Video</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('social')">5-Video Starter</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('social')">10-Video Consistent</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('social')">20-Video Content Machine</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('social')">30-Video Dominance</div>
+    </div>
+    <div class="gn-dd-col">
+      <div class="gn-dd-col-title">Book Content</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBookingWith('social')">Book a Content Shoot</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBooking()">Agent Intro Reel</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBooking()">Agent Brand Package</div>
+    </div>
+    <div class="gn-dd-col">
+      <div class="gn-dd-col-title">More from Social</div>
+      <div class="gn-dd-link gn-dd-link-sm">Talking heads, tips, market updates, and listing content for Instagram, TikTok, and YouTube Shorts.</div>
+    </div>
+  </div>
+</div>
+
+<div class="gn-dropdown" id="dd-touring">
+  <div class="gn-dd-inner">
+    <div class="gn-dd-col">
+      <div class="gn-dd-col-title">Explore Tours & Plans</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('virtual')">Matterport 3D Tour</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('floorplans')">Floor Plans</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('twilight')">Twilight Shoots</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBooking()">Neighbourhood Shots</div>
+    </div>
+    <div class="gn-dd-col">
+      <div class="gn-dd-col-title">Book Tours</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBookingWith('virtual')">Book a Virtual Tour</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBookingWith('floorplans')">Book Floor Plans</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBooking()">Add Drone</div>
+    </div>
+    <div class="gn-dd-col">
+      <div class="gn-dd-col-title">More from Tours</div>
+      <div class="gn-dd-link gn-dd-link-sm">Interactive 3D walkthroughs, MLS-ready floor plans, and blue hour exteriors.</div>
+    </div>
+  </div>
+</div>
+
+<div class="gn-dropdown" id="dd-branding">
+  <div class="gn-dd-inner">
+    <div class="gn-dd-col">
+      <div class="gn-dd-col-title">Explore Branding</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('headshots')">Headshot Session</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('headshots')">Personal Brand Session</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('headshots')">Team / Brokerage Session</div>
+      <div class="gn-dd-link gn-dd-link-sm" onclick="closeAllDropdowns();openBooking()">Compare Sessions</div>
+    </div>
+    <div class="gn-dd-col">
+      <div class="gn-dd-col-title">Intro Reels</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBooking()">Agent Intro Reel</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBooking()">Agent Brand Package</div>
+    </div>
+    <div class="gn-dd-col">
+      <div class="gn-dd-col-title">More from Branding</div>
+      <div class="gn-dd-link gn-dd-link-sm">Headshots, lifestyle sessions, and on-camera intro reels that build your personal brand.</div>
+    </div>
+  </div>
+</div>
+
+<div class="gn-dropdown" id="dd-packages">
+  <div class="gn-dd-inner">
+    <div class="gn-dd-col">
+      <div class="gn-dd-col-title">Listing Launch</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('launch')">Listing Launch Starter</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('launch')">Listing Launch Pro</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('launch')">Listing Launch Premium</div>
+      <div class="gn-dd-link gn-dd-link-sm" onclick="closeAllDropdowns();openBooking()">Compare Launches</div>
+    </div>
+    <div class="gn-dd-col">
+      <div class="gn-dd-col-title">Save More</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBooking()">Build Your Own Package</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBooking()">Commitment Discounts</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBooking()">Pay-in-Full Savings</div>
+    </div>
+    <div class="gn-dd-col">
+      <div class="gn-dd-col-title">More from Packages</div>
+      <div class="gn-dd-link gn-dd-link-sm">Pick any services, commit to 3–12 months, and save up to 20%. Pay in full for an extra 5% off.</div>
+    </div>
+  </div>
+</div>
+
+<div class="gn-dropdown" id="dd-specialty">
+  <div class="gn-dd-inner">
+    <div class="gn-dd-col">
+      <div class="gn-dd-col-title">Specialty Services</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('specialty')">Same-Day Rush</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('specialty')">Open House Day-Of</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('specialty')">Tenant-Occupied</div>
+      <div class="gn-dd-link gn-dd-link-lg" onclick="closeAllDropdowns();openBookingWith('specialty')">Seasonal Refresh</div>
+      <div class="gn-dd-link gn-dd-link-sm" onclick="closeAllDropdowns();openBookingWith('specialty')">Condo / Assignment Marketing</div>
+    </div>
+    <div class="gn-dd-col">
+      <div class="gn-dd-col-title">More Services</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBookingWith('virtualstaging')">Virtual Staging</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBookingWith('other')">Commercial Photography</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBookingWith('other')">Airbnb / STR</div>
+      <div class="gn-dd-link" onclick="closeAllDropdowns();openBooking()">Marketing Materials</div>
+    </div>
+    <div class="gn-dd-col">
+      <div class="gn-dd-col-title">More from Specialty</div>
+      <div class="gn-dd-link gn-dd-link-sm">Rush delivery, tenant-occupied shoots, open house content, and everything that doesn't fit in a box.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile menu — Apple-style slide panels -->
 <div class="gn-mobile-menu" id="gn-mobile-menu">
-  <div class="gn-mm-section" data-mm="photography"><div class="gn-mm-header" onclick="toggleMmSection(this.parentElement)">Photography <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div><div class="gn-mm-items" id="mm-photography"></div></div>
-  <div class="gn-mm-section" data-mm="video"><div class="gn-mm-header" onclick="toggleMmSection(this.parentElement)">Video <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div><div class="gn-mm-items" id="mm-video"></div></div>
-  <div class="gn-mm-section" data-mm="social"><div class="gn-mm-header" onclick="toggleMmSection(this.parentElement)">Social Content <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div><div class="gn-mm-items" id="mm-social"></div></div>
-  <div class="gn-mm-section" data-mm="touring"><div class="gn-mm-header" onclick="toggleMmSection(this.parentElement)">Tours & Plans <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div><div class="gn-mm-items" id="mm-touring"></div></div>
-  <div class="gn-mm-section" data-mm="branding"><div class="gn-mm-header" onclick="toggleMmSection(this.parentElement)">Branding <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div><div class="gn-mm-items" id="mm-branding"></div></div>
-  <div class="gn-mm-section" data-mm="packages"><div class="gn-mm-header" onclick="toggleMmSection(this.parentElement)">Packages <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div><div class="gn-mm-items" id="mm-packages"></div></div>
-  <div class="gn-mm-section" data-mm="specialty"><div class="gn-mm-header" onclick="toggleMmSection(this.parentElement)">More <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div><div class="gn-mm-items" id="mm-specialty"></div></div>
-  <button class="gn-mm-cta" onclick="openBooking();toggleMobileMenu()">Book a Shoot</button>
-  <div style="padding:16px 28px;font-size:.72rem;color:rgba(255,255,255,.3);text-align:center">hello@reelestatemedia.com · 416.257.6131</div>
+  <!-- Panel 1: Main category list -->
+  <div class="mm-panel mm-panel-main" id="mm-panel-main">
+    <div class="mm-link" onclick="mmShowSub('photography')">Photography <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 6 15 12 9 18"/></svg></div>
+    <div class="mm-link" onclick="mmShowSub('video')">Video <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 6 15 12 9 18"/></svg></div>
+    <div class="mm-link" onclick="mmShowSub('social')">Social Content <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 6 15 12 9 18"/></svg></div>
+    <div class="mm-link" onclick="mmShowSub('touring')">Tours & Plans <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 6 15 12 9 18"/></svg></div>
+    <div class="mm-link" onclick="mmShowSub('branding')">Branding <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 6 15 12 9 18"/></svg></div>
+    <div class="mm-link" onclick="mmShowSub('packages')">Packages <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 6 15 12 9 18"/></svg></div>
+    <div class="mm-link" onclick="mmShowSub('specialty')">More <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 6 15 12 9 18"/></svg></div>
+    <button class="mm-cta" onclick="toggleMobileMenu();openBooking()">Book a Shoot</button>
+  </div>
+
+  <!-- Panel 2: Sub items (populated by JS) -->
+  <div class="mm-panel mm-panel-sub" id="mm-panel-sub">
+    <div class="mm-sub-header">
+      <button class="mm-sub-back" onclick="mmGoBack()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg> Back</button>
+      <button class="mm-sub-close" onclick="toggleMobileMenu()">✕</button>
+    </div>
+    <div id="mm-sub-content"></div>
+  </div>
 </div>
 
 <!-- ═══════════ PAGE CONTENT ═══════════ -->
@@ -410,19 +669,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display'
   </div>
 </section>
 
-<!-- ★ DUO ROW — Monthly Plans + Specialty -->
+<!-- ★ DUO ROW — Testimonial + Specialty -->
 <div class="duo-row">
-  <div class="duo-card dark">
-    <div class="section-text">
-      <h2>Monthly Plans</h2>
-      <p>Priority booking, dedicated editing, better rates for agents who list regularly.</p>
-      <div class="price-line">From <strong>$900</strong>/month</div>
-      <div class="links">
-        <button class="link-primary" onclick="openBookingWith('retainer')">See Plans</button>
+  <div class="duo-card dark testimonial-card">
+    <div class="tq">They made my listing look like a magazine spread. I went from averaging 3 weeks on market to getting offers in 4 days. Every agent in my brokerage uses them now.</div>
+    <div class="ta-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+    <div class="ta" style="margin-top:16px">
+      <div class="ta-avatar">HD</div>
+      <div>
+        <div class="ta-name">Harris Durrani</div>
+        <div class="ta-role">Top Producer - Homelife Miracle</div>
       </div>
-    </div>
-    <div class="section-img" style="padding:20px">
-      <img src="photos/section-plans.jpg" alt="Calendar grid" style="border-radius:12px;max-height:300px;width:auto;margin:0 auto;display:block;object-fit:contain">
     </div>
   </div>
   <div class="duo-card">
@@ -467,7 +724,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display'
 <div class="booking-modal" id="booking-modal">
   <div class="bm-content">
     <button class="bm-close" onclick="closeBooking()">✕</button>
-    <div class="bm-progress" id="bm-progress"><div class="bm-pdot active"></div><div class="bm-pdot"></div><div class="bm-pdot"></div><div class="bm-pdot"></div><div class="bm-pdot"></div></div>
+    <div class="bm-progress" id="bm-progress"><div class="bm-pdot active"></div><div class="bm-pdot"></div><div class="bm-pdot"></div><div class="bm-pdot"></div><div class="bm-pdot"></div><div class="bm-pdot"></div></div>
     <div class="bm-step active" id="bm-step1">
       <div class="bm-step-title">What do you need <em>for this listing?</em></div>
       <p class="bm-step-hint">Choose everything that applies — we'll build the right package.</p>
@@ -497,13 +754,47 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display'
         <div class="bm-field full"><label>Property Address</label><input id="bm-address" type="text" placeholder="123 Main St, Toronto…"></div>
         <div class="bm-field full"><label>How did you hear about us?</label><input id="bm-referral" type="text" placeholder="Agent referral, Google, Instagram…"></div>
       </div>
-      <div class="bm-nav"><button class="bm-btn bm-btn-back" onclick="bmGoStep(3)">← Back</button><button class="bm-btn bm-btn-next" onclick="bmGoStep(5)">Review →</button></div>
+      <div class="bm-nav"><button class="bm-btn bm-btn-back" onclick="bmGoStep(3)">← Back</button><button class="bm-btn bm-btn-next" onclick="bmGoStep(5)">Next →</button></div>
     </div>
     <div class="bm-step" id="bm-step5">
+      <div class="bm-step-title">Lock in <em>your rate</em></div>
+      <p class="bm-step-hint">Commit longer or pay upfront to save. Discounts stack.</p>
+      <div style="margin-bottom:20px">
+        <div style="font-size:.72rem;font-weight:600;color:var(--ink-sub);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Commitment Length</div>
+        <div class="bm-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:0" id="bm-duration-grid">
+          <div class="bm-choice selected" data-dur="0" onclick="bmSelectDuration(this)"><div class="bm-choice-check">✓</div><div class="bm-choice-name">One-time</div><div class="bm-choice-desc">No discount</div></div>
+          <div class="bm-choice" data-dur="3" onclick="bmSelectDuration(this)"><div class="bm-choice-check">✓</div><div class="bm-choice-name">3 months</div><div class="bm-choice-desc">5% off</div></div>
+          <div class="bm-choice" data-dur="6" onclick="bmSelectDuration(this)"><div class="bm-choice-check">✓</div><div class="bm-choice-name">6 months</div><div class="bm-choice-desc">10% off</div></div>
+          <div class="bm-choice" data-dur="12" onclick="bmSelectDuration(this)"><div class="bm-choice-check">✓</div><div class="bm-choice-name">12 months</div><div class="bm-choice-desc">15% off</div></div>
+        </div>
+      </div>
+      <div style="margin-bottom:20px">
+        <div style="font-size:.72rem;font-weight:600;color:var(--ink-sub);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Payment Method</div>
+        <div class="bm-grid" style="grid-template-columns:repeat(2,1fr);margin-bottom:0" id="bm-payment-grid">
+          <div class="bm-choice selected" data-pay="monthly" onclick="bmSelectPayment(this)"><div class="bm-choice-check">✓</div><div class="bm-choice-name">Pay Monthly</div><div class="bm-choice-desc">No extra discount</div></div>
+          <div class="bm-choice" data-pay="upfront" onclick="bmSelectPayment(this)"><div class="bm-choice-check">✓</div><div class="bm-choice-name">Pay in Full</div><div class="bm-choice-desc">Extra 5% off</div></div>
+        </div>
+      </div>
+      <div id="bm-savings-preview" style="background:var(--ink);border-radius:14px;padding:20px;margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+          <div>
+            <div style="font-size:.72rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Your Price</div>
+            <div id="bm-preview-price" style="font-size:1.4rem;font-weight:700;color:var(--gold)">$0</div>
+            <div id="bm-preview-original" style="font-size:.78rem;color:rgba(255,255,255,.3);text-decoration:line-through;margin-top:2px"></div>
+          </div>
+          <div style="text-align:right">
+            <div id="bm-preview-savings" style="font-size:.88rem;color:var(--teal-light);font-weight:600"></div>
+            <div id="bm-preview-permonth" style="font-size:.72rem;color:rgba(255,255,255,.35);margin-top:2px"></div>
+          </div>
+        </div>
+      </div>
+      <div class="bm-nav"><button class="bm-btn bm-btn-back" onclick="bmGoStep(4)">← Back</button><button class="bm-btn bm-btn-next" onclick="bmGoStep(6)">Review →</button></div>
+    </div>
+    <div class="bm-step" id="bm-step6">
       <div class="bm-step-title">Your <em>quote is ready</em></div>
       <p class="bm-step-hint">Everything look good?</p>
       <div class="bm-summary" id="bm-summary"></div>
-      <div class="bm-nav"><button class="bm-btn bm-btn-back" onclick="bmGoStep(4)">← Back</button><button class="bm-btn bm-btn-send" onclick="bmSendQuote()">Send Quote Request →</button></div>
+      <div class="bm-nav"><button class="bm-btn bm-btn-back" onclick="bmGoStep(5)">← Back</button><button class="bm-btn bm-btn-send" onclick="bmSendQuote()">Send Quote Request →</button></div>
     </div>
     <div class="bm-step" id="bm-step-success">
       <div class="bm-success"><div class="bm-success-icon">✓</div><h3>You're all set, <span id="bm-success-name"></span>!</h3><p>We'll review your quote and reach out within 24 hours.</p></div>
@@ -518,32 +809,319 @@ const CATALOGUE={photography:[{name:'Basic Listing Photos',price:175,includes:['
 const ADDONS=[{name:'Drone Photo / Video',price:75},{name:'Listing Reel Cut',price:75},{name:'Twilight Edit',price:40},{name:'Floor Plans',price:100},{name:'Virtual Staging (per image)',price:35},{name:'Agent On-Camera Intro',price:100},{name:'Neighbourhood B-Roll',price:50},{name:'Property Feature Sheet',price:75},{name:'Social Media Package',price:150}];
 
 /* ═══════════ NAV DROPDOWNS ═══════════ */
-const ddMap={photography:[...CATALOGUE.photography],video:[...CATALOGUE.video,...CATALOGUE.bundles],social:[...CATALOGUE.social],touring:[...CATALOGUE.virtual,...CATALOGUE.floorplans,...CATALOGUE.twilight,...CATALOGUE.neighbourhood],branding:[...CATALOGUE.agentintro,...CATALOGUE.headshots],packages:[...CATALOGUE.launch,...CATALOGUE.retainer.filter(r=>r.tag==='monthly')],specialty:[...CATALOGUE.marketing,...CATALOGUE.specialty,...CATALOGUE.virtualstaging,...CATALOGUE.luxury,...CATALOGUE.other]};
-
-Object.keys(ddMap).forEach(key=>{const grid=document.getElementById('ddg-'+key);const mmItems=document.getElementById('mm-'+key);if(!grid)return;ddMap[key].forEach(item=>{const card=document.createElement('div');card.className='gn-dd-card'+(item.featured?' featured':'');card.innerHTML='<div class="gn-dd-card-name">'+item.name+'</div><div class="gn-dd-card-price">$'+item.price.toLocaleString('en-CA')+(item.tag==='monthly'?'/mo':'')+'</div><div class="gn-dd-card-desc">'+(item.includes?item.includes.slice(0,2).join(' · '):'')+'</div>';card.addEventListener('click',()=>{closeAllDropdowns();openBooking()});grid.appendChild(card);if(mmItems){const mi=document.createElement('div');mi.className='gn-mm-item';mi.innerHTML='<div class="gn-mm-item-name">'+item.name+'</div><div class="gn-mm-item-price">$'+item.price.toLocaleString('en-CA')+(item.tag==='monthly'?'/mo':'')+'</div>';mi.addEventListener('click',()=>{toggleMobileMenu();openBooking()});mmItems.appendChild(mi)}})});
 
 let activeDD=null;
 function closeAllDropdowns(){document.querySelectorAll('.gn-dropdown').forEach(d=>d.classList.remove('open'));document.querySelectorAll('.gn-link').forEach(l=>l.classList.remove('active'));activeDD=null}
-document.querySelectorAll('.gn-link[data-dd]').forEach(link=>{link.addEventListener('mouseenter',()=>{const key=link.dataset.dd;if(activeDD===key)return;closeAllDropdowns();const dd=document.getElementById('dd-'+key);if(dd){dd.classList.add('open');link.classList.add('active');activeDD=key}})});
-document.querySelector('.gn').addEventListener('mouseleave',()=>{setTimeout(()=>{if(!document.querySelector('.gn-dropdown:hover'))closeAllDropdowns()},100)});
-document.querySelectorAll('.gn-dropdown').forEach(dd=>{dd.addEventListener('mouseleave',closeAllDropdowns)});
+
+// Open on both hover and click for laptop trackpads
+document.querySelectorAll('.gn-link[data-dd]').forEach(link=>{
+  function openDD(){
+    const key=link.dataset.dd;
+    if(activeDD===key){closeAllDropdowns();return}
+    closeAllDropdowns();
+    const dd=document.getElementById('dd-'+key);
+    if(dd){dd.classList.add('open');link.classList.add('active');activeDD=key}
+  }
+  link.addEventListener('mouseenter',openDD);
+  link.addEventListener('click',function(e){e.preventDefault();openDD()});
+});
+
+// Close when mouse leaves the entire nav+dropdown area
+let closeTimer=null;
+function startCloseTimer(){closeTimer=setTimeout(()=>{closeAllDropdowns()},300)}
+function cancelCloseTimer(){if(closeTimer){clearTimeout(closeTimer);closeTimer=null}}
+
+document.querySelector('.gn').addEventListener('mouseleave',startCloseTimer);
+document.querySelector('.gn').addEventListener('mouseenter',cancelCloseTimer);
+document.querySelectorAll('.gn-dropdown').forEach(dd=>{
+  dd.addEventListener('mouseenter',cancelCloseTimer);
+  dd.addEventListener('mouseleave',startCloseTimer);
+});
+
+// Close on click outside
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.gn')&&!e.target.closest('.gn-dropdown'))closeAllDropdowns();
+});
 window.addEventListener('scroll',closeAllDropdowns,{passive:true});
 
-function toggleMobileMenu(){const menu=document.getElementById('gn-mobile-menu');const burger=document.getElementById('gn-burger');menu.classList.toggle('open');burger.classList.toggle('open');document.body.style.overflow=menu.classList.contains('open')?'hidden':''}
-function toggleMmSection(s){const wasOpen=s.classList.contains('open');document.querySelectorAll('.gn-mm-section').forEach(x=>x.classList.remove('open'));if(!wasOpen)s.classList.add('open')}
+function toggleMobileMenu(){
+  const menu=document.getElementById('gn-mobile-menu');
+  const burger=document.getElementById('gn-burger');
+  menu.classList.toggle('open');
+  burger.classList.toggle('open');
+  document.body.style.overflow=menu.classList.contains('open')?'hidden':'';
+  // Reset to main panel on close
+  if(!menu.classList.contains('open')) menu.classList.remove('mm-in-sub');
+}
+
+// Mobile sub-panel data
+const mmSubData={
+  photography:{
+    title:'Explore Photography',
+    items:[
+      {name:'All Photography',action:"openBookingWith('photos')",lg:true},
+      {name:'Basic Listing',action:"openBookingWith('photos')",lg:true},
+      {name:'Standard Listing',action:"openBookingWith('photos')",lg:true},
+      {name:'Premium Listing',action:"openBookingWith('photos')",lg:true},
+      {name:'Luxury Estate',action:"openBookingWith('photos')",lg:true},
+      {name:'Book Photography',action:"openBookingWith('photos')",sm:true},
+      {name:'Photo + Video Bundles',action:"openBookingWith('photos')",sm:true},
+    ]
+  },
+  video:{
+    title:'Explore Video',
+    items:[
+      {name:'All Video',action:"openBookingWith('video')",lg:true},
+      {name:'Basic Walkthrough',action:"openBookingWith('video')",lg:true},
+      {name:'Cinematic Listing',action:"openBookingWith('video')",lg:true},
+      {name:'Luxury Property Film',action:"openBookingWith('video')",lg:true},
+      {name:'Starter Bundle',action:"openBookingWith('photos')",sm:true},
+      {name:'Pro Bundle',action:"openBookingWith('photos')",sm:true},
+      {name:'Signature Cinematic',action:"openBookingWith('photos')",sm:true},
+    ]
+  },
+  social:{
+    title:'Explore Social Content',
+    items:[
+      {name:'All Social Content',action:"openBookingWith('social')",lg:true},
+      {name:'Single Video',action:"openBookingWith('social')",lg:true},
+      {name:'5-Video Starter',action:"openBookingWith('social')",lg:true},
+      {name:'10-Video Consistent',action:"openBookingWith('social')",lg:true},
+      {name:'20-Video Content Machine',action:"openBookingWith('social')",lg:true},
+      {name:'30-Video Dominance',action:"openBookingWith('social')",lg:true},
+    ]
+  },
+  touring:{
+    title:'Explore Tours & Plans',
+    items:[
+      {name:'Matterport 3D Tour',action:"openBookingWith('virtual')",lg:true},
+      {name:'Floor Plans',action:"openBookingWith('floorplans')",lg:true},
+      {name:'Twilight Shoots',action:"openBookingWith('twilight')",lg:true},
+      {name:'Neighbourhood Shots',action:"openBooking()",lg:true},
+      {name:'Add Drone',action:"openBooking()",sm:true},
+    ]
+  },
+  branding:{
+    title:'Explore Branding',
+    items:[
+      {name:'Headshot Session',action:"openBookingWith('headshots')",lg:true},
+      {name:'Personal Brand Session',action:"openBookingWith('headshots')",lg:true},
+      {name:'Team / Brokerage Session',action:"openBookingWith('headshots')",lg:true},
+      {name:'Agent Intro Reel',action:"openBooking()",sm:true},
+      {name:'Agent Brand Package',action:"openBooking()",sm:true},
+    ]
+  },
+  packages:{
+    title:'Listing Launch',
+    items:[
+      {name:'Listing Launch Starter',action:"openBookingWith('launch')",lg:true},
+      {name:'Listing Launch Pro',action:"openBookingWith('launch')",lg:true},
+      {name:'Listing Launch Premium',action:"openBookingWith('launch')",lg:true},
+      {name:'Build Your Own Package',action:"openBooking()",sm:true},
+      {name:'Commitment Discounts',action:"openBooking()",sm:true},
+    ]
+  },
+  specialty:{
+    title:'More Services',
+    items:[
+      {name:'Same-Day Rush',action:"openBookingWith('specialty')",lg:true},
+      {name:'Open House Day-Of',action:"openBookingWith('specialty')",lg:true},
+      {name:'Tenant-Occupied',action:"openBookingWith('specialty')",lg:true},
+      {name:'Seasonal Refresh',action:"openBookingWith('specialty')",lg:true},
+      {name:'Virtual Staging',action:"openBookingWith('virtualstaging')",sm:true},
+      {name:'Commercial',action:"openBookingWith('other')",sm:true},
+      {name:'Airbnb / STR',action:"openBookingWith('other')",sm:true},
+    ]
+  },
+};
+
+function mmShowSub(key){
+  const data=mmSubData[key];
+  if(!data)return;
+  const content=document.getElementById('mm-sub-content');
+  let html='<div class="mm-sub-title">'+data.title+'</div>';
+  data.items.forEach(item=>{
+    const cls=item.sm?'mm-sub-link mm-sub-link-sm':'mm-sub-link';
+    html+='<div class="'+cls+'" onclick="toggleMobileMenu();'+item.action+'">'+item.name+'</div>';
+  });
+  html+='<button class="mm-cta" onclick="toggleMobileMenu();openBooking()" style="margin-top:20px">Book a Shoot</button>';
+  content.innerHTML=html;
+  document.getElementById('gn-mobile-menu').classList.add('mm-in-sub');
+}
+
+function mmGoBack(){
+  document.getElementById('gn-mobile-menu').classList.remove('mm-in-sub');
+}
 
 /* ═══════════ BOOKING MODAL ═══════════ */
 let bmStep=1,bmChoices=[],bmCurrentTiers=[],bmSelectedTier=null,bmSelectedAddons=[];
-const serviceOptions=[{val:'photos',name:'Listing Photos',desc:'HDR photography'},{val:'video',name:'Listing Video',desc:'Cinematic walkthroughs'},{val:'social',name:'Social Media Content',desc:'Reels and brand content'},{val:'virtual',name:'Virtual Tour',desc:'Matterport 3D'},{val:'floorplans',name:'Floor Plans',desc:'Digital floor plans'},{val:'twilight',name:'Twilight / Blue Hour',desc:'Golden hour shots'},{val:'headshots',name:'Headshots / Branding',desc:'Agent headshots'},{val:'launch',name:'Listing Launch Package',desc:'Complete launch'},{val:'virtualstaging',name:'Virtual Staging',desc:'Digitally furnish rooms'},{val:'retainer',name:'Retainer / Bundle Plan',desc:'Monthly or yearly plans'},{val:'specialty',name:'Specialty / Urgent',desc:'Rush, tenant-occupied'},{val:'other',name:'Something Else',desc:'Commercial, Airbnb'}];
+let bmDuration=0,bmPayMethod='monthly'; // commitment state
+const DURATION_DISCOUNTS={0:0,3:.05,6:.10,12:.15};
+const UPFRONT_DISCOUNT=.05;
+
+const serviceOptions=[{val:'photos',name:'Listing Photos',desc:'HDR photography'},{val:'video',name:'Listing Video',desc:'Cinematic walkthroughs'},{val:'social',name:'Social Media Content',desc:'Reels and brand content'},{val:'virtual',name:'Virtual Tour',desc:'Matterport 3D'},{val:'floorplans',name:'Floor Plans',desc:'Digital floor plans'},{val:'twilight',name:'Twilight / Blue Hour',desc:'Golden hour shots'},{val:'headshots',name:'Headshots / Branding',desc:'Agent headshots'},{val:'launch',name:'Listing Launch Package',desc:'Complete launch'},{val:'virtualstaging',name:'Virtual Staging',desc:'Digitally furnish rooms'},{val:'specialty',name:'Specialty / Urgent',desc:'Rush, tenant-occupied'},{val:'other',name:'Something Else',desc:'Commercial, Airbnb'}];
 
 (function(){const grid=document.getElementById('bm-choices');grid.innerHTML=serviceOptions.map(s=>'<div class="bm-choice" data-val="'+s.val+'" onclick="bmToggleChoice(this)"><div class="bm-choice-check">✓</div><div class="bm-choice-name">'+s.name+'</div><div class="bm-choice-desc">'+s.desc+'</div></div>').join('')})();
 
 function bmToggleChoice(el){el.classList.toggle('selected');bmChoices=[...document.querySelectorAll('.bm-choice.selected')].map(c=>c.dataset.val);document.getElementById('bm-btn1').disabled=bmChoices.length===0}
 function openBooking(){document.getElementById('booking-modal').classList.add('open');document.body.style.overflow='hidden';bmGoStep(1)}
 function openBookingWith(val){openBooking();setTimeout(()=>{const card=document.querySelector('.bm-choice[data-val="'+val+'"]');if(card&&!card.classList.contains('selected'))bmToggleChoice(card)},100)}
-function closeBooking(){document.getElementById('booking-modal').classList.remove('open');document.body.style.overflow='';bmStep=1;bmChoices=[];bmSelectedTier=null;bmSelectedAddons=[];document.querySelectorAll('.bm-choice').forEach(c=>c.classList.remove('selected'));document.querySelectorAll('.bm-step').forEach(s=>s.classList.remove('active'));document.getElementById('bm-step1').classList.add('active');document.getElementById('bm-btn1').disabled=true;updateBmProgress(1)}
-function bmGoStep(step){if(step===2)buildBmTiers();if(step===3)buildBmAddons();if(step===5)buildBmSummary();document.querySelectorAll('.bm-step').forEach(s=>s.classList.remove('active'));document.getElementById('bm-step'+step).classList.add('active');bmStep=step;updateBmProgress(step);document.querySelector('.bm-content').scrollTop=0}
+function closeBooking(){document.getElementById('booking-modal').classList.remove('open');document.body.style.overflow='';bmStep=1;bmChoices=[];bmSelectedTier=null;bmSelectedAddons=[];bmDuration=0;bmPayMethod='monthly';document.querySelectorAll('.bm-choice').forEach(c=>c.classList.remove('selected'));document.querySelectorAll('.bm-step').forEach(s=>s.classList.remove('active'));document.getElementById('bm-step1').classList.add('active');document.getElementById('bm-btn1').disabled=true;updateBmProgress(1);resetCommitmentUI()}
+
+function resetCommitmentUI(){
+  document.querySelectorAll('#bm-duration-grid .bm-choice').forEach(c=>c.classList.remove('selected'));
+  const def=document.querySelector('#bm-duration-grid .bm-choice[data-dur="0"]');
+  if(def)def.classList.add('selected');
+  document.querySelectorAll('#bm-payment-grid .bm-choice').forEach(c=>c.classList.remove('selected'));
+  const defP=document.querySelector('#bm-payment-grid .bm-choice[data-pay="monthly"]');
+  if(defP)defP.classList.add('selected');
+}
+
+function bmGoStep(step){
+  if(step===2)buildBmTiers();
+  if(step===3)buildBmAddons();
+  if(step===5)bmUpdateSavingsPreview();
+  if(step===6)buildBmSummary();
+  document.querySelectorAll('.bm-step').forEach(s=>s.classList.remove('active'));
+  document.getElementById('bm-step'+step).classList.add('active');
+  bmStep=step;updateBmProgress(step);
+  document.querySelector('.bm-content').scrollTop=0;
+}
 function updateBmProgress(step){document.querySelectorAll('.bm-pdot').forEach((d,i)=>{d.className='bm-pdot';if(i+1===step)d.classList.add('active');else if(i+1<step)d.classList.add('done')})}
+
+/* Commitment selectors */
+const BUNDLE_SETS = ['bundles','launch']; // catalogue keys that are already discounted
+const SOCIAL_MULTI = ['Starter — 5 Videos','Consistent — 10 Videos','Content Machine — 20 Videos','Market Dominance — 30 Videos']; // social multi-packs
+
+function bmIsBundle(){
+  if(bmSelectedTier===null||!bmCurrentTiers[bmSelectedTier]) return false;
+  const tier = bmCurrentTiers[bmSelectedTier];
+  if(BUNDLE_SETS.includes(tier._setKey)) return true;
+  if(SOCIAL_MULTI.includes(tier.name)) return true;
+  return false;
+}
+
+function bmSelectDuration(el){
+  // Block only if pure bundle with no add-ons
+  if(bmIsBundle() && bmSelectedAddons.length === 0) return;
+  document.querySelectorAll('#bm-duration-grid .bm-choice').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  bmDuration=Number(el.dataset.dur);
+  bmUpdateSavingsPreview();
+}
+function bmSelectPayment(el){
+  document.querySelectorAll('#bm-payment-grid .bm-choice').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  bmPayMethod=el.dataset.pay;
+  bmUpdateSavingsPreview();
+}
+
+function bmGetBaseSubtotal(){
+  let items=[];
+  if(bmSelectedTier!==null&&bmCurrentTiers[bmSelectedTier])items.push(bmCurrentTiers[bmSelectedTier]);
+  items=items.concat(bmSelectedAddons);
+  return items.reduce((s,i)=>s+Number(i.price),0);
+}
+
+function bmCalcPerItem(){
+  // Returns {bundleTotal, bundleDiscount, addonTotal, addonDiscount, totalBase, totalDiscount, finalPrice}
+  const isBundle = bmIsBundle();
+  const months = bmDuration || 1;
+  const upfrontDisc = (bmPayMethod==='upfront') ? UPFRONT_DISCOUNT : 0;
+  const durDisc = DURATION_DISCOUNTS[bmDuration] || 0;
+
+  // Tier price
+  let tierPrice = 0;
+  if(bmSelectedTier!==null&&bmCurrentTiers[bmSelectedTier]) tierPrice = Number(bmCurrentTiers[bmSelectedTier].price);
+  const tierBase = tierPrice * months;
+  // Bundle tier: only upfront discount. Individual tier: duration + upfront
+  const tierDiscRate = isBundle ? upfrontDisc : (durDisc + upfrontDisc);
+  const tierDiscount = Math.round(tierBase * tierDiscRate);
+
+  // Add-ons always get full discount (duration + upfront)
+  const addonBase = bmSelectedAddons.reduce((s,a) => s + Number(a.price), 0) * months;
+  const addonDiscRate = durDisc + upfrontDisc;
+  const addonDiscount = Math.round(addonBase * addonDiscRate);
+
+  const totalBase = tierBase + addonBase;
+  const totalDiscount = tierDiscount + addonDiscount;
+  const finalPrice = totalBase - totalDiscount;
+
+  return { tierBase, tierDiscount, tierDiscRate, addonBase, addonDiscount, addonDiscRate, totalBase, totalDiscount, finalPrice, isBundle, months };
+}
+
+function bmUpdateSavingsPreview(){
+  const hasAddons = bmSelectedAddons.length > 0;
+  const isBundle = bmIsBundle();
+  const durGrid = document.getElementById('bm-duration-grid');
+  const durLabel = durGrid.parentElement;
+  const bundleMsg = document.getElementById('bm-bundle-msg');
+
+  // Show duration grid if: not a bundle, OR bundle with add-ons (add-ons benefit from duration)
+  if(isBundle && !hasAddons){
+    durLabel.style.display='none';
+    bmDuration=0;
+    // Reset duration selection to one-time
+    document.querySelectorAll('#bm-duration-grid .bm-choice').forEach(c=>c.classList.remove('selected'));
+    const def=document.querySelector('#bm-duration-grid .bm-choice[data-dur="0"]');
+    if(def)def.classList.add('selected');
+    if(!bundleMsg){
+      const msg = document.createElement('div');
+      msg.id='bm-bundle-msg';
+      msg.style.cssText='background:var(--teal-pale);border:1px solid var(--teal-light);border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:.82rem;color:var(--teal);line-height:1.5';
+      msg.innerHTML='<strong>Package savings already included.</strong> Pay in full to save an extra 5%.';
+      durLabel.parentElement.insertBefore(msg, durLabel);
+    }
+  } else if(isBundle && hasAddons){
+    durLabel.style.display='';
+    if(bundleMsg) bundleMsg.remove();
+    // Show a smaller note about split discounts
+    let splitMsg = document.getElementById('bm-split-msg');
+    if(!splitMsg){
+      splitMsg = document.createElement('div');
+      splitMsg.id='bm-split-msg';
+      splitMsg.style.cssText='background:var(--teal-pale);border:1px solid var(--teal-light);border-radius:12px;padding:12px 16px;margin-bottom:20px;font-size:.78rem;color:var(--teal);line-height:1.45';
+      splitMsg.innerHTML='Your package already includes built-in savings (pay-in-full discount only). Commitment discounts apply to your add-ons.';
+      durLabel.parentElement.insertBefore(splitMsg, durLabel.nextSibling);
+    }
+  } else {
+    durLabel.style.display='';
+    if(bundleMsg) bundleMsg.remove();
+    const splitMsg = document.getElementById('bm-split-msg');
+    if(splitMsg) splitMsg.remove();
+  }
+
+  const calc = bmCalcPerItem();
+
+  document.getElementById('bm-preview-price').textContent='$'+calc.finalPrice.toLocaleString('en-CA');
+
+  if(calc.totalDiscount>0){
+    document.getElementById('bm-preview-original').textContent='$'+calc.totalBase.toLocaleString('en-CA');
+    const pctOff = calc.totalBase > 0 ? Math.round((calc.totalDiscount / calc.totalBase) * 100) : 0;
+    document.getElementById('bm-preview-savings').textContent='You save $'+calc.totalDiscount.toLocaleString('en-CA')+' ('+pctOff+'% off)';
+  } else {
+    document.getElementById('bm-preview-original').textContent='';
+    document.getElementById('bm-preview-savings').textContent=(isBundle && !hasAddons)?'Package savings already included':'No discount applied';
+  }
+
+  if(calc.months>1){
+    const perMonth=Math.round(calc.finalPrice/calc.months);
+    document.getElementById('bm-preview-permonth').textContent='$'+perMonth.toLocaleString('en-CA')+'/month × '+calc.months+' months';
+  } else {
+    document.getElementById('bm-preview-permonth').textContent='One-time payment';
+  }
+
+  // Update payment labels
+  const monthlyOpt=document.querySelector('#bm-payment-grid .bm-choice[data-pay="monthly"]');
+  const upfrontOpt=document.querySelector('#bm-payment-grid .bm-choice[data-pay="upfront"]');
+  if(bmDuration===0){
+    monthlyOpt.querySelector('.bm-choice-desc').textContent='Standard';
+    upfrontOpt.querySelector('.bm-choice-desc').textContent='5% off';
+  } else {
+    monthlyOpt.querySelector('.bm-choice-desc').textContent='No extra discount';
+    upfrontOpt.querySelector('.bm-choice-desc').textContent='Extra 5% off';
+  }
+}
 
 function buildBmTiers(){bmCurrentTiers=[];bmSelectedTier=null;document.getElementById('bm-btn2').disabled=true;const tierMap={photos:'photography',video:'video',social:'social',virtual:'virtual',floorplans:'floorplans',twilight:'twilight',headshots:'headshots',launch:'launch',virtualstaging:'virtualstaging',retainer:'retainer',specialty:'specialty',other:'other'};const hasP=bmChoices.includes('photos'),hasV=bmChoices.includes('video'),showB=hasP&&hasV;const sets=[];bmChoices.forEach(c=>{if(showB&&(c==='photos'||c==='video')){if(!sets.includes('bundles'))sets.push('bundles')}else sets.push(c)});sets.forEach(key=>{const ck=tierMap[key]||key;if(CATALOGUE[ck])CATALOGUE[ck].forEach(t=>bmCurrentTiers.push({...t,_setKey:key}))});const grid=document.getElementById('bm-tiers');grid.innerHTML=bmCurrentTiers.map((t,i)=>{const inc=t.includes?t.includes.slice(0,3).join(' · '):'';return'<div class="bm-tier'+(t.featured?' featured':'')+'" onclick="bmSelectTier('+i+')" data-idx="'+i+'"><div><div class="bm-tier-name">'+t.name+'</div><div class="bm-tier-includes">'+inc+'</div></div><div class="bm-tier-price">$'+t.price.toLocaleString('en-CA')+'</div></div>'}).join('');if(bmCurrentTiers.length===1)bmSelectTier(0)}
 
@@ -553,9 +1131,83 @@ function buildBmAddons(){bmSelectedAddons=[];const container=document.getElement
 
 function bmToggleAddon(el){el.classList.toggle('selected');const name=el.dataset.name,price=Number(el.dataset.price);if(el.classList.contains('selected'))bmSelectedAddons.push({name,price});else bmSelectedAddons=bmSelectedAddons.filter(a=>a.name!==name)}
 
-function buildBmSummary(){const name=document.getElementById('bm-name').value.trim(),brokerage=document.getElementById('bm-brokerage').value.trim();let items=[];if(bmSelectedTier!==null&&bmCurrentTiers[bmSelectedTier])items.push(bmCurrentTiers[bmSelectedTier]);items=items.concat(bmSelectedAddons);const sub=items.reduce((s,i)=>s+Number(i.price),0),hst=Math.round(sub*.13),total=sub+hst;document.getElementById('bm-summary').innerHTML='<div class="bm-summary-client">'+(name||'Your Quote')+(brokerage?' · '+brokerage:'')+'</div>'+items.map(i=>'<div class="bm-summary-item"><span>'+i.name+'</span><span>$'+Number(i.price).toLocaleString('en-CA')+'</span></div>').join('')+'<div class="bm-summary-item" style="opacity:.5"><span>HST (13%)</span><span>$'+hst.toLocaleString('en-CA')+'</span></div><div class="bm-summary-total"><span>Total</span><span>$'+total.toLocaleString('en-CA')+'</span></div>'}
+function buildBmSummary(){
+  const name=document.getElementById('bm-name').value.trim(),brokerage=document.getElementById('bm-brokerage').value.trim();
+  const calc = bmCalcPerItem();
+  const isBundle = calc.isBundle;
+  const months = calc.months;
+  const payLabel=bmPayMethod==='upfront'?'Pay in full':'Pay monthly';
+  const durLabel=bmDuration===0?'One-time':bmDuration+'-month commitment';
 
-function bmSendQuote(){const name=document.getElementById('bm-name').value.trim(),email=document.getElementById('bm-email').value.trim(),phone=document.getElementById('bm-phone').value.trim();if(!name||!email||!phone){alert('Please go back and fill in your name, email, and phone.');return}let lineItems=[];if(bmSelectedTier!==null&&bmCurrentTiers[bmSelectedTier]){const t=bmCurrentTiers[bmSelectedTier];lineItems.push({id:'li_'+Date.now(),desc:t.name,qty:1,price:Number(t.price)})}bmSelectedAddons.forEach((a,i)=>lineItems.push({id:'li_'+(Date.now()+i+1),desc:a.name,qty:1,price:Number(a.price)}));const sub=lineItems.reduce((s,l)=>s+Number(l.price),0),tax=Math.round(sub*.13),total=sub+tax;const pq={id:'pq_'+Date.now(),fromPricing:true,client:name,brokerage:document.getElementById('bm-brokerage').value.trim(),email,phone,address:document.getElementById('bm-address').value.trim(),referral:document.getElementById('bm-referral').value.trim(),lineItems,subtotal:sub,useTax:true,tax,total,remaining:total,deposit:0,createdAt:new Date().toISOString()};localStorage.setItem('reel_estate_pending_quote',JSON.stringify(pq));const SB_URL='https://dgoiormpqixydbijuqoe.supabase.co',SB_KEY='sb_publishable_nz-LREWZbxC0FaN8evKVlQ_ik4PffGj';fetch(SB_URL+'/rest/v1/pending_quotes',{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({id:pq.id,data:pq,processed:false,created_at:pq.createdAt})}).catch(e=>console.warn('Supabase sync failed',e));document.querySelectorAll('.bm-step').forEach(s=>s.classList.remove('active'));document.getElementById('bm-step-success').classList.add('active');document.getElementById('bm-success-name').textContent=name.split(' ')[0]}
+  let html='<div class="bm-summary-client">'+(name||'Your Quote')+(brokerage?' · '+brokerage:'')+'</div>';
+
+  // Tier line
+  if(bmSelectedTier!==null&&bmCurrentTiers[bmSelectedTier]){
+    const t=bmCurrentTiers[bmSelectedTier];
+    const tierTotal=Number(t.price)*months;
+    html+='<div class="bm-summary-item"><span>'+t.name+(months>1?' × '+months+' mo':'')+'</span><span>$'+tierTotal.toLocaleString('en-CA')+'</span></div>';
+    if(calc.tierDiscount>0){
+      const tierPct=Math.round(calc.tierDiscRate*100);
+      html+='<div class="bm-summary-item" style="color:var(--teal-light)"><span>↳ '+(isBundle?'Pay-in-full':'Commitment')+' discount ('+tierPct+'%)</span><span>-$'+calc.tierDiscount.toLocaleString('en-CA')+'</span></div>';
+    }
+  }
+
+  // Add-on lines
+  bmSelectedAddons.forEach(a=>{
+    const aTotal=Number(a.price)*months;
+    html+='<div class="bm-summary-item"><span>'+a.name+(months>1?' × '+months+' mo':'')+'</span><span>$'+aTotal.toLocaleString('en-CA')+'</span></div>';
+  });
+  if(calc.addonDiscount>0&&bmSelectedAddons.length>0){
+    const addonPct=Math.round(calc.addonDiscRate*100);
+    html+='<div class="bm-summary-item" style="color:var(--teal-light)"><span>↳ Add-on discount ('+addonPct+'%)</span><span>-$'+calc.addonDiscount.toLocaleString('en-CA')+'</span></div>';
+  }
+
+  // Commitment info
+  html+='<div class="bm-summary-item" style="opacity:.4"><span>'+durLabel+' · '+payLabel+'</span><span></span></div>';
+
+  const hst=Math.round(calc.finalPrice*.13);
+  const total=calc.finalPrice+hst;
+  html+='<div class="bm-summary-item" style="opacity:.5"><span>HST (13%)</span><span>$'+hst.toLocaleString('en-CA')+'</span></div>';
+  html+='<div class="bm-summary-total"><span>Total</span><span>$'+total.toLocaleString('en-CA')+'</span></div>';
+  if(calc.totalDiscount>0){
+    html+='<div style="text-align:right;font-size:.72rem;color:var(--teal-light);margin-top:4px">Total savings: $'+calc.totalDiscount.toLocaleString('en-CA')+'</div>';
+  }
+  if(months>1&&bmPayMethod==='monthly'){
+    const perMonth=Math.round(total/months);
+    html+='<div style="text-align:right;font-size:.72rem;color:rgba(255,255,255,.35);margin-top:2px">$'+perMonth.toLocaleString('en-CA')+'/month × '+months+' months</div>';
+  }
+  document.getElementById('bm-summary').innerHTML=html;
+}
+
+function bmSendQuote(){
+  const name=document.getElementById('bm-name').value.trim(),email=document.getElementById('bm-email').value.trim(),phone=document.getElementById('bm-phone').value.trim();
+  if(!name||!email||!phone){alert('Please go back and fill in your name, email, and phone.');return}
+  const calc = bmCalcPerItem();
+  let lineItems=[];
+  if(bmSelectedTier!==null&&bmCurrentTiers[bmSelectedTier]){
+    const t=bmCurrentTiers[bmSelectedTier];
+    lineItems.push({id:'li_'+Date.now(),desc:t.name,qty:1,price:Number(t.price),isBundle:calc.isBundle,discountRate:calc.tierDiscRate});
+  }
+  bmSelectedAddons.forEach((a,i)=>lineItems.push({id:'li_'+(Date.now()+i+1),desc:a.name,qty:1,price:Number(a.price),isBundle:false,discountRate:calc.addonDiscRate}));
+  const hst=Math.round(calc.finalPrice*.13);
+  const total=calc.finalPrice+hst;
+  const pq={
+    id:'pq_'+Date.now(),fromPricing:true,client:name,
+    brokerage:document.getElementById('bm-brokerage').value.trim(),email,phone,
+    address:document.getElementById('bm-address').value.trim(),
+    referral:document.getElementById('bm-referral').value.trim(),
+    lineItems,
+    commitment:{duration:bmDuration,payMethod:bmPayMethod,tierDiscount:calc.tierDiscount,addonDiscount:calc.addonDiscount,totalDiscount:calc.totalDiscount},
+    subtotal:calc.finalPrice,useTax:true,tax:hst,total,remaining:total,deposit:0,
+    createdAt:new Date().toISOString()
+  };
+  localStorage.setItem('reel_estate_pending_quote',JSON.stringify(pq));
+  const SB_URL='https://dgoiormpqixydbijuqoe.supabase.co',SB_KEY='sb_publishable_nz-LREWZbxC0FaN8evKVlQ_ik4PffGj';
+  fetch(SB_URL+'/rest/v1/pending_quotes',{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({id:pq.id,data:pq,processed:false,created_at:pq.createdAt})}).catch(e=>console.warn('Supabase sync failed',e));
+  document.querySelectorAll('.bm-step').forEach(s=>s.classList.remove('active'));
+  document.getElementById('bm-step-success').classList.add('active');
+  document.getElementById('bm-success-name').textContent=name.split(' ')[0];
+}
 </script>
 </body>
 </html>
