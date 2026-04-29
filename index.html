@@ -475,6 +475,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display'
   margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08);
   font-size:.82rem;color:var(--teal-light);font-weight:600;
 }
+.calc-rec-addons{margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08)}
+.calc-rec-addons-title{font-size:.68rem;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.calc-rec-addon-item{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);
+  font-size:.78rem;color:rgba(255,255,255,.6);
+}
+.calc-rec-addon-item:last-child{border-bottom:none}
+.calc-rec-addon-item span:last-child{color:var(--gold);font-weight:600}
+.calc-rec-total{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.12);
+  font-size:1rem;font-weight:700;color:#fff;
+}
+.calc-rec-total span:last-child{color:var(--gold);font-size:1.1rem}
 
 /* Step 3: lead capture */
 .calc-form{
@@ -542,8 +557,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display'
    ═══════════════════════════════════════ */
 .booking-modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:2000;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px}
 .booking-modal.open{display:flex}
-.bm-content{background:var(--white);border-radius:20px;width:100%;max-width:640px;max-height:90vh;display:flex;flex-direction:column;position:relative;box-shadow:0 24px 80px rgba(0,0,0,.2);overflow:hidden}
-.bm-content-scroll{flex:1;overflow-y:auto;padding:40px 36px 20px}
+.bm-content{background:var(--white);border-radius:20px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;padding:40px 36px;position:relative;box-shadow:0 24px 80px rgba(0,0,0,.2)}
 .bm-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border:none;background:var(--surface);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;color:var(--ink-sub);z-index:2}
 .bm-close:hover{background:var(--border)}
 .bm-step{display:none}.bm-step.active{display:block;animation:fadeUp .3s ease}
@@ -587,11 +601,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display'
 .bm-summary-item{display:flex;justify-content:space-between;padding:6px 0;font-size:.82rem;color:rgba(255,255,255,.6);border-bottom:1px solid rgba(255,255,255,.06)}
 .bm-summary-total{display:flex;justify-content:space-between;padding:12px 0 0;font-size:1.1rem;font-weight:700;color:var(--gold)}
 .bm-nav{
-  display:none;justify-content:space-between;gap:12px;
-  padding:16px 36px;border-top:1px solid var(--surface);
-  background:var(--white);flex-shrink:0;
+  display:flex;justify-content:space-between;gap:12px;
+  padding:16px 0 0;
+  position:sticky;bottom:0;
+  background:var(--white);
+  margin:8px -36px -20px;padding:16px 36px 20px;
+  border-top:1px solid var(--surface);
 }
-.bm-nav.visible{display:flex}
 .bm-btn{padding:12px 24px;border-radius:22px;border:none;font-size:.85rem;font-weight:600;cursor:pointer;font-family:inherit;transition:background .2s}
 .bm-btn-back{background:var(--surface);color:var(--ink-sub)}.bm-btn-back:hover{background:var(--border)}
 .bm-btn-next{background:var(--teal);color:#fff}.bm-btn-next:hover{background:var(--teal-mid)}.bm-btn-next:disabled{opacity:.4;cursor:not-allowed}
@@ -610,9 +626,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display'
 
 @media(max-width:734px){
   .bm-grid{grid-template-columns:1fr}
-  .bm-content{border-radius:16px}
-  .bm-content-scroll{padding:28px 20px 16px}
-  .bm-nav{padding:14px 20px}
+  .bm-content{padding:28px 20px;border-radius:16px}
+  .bm-nav{margin:8px -20px -20px;padding:14px 20px 20px}
   .bm-form{grid-template-columns:1fr}
   .section-text{padding:40px 20px 16px}
   .section-stats{gap:28px}
@@ -858,13 +873,89 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display'
 <section class="section-full" style="margin-bottom:0">
   <div class="section-text" style="padding:72px 24px 24px">
     <h2>Listings that look cinematic.</h2>
-    <p>The photos sell the showing. The video sells the dream. We make both.</p>
+    <p>The photos sell the showing. The video sells the dream. We make both and everything in between.</p>
     <div class="links">
       <button class="link-primary" onclick="openBooking()">Book a Shoot</button>
       <a class="link-secondary" href="#photography" style="text-decoration:none">Explore services</a>
     </div>
   </div>
   <div class="hero-reel" id="hero-reel"></div>
+</section>
+
+<!-- ★ MEDIA CALCULATOR — Lead capture tool -->
+<section class="calc-section" id="media-calculator">
+  <div class="calc-inner">
+
+    <!-- Step 1: Enter listing price -->
+    <div class="calc-step active" id="calc-step1">
+      <h2>What should you spend on media?</h2>
+      <p class="calc-sub">Enter your listing price. We'll tell you exactly what top agents invest — and what you'll get back.</p>
+      <div class="calc-input-wrap">
+        <input type="text" class="calc-price-input" id="calc-price" placeholder="$800,000" oninput="calcFormatPrice(this)">
+        <div class="calc-hint">The listing price or expected sale price</div>
+        <button class="calc-btn" id="calc-btn1" onclick="calcShowResults()" disabled>Show me the numbers →</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Results + ROI -->
+    <div class="calc-step" id="calc-step2">
+      <div class="calc-result-hero">
+        <div class="calc-listing-price" id="calc-display-price"></div>
+        <div class="calc-rec-range" id="calc-rec-range"></div>
+        <div class="calc-rec-note">That's what top-performing Toronto agents invest in media for this price range.</div>
+      </div>
+
+      <div class="calc-roi-grid">
+        <div class="calc-roi-card">
+          <div class="calc-roi-val" id="calc-roi-extra">—</div>
+          <div class="calc-roi-label">Potential extra sale price with professional media</div>
+        </div>
+        <div class="calc-roi-card">
+          <div class="calc-roi-val">32%</div>
+          <div class="calc-roi-label">Faster to conditional offer on average</div>
+        </div>
+        <div class="calc-roi-card">
+          <div class="calc-roi-val" id="calc-roi-return">—</div>
+          <div class="calc-roi-label">Return on every $1 spent on media</div>
+        </div>
+      </div>
+
+      <div class="calc-rec-pkg" id="calc-rec-pkg"></div>
+
+      <div style="text-align:center">
+        <button class="calc-btn" onclick="calcShowCapture()">Get my custom media plan →</button>
+        <div style="margin-top:12px"><a href="#" onclick="event.preventDefault();calcGoStep(1)" style="font-size:.78rem;color:var(--ink-sub);text-decoration:none">← Try a different price</a></div>
+      </div>
+    </div>
+
+    <!-- Step 3: Capture info -->
+    <div class="calc-step" id="calc-step3">
+      <h2>Your custom media plan.</h2>
+      <p class="calc-sub">We'll send you a personalized recommendation based on your listing price — plus a strategy you can show your sellers.</p>
+      <div class="calc-form">
+        <div class="calc-field"><label>Your Name *</label><input id="calc-name" type="text" placeholder="Jane Smith"></div>
+        <div class="calc-field"><label>Brokerage</label><input id="calc-brokerage" type="text" placeholder="RE/MAX, Compass…"></div>
+        <div class="calc-field"><label>Email *</label><input id="calc-email" type="email" placeholder="jane@brokerage.com"></div>
+        <div class="calc-field"><label>Phone *</label><input id="calc-phone" type="tel" placeholder="(416) 555-1234"></div>
+        <div class="calc-field full"><label>How many listings do you do per year?</label><input id="calc-volume" type="text" placeholder="5-10, 10-20, 20+…"></div>
+      </div>
+      <div style="text-align:center">
+        <button class="calc-btn" onclick="calcSubmit()">Send my plan →</button>
+        <div style="margin-top:12px"><a href="#" onclick="event.preventDefault();calcGoStep(2)" style="font-size:.78rem;color:var(--ink-sub);text-decoration:none">← Back to results</a></div>
+      </div>
+    </div>
+
+    <!-- Step 4: Success -->
+    <div class="calc-step" id="calc-step4">
+      <div class="calc-success">
+        <div class="calc-success-icon">✓</div>
+        <h3>Check your inbox, <span id="calc-success-name"></span>.</h3>
+        <p>We're putting together your custom media plan based on your listing price and volume. You'll hear from us within 24 hours.</p>
+        <button class="calc-btn" onclick="openBooking()" style="margin-top:24px">Book a shoot now →</button>
+      </div>
+    </div>
+
+  </div>
 </section>
 
 <!-- ★ Listing Photography (full-width, like iPhone) -->
@@ -991,82 +1082,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display'
   </div>
 </section>
 
-<!-- ★ MEDIA CALCULATOR — Lead capture tool -->
-<section class="calc-section" id="media-calculator">
-  <div class="calc-inner">
-
-    <!-- Step 1: Enter listing price -->
-    <div class="calc-step active" id="calc-step1">
-      <h2>What should you spend on media?</h2>
-      <p class="calc-sub">Enter your listing price. We'll tell you exactly what top agents invest — and what you'll get back.</p>
-      <div class="calc-input-wrap">
-        <input type="text" class="calc-price-input" id="calc-price" placeholder="$800,000" oninput="calcFormatPrice(this)">
-        <div class="calc-hint">The listing price or expected sale price</div>
-        <button class="calc-btn" id="calc-btn1" onclick="calcShowResults()" disabled>Show me the numbers →</button>
-      </div>
-    </div>
-
-    <!-- Step 2: Results + ROI -->
-    <div class="calc-step" id="calc-step2">
-      <div class="calc-result-hero">
-        <div class="calc-listing-price" id="calc-display-price"></div>
-        <div class="calc-rec-range" id="calc-rec-range"></div>
-        <div class="calc-rec-note">That's what top-performing Toronto agents invest in media for this price range.</div>
-      </div>
-
-      <div class="calc-roi-grid">
-        <div class="calc-roi-card">
-          <div class="calc-roi-val" id="calc-roi-extra">—</div>
-          <div class="calc-roi-label">Potential extra sale price with professional media</div>
-        </div>
-        <div class="calc-roi-card">
-          <div class="calc-roi-val">32%</div>
-          <div class="calc-roi-label">Faster to conditional offer on average</div>
-        </div>
-        <div class="calc-roi-card">
-          <div class="calc-roi-val" id="calc-roi-return">—</div>
-          <div class="calc-roi-label">Return on every $1 spent on media</div>
-        </div>
-      </div>
-
-      <div class="calc-rec-pkg" id="calc-rec-pkg"></div>
-
-      <div style="text-align:center">
-        <button class="calc-btn" onclick="calcShowCapture()">Get my custom media plan →</button>
-        <div style="margin-top:12px"><a href="#" onclick="event.preventDefault();calcGoStep(1)" style="font-size:.78rem;color:var(--ink-sub);text-decoration:none">← Try a different price</a></div>
-      </div>
-    </div>
-
-    <!-- Step 3: Capture info -->
-    <div class="calc-step" id="calc-step3">
-      <h2>Your custom media plan.</h2>
-      <p class="calc-sub">We'll send you a personalized recommendation based on your listing price — plus a strategy you can show your sellers.</p>
-      <div class="calc-form">
-        <div class="calc-field"><label>Your Name *</label><input id="calc-name" type="text" placeholder="Jane Smith"></div>
-        <div class="calc-field"><label>Brokerage</label><input id="calc-brokerage" type="text" placeholder="RE/MAX, Compass…"></div>
-        <div class="calc-field"><label>Email *</label><input id="calc-email" type="email" placeholder="jane@brokerage.com"></div>
-        <div class="calc-field"><label>Phone *</label><input id="calc-phone" type="tel" placeholder="(416) 555-1234"></div>
-        <div class="calc-field full"><label>How many listings do you do per year?</label><input id="calc-volume" type="text" placeholder="5-10, 10-20, 20+…"></div>
-      </div>
-      <div style="text-align:center">
-        <button class="calc-btn" onclick="calcSubmit()">Send my plan →</button>
-        <div style="margin-top:12px"><a href="#" onclick="event.preventDefault();calcGoStep(2)" style="font-size:.78rem;color:var(--ink-sub);text-decoration:none">← Back to results</a></div>
-      </div>
-    </div>
-
-    <!-- Step 4: Success -->
-    <div class="calc-step" id="calc-step4">
-      <div class="calc-success">
-        <div class="calc-success-icon">✓</div>
-        <h3>Check your inbox, <span id="calc-success-name"></span>.</h3>
-        <p>We're putting together your custom media plan based on your listing price and volume. You'll hear from us within 24 hours.</p>
-        <button class="calc-btn" onclick="openBooking()" style="margin-top:24px">Book a shoot now →</button>
-      </div>
-    </div>
-
-  </div>
-</section>
-
 <!-- ★ DUO ROW — Testimonial + Specialty -->
 <div class="duo-row">
   <div class="duo-card dark testimonial-card">
@@ -1134,83 +1149,87 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display'
 <div class="booking-modal" id="booking-modal">
   <div class="bm-content">
     <button class="bm-close" onclick="closeBooking()">✕</button>
+    <div class="bm-progress" id="bm-progress"><div class="bm-pdot active"></div><div class="bm-pdot"></div><div class="bm-pdot"></div><div class="bm-pdot"></div><div class="bm-pdot"></div><div class="bm-pdot"></div></div>
 
-    <div class="bm-content-scroll" id="bm-scroll">
-      <div class="bm-progress" id="bm-progress"><div class="bm-pdot active"></div><div class="bm-pdot"></div><div class="bm-pdot"></div><div class="bm-pdot"></div><div class="bm-pdot"></div><div class="bm-pdot"></div></div>
-      <div class="bm-step active" id="bm-step1">
-        <div class="bm-step-title">What do you need <em>for this listing?</em></div>
-        <p class="bm-step-hint">Choose everything that applies — we'll build the right package.</p>
-        <div class="bm-grid" id="bm-choices"></div>
-      </div>
-      <div class="bm-step" id="bm-step2">
-        <div class="bm-step-title">Pick <em>your package</em></div>
-        <p class="bm-step-hint">Choose the option that fits best.</p>
-        <div class="bm-tier-grid" id="bm-tiers"></div>
-      </div>
-      <div class="bm-step" id="bm-step3">
-        <div class="bm-step-title">Anything to <em>add on?</em></div>
-        <p class="bm-step-hint">Optional extras to complete your package.</p>
-        <div id="bm-addons"></div>
-      </div>
-      <div class="bm-step" id="bm-step4">
-        <div class="bm-step-title">Who are <em>we sending this to?</em></div>
-        <p class="bm-step-hint">So we can put your name on the quote.</p>
-        <div class="bm-form">
-          <div class="bm-field"><label>Your Name *</label><input id="bm-name" type="text" placeholder="Jane Smith"></div>
-          <div class="bm-field"><label>Brokerage</label><input id="bm-brokerage" type="text" placeholder="RE/MAX, Compass…"></div>
-          <div class="bm-field"><label>Email *</label><input id="bm-email" type="email" placeholder="jane@brokerage.com"></div>
-          <div class="bm-field"><label>Phone *</label><input id="bm-phone" type="tel" placeholder="(416) 555-1234"></div>
-          <div class="bm-field full"><label>Property Address</label><input id="bm-address" type="text" placeholder="123 Main St, Toronto…"></div>
-          <div class="bm-field full"><label>How did you hear about us?</label><input id="bm-referral" type="text" placeholder="Agent referral, Google, Instagram…"></div>
-        </div>
-      </div>
-      <div class="bm-step" id="bm-step5">
-        <div class="bm-step-title">Lock in <em>your rate</em></div>
-        <p class="bm-step-hint">Commit longer or pay upfront to save. Discounts stack.</p>
-        <div style="margin-bottom:20px">
-          <div style="font-size:.72rem;font-weight:600;color:var(--ink-sub);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Commitment Length</div>
-          <div class="bm-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:0" id="bm-duration-grid">
-            <div class="bm-choice selected" data-dur="0" onclick="bmSelectDuration(this)"><div class="bm-choice-check">✓</div><div class="bm-choice-name">One-time</div><div class="bm-choice-desc">No discount</div></div>
-            <div class="bm-choice" data-dur="3" onclick="bmSelectDuration(this)"><div class="bm-choice-check">✓</div><div class="bm-choice-name">3 months</div><div class="bm-choice-desc">5% off</div></div>
-            <div class="bm-choice" data-dur="6" onclick="bmSelectDuration(this)"><div class="bm-choice-check">✓</div><div class="bm-choice-name">6 months</div><div class="bm-choice-desc">10% off</div></div>
-            <div class="bm-choice" data-dur="12" onclick="bmSelectDuration(this)"><div class="bm-choice-check">✓</div><div class="bm-choice-name">12 months</div><div class="bm-choice-desc">15% off</div></div>
-          </div>
-        </div>
-        <div style="margin-bottom:20px">
-          <div style="font-size:.72rem;font-weight:600;color:var(--ink-sub);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Payment Method</div>
-          <div class="bm-grid" style="grid-template-columns:repeat(2,1fr);margin-bottom:0" id="bm-payment-grid">
-            <div class="bm-choice selected" data-pay="monthly" onclick="bmSelectPayment(this)"><div class="bm-choice-check">✓</div><div class="bm-choice-name">Pay Monthly</div><div class="bm-choice-desc">No extra discount</div></div>
-            <div class="bm-choice" data-pay="upfront" onclick="bmSelectPayment(this)"><div class="bm-choice-check">✓</div><div class="bm-choice-name">Pay in Full</div><div class="bm-choice-desc">Extra 5% off</div></div>
-          </div>
-        </div>
-        <div id="bm-savings-preview" style="background:var(--ink);border-radius:14px;padding:20px;margin-bottom:20px">
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
-            <div>
-              <div style="font-size:.72rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Your Price</div>
-              <div id="bm-preview-price" style="font-size:1.4rem;font-weight:700;color:var(--gold)">$0</div>
-              <div id="bm-preview-original" style="font-size:.78rem;color:rgba(255,255,255,.3);text-decoration:line-through;margin-top:2px"></div>
-            </div>
-            <div style="text-align:right">
-              <div id="bm-preview-savings" style="font-size:.88rem;color:var(--teal-light);font-weight:600"></div>
-              <div id="bm-preview-permonth" style="font-size:.72rem;color:rgba(255,255,255,.35);margin-top:2px"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="bm-step" id="bm-step6">
-        <div class="bm-step-title">Your <em>quote is ready</em></div>
-        <p class="bm-step-hint">Everything look good?</p>
-        <div class="bm-summary" id="bm-summary"></div>
-      </div>
-      <div class="bm-step" id="bm-step-success">
-        <div class="bm-success"><div class="bm-success-icon">✓</div><h3>You're all set, <span id="bm-success-name"></span>!</h3><p>We'll review your quote and reach out within 24 hours.</p></div>
-      </div>
+    <div class="bm-step active" id="bm-step1">
+      <div class="bm-step-title">What do you need <em>for this listing?</em></div>
+      <p class="bm-step-hint">Choose everything that applies — we'll build the right package.</p>
+      <div class="bm-grid" id="bm-choices"></div>
+      <div class="bm-nav" id="bm-nav1" style="display:none"><div></div><button class="bm-btn bm-btn-next" onclick="bmGoStep(2)">Next — Choose package →</button></div>
     </div>
 
-    <!-- Sticky floating nav bar -->
-    <div class="bm-nav" id="bm-nav">
-      <button class="bm-btn bm-btn-back" id="bm-nav-back" onclick="bmNavBack()">← Back</button>
-      <button class="bm-btn bm-btn-next" id="bm-nav-next" onclick="bmNavNext()">Next →</button>
+    <div class="bm-step" id="bm-step2">
+      <div class="bm-step-title">Pick <em>your package</em></div>
+      <p class="bm-step-hint">Choose the option that fits best.</p>
+      <div class="bm-tier-grid" id="bm-tiers"></div>
+      <div class="bm-nav" id="bm-nav2" style="display:none"><button class="bm-btn bm-btn-back" onclick="bmGoStep(1)">← Back</button><button class="bm-btn bm-btn-next" onclick="bmGoStep(3)">Next — Add extras →</button></div>
+    </div>
+
+    <div class="bm-step" id="bm-step3">
+      <div class="bm-step-title">Anything to <em>add on?</em></div>
+      <p class="bm-step-hint">Optional extras to complete your package.</p>
+      <div id="bm-addons"></div>
+      <div class="bm-nav"><button class="bm-btn bm-btn-back" onclick="bmGoStep(2)">← Back</button><button class="bm-btn bm-btn-next" onclick="bmGoStep(4)">Next — Your details →</button></div>
+    </div>
+
+    <div class="bm-step" id="bm-step4">
+      <div class="bm-step-title">Who are <em>we sending this to?</em></div>
+      <p class="bm-step-hint">So we can put your name on the quote.</p>
+      <div class="bm-form">
+        <div class="bm-field"><label>Your Name *</label><input id="bm-name" type="text" placeholder="Jane Smith"></div>
+        <div class="bm-field"><label>Brokerage</label><input id="bm-brokerage" type="text" placeholder="RE/MAX, Compass…"></div>
+        <div class="bm-field"><label>Email *</label><input id="bm-email" type="email" placeholder="jane@brokerage.com"></div>
+        <div class="bm-field"><label>Phone *</label><input id="bm-phone" type="tel" placeholder="(416) 555-1234"></div>
+        <div class="bm-field full"><label>Property Address</label><input id="bm-address" type="text" placeholder="123 Main St, Toronto…"></div>
+        <div class="bm-field full"><label>How did you hear about us?</label><input id="bm-referral" type="text" placeholder="Agent referral, Google, Instagram…"></div>
+      </div>
+      <div class="bm-nav"><button class="bm-btn bm-btn-back" onclick="bmGoStep(3)">← Back</button><button class="bm-btn bm-btn-next" onclick="bmGoStep(5)">Next — Lock in rate →</button></div>
+    </div>
+
+    <div class="bm-step" id="bm-step5">
+      <div class="bm-step-title">Lock in <em>your rate</em></div>
+      <p class="bm-step-hint">Commit longer or pay upfront to save. Discounts stack.</p>
+      <div style="margin-bottom:20px">
+        <div style="font-size:.72rem;font-weight:600;color:var(--ink-sub);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Commitment Length</div>
+        <div class="bm-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:0" id="bm-duration-grid">
+          <div class="bm-choice selected" data-dur="0" onclick="bmSelectDuration(this)"><div class="bm-choice-check">✓</div><div class="bm-choice-name">One-time</div><div class="bm-choice-desc">No discount</div></div>
+          <div class="bm-choice" data-dur="3" onclick="bmSelectDuration(this)"><div class="bm-choice-check">✓</div><div class="bm-choice-name">3 months</div><div class="bm-choice-desc">5% off</div></div>
+          <div class="bm-choice" data-dur="6" onclick="bmSelectDuration(this)"><div class="bm-choice-check">✓</div><div class="bm-choice-name">6 months</div><div class="bm-choice-desc">10% off</div></div>
+          <div class="bm-choice" data-dur="12" onclick="bmSelectDuration(this)"><div class="bm-choice-check">✓</div><div class="bm-choice-name">12 months</div><div class="bm-choice-desc">15% off</div></div>
+        </div>
+      </div>
+      <div style="margin-bottom:20px">
+        <div style="font-size:.72rem;font-weight:600;color:var(--ink-sub);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Payment Method</div>
+        <div class="bm-grid" style="grid-template-columns:repeat(2,1fr);margin-bottom:0" id="bm-payment-grid">
+          <div class="bm-choice selected" data-pay="monthly" onclick="bmSelectPayment(this)"><div class="bm-choice-check">✓</div><div class="bm-choice-name">Pay Monthly</div><div class="bm-choice-desc">No extra discount</div></div>
+          <div class="bm-choice" data-pay="upfront" onclick="bmSelectPayment(this)"><div class="bm-choice-check">✓</div><div class="bm-choice-name">Pay in Full</div><div class="bm-choice-desc">Extra 5% off</div></div>
+        </div>
+      </div>
+      <div id="bm-savings-preview" style="background:var(--ink);border-radius:14px;padding:20px;margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+          <div>
+            <div style="font-size:.72rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Your Price</div>
+            <div id="bm-preview-price" style="font-size:1.4rem;font-weight:700;color:var(--gold)">$0</div>
+            <div id="bm-preview-original" style="font-size:.78rem;color:rgba(255,255,255,.3);text-decoration:line-through;margin-top:2px"></div>
+          </div>
+          <div style="text-align:right">
+            <div id="bm-preview-savings" style="font-size:.88rem;color:var(--teal-light);font-weight:600"></div>
+            <div id="bm-preview-permonth" style="font-size:.72rem;color:rgba(255,255,255,.35);margin-top:2px"></div>
+          </div>
+        </div>
+      </div>
+      <div class="bm-nav"><button class="bm-btn bm-btn-back" onclick="bmGoStep(4)">← Back</button><button class="bm-btn bm-btn-next" onclick="bmGoStep(6)">Review my quote →</button></div>
+    </div>
+
+    <div class="bm-step" id="bm-step6">
+      <div class="bm-step-title">Your <em>quote is ready</em></div>
+      <p class="bm-step-hint">Everything look good?</p>
+      <div class="bm-summary" id="bm-summary"></div>
+      <div class="bm-nav"><button class="bm-btn bm-btn-back" onclick="bmGoStep(5)">← Back</button><button class="bm-btn bm-btn-send" onclick="bmSendQuote()">Send Quote Request →</button></div>
+    </div>
+
+    <div class="bm-step" id="bm-step-success">
+      <div class="bm-success"><div class="bm-success-icon">✓</div><h3>You're all set, <span id="bm-success-name"></span>!</h3><p>We'll review your quote and reach out within 24 hours.</p></div>
     </div>
   </div>
 </div>
@@ -1385,7 +1404,7 @@ const serviceOptions=[{val:'photos',name:'Listing Photos',desc:'HDR photography'
 
 (function(){const grid=document.getElementById('bm-choices');grid.innerHTML=serviceOptions.map(s=>'<div class="bm-choice" data-val="'+s.val+'" onclick="bmToggleChoice(this)"><div class="bm-choice-check">✓</div><div class="bm-choice-name">'+s.name+'</div><div class="bm-choice-desc">'+s.desc+'</div></div>').join('')})();
 
-function bmToggleChoice(el){el.classList.toggle('selected');bmChoices=[...document.querySelectorAll('.bm-choice.selected')].map(c=>c.dataset.val).filter(Boolean);updateBmNav()}
+function bmToggleChoice(el){el.classList.toggle('selected');bmChoices=[...document.querySelectorAll('#bm-choices .bm-choice.selected')].map(c=>c.dataset.val);document.getElementById('bm-nav1').style.display=bmChoices.length>0?'flex':'none'}
 function openBooking(startStep){document.getElementById('booking-modal').classList.add('open');document.body.style.overflow='hidden';bmGoStep(startStep||1)}
 function openBookingWith(val){openBooking();setTimeout(()=>{const card=document.querySelector('.bm-choice[data-val="'+val+'"]');if(card&&!card.classList.contains('selected'))bmToggleChoice(card)},100)}
 
@@ -1422,7 +1441,7 @@ function openBookingFromCart(){
     openBooking(1);
   }
 }
-function closeBooking(){document.getElementById('booking-modal').classList.remove('open');document.body.style.overflow='';bmStep=1;bmChoices=[];bmSelectedTier=null;bmSelectedAddons=[];bmDuration=0;bmPayMethod='monthly';document.querySelectorAll('.bm-choice').forEach(c=>c.classList.remove('selected'));document.querySelectorAll('.bm-step').forEach(s=>s.classList.remove('active'));document.getElementById('bm-step1').classList.add('active');document.getElementById('bm-btn1').disabled=true;updateBmProgress(1);resetCommitmentUI()}
+function closeBooking(){document.getElementById('booking-modal').classList.remove('open');document.body.style.overflow='';bmStep=1;bmChoices=[];bmSelectedTier=null;bmSelectedAddons=[];bmDuration=0;bmPayMethod='monthly';document.querySelectorAll('.bm-choice').forEach(c=>c.classList.remove('selected'));document.querySelectorAll('.bm-step').forEach(s=>s.classList.remove('active'));document.getElementById('bm-step1').classList.add('active');document.getElementById('bm-nav1').style.display='none';document.getElementById('bm-nav2').style.display='none';updateBmProgress(1);resetCommitmentUI()}
 
 function resetCommitmentUI(){
   document.querySelectorAll('#bm-duration-grid .bm-choice').forEach(c=>c.classList.remove('selected'));
@@ -1447,7 +1466,7 @@ function bmGoStep(step){
           inp.addEventListener('input',function fix(){inp.style.borderColor='';inp.removeEventListener('input',fix)},{once:true});
         }
       });
-      document.getElementById('bm-scroll').scrollTop=0;
+      document.querySelector('.bm-content').scrollTop=0;
       return;
     }
   }
@@ -1458,53 +1477,11 @@ function bmGoStep(step){
   document.querySelectorAll('.bm-step').forEach(s=>s.classList.remove('active'));
   document.getElementById('bm-step'+step).classList.add('active');
   bmStep=step;updateBmProgress(step);
-  document.getElementById('bm-scroll').scrollTop=0;
-  updateBmNav();
+  document.querySelector('.bm-content').scrollTop=0;
+
 }
 
-function updateBmNav(){
-  const nav = document.getElementById('bm-nav');
-  const backBtn = document.getElementById('bm-nav-back');
-  const nextBtn = document.getElementById('bm-nav-next');
 
-  // Hide on success
-  if(document.getElementById('bm-step-success').classList.contains('active')){
-    nav.classList.remove('visible');return;
-  }
-
-  // Step 1: show only after selection
-  if(bmStep===1){
-    backBtn.style.display='none';
-    nextBtn.textContent='Next — Choose package →';
-    nextBtn.className='bm-btn bm-btn-next';
-    const has=bmChoices.length>0;
-    nextBtn.disabled=!has;
-    if(has){nav.classList.add('visible')}else{nav.classList.remove('visible')}
-    return;
-  }
-  // Step 2: show only after tier selected
-  if(bmStep===2){
-    backBtn.style.display='';
-    nextBtn.textContent='Next — Add extras →';
-    nextBtn.className='bm-btn bm-btn-next';
-    const has=bmSelectedTier!==null;
-    nextBtn.disabled=!has;
-    if(has){nav.classList.add('visible')}else{nav.classList.remove('visible')}
-    return;
-  }
-
-  // Steps 3-6: always visible
-  nav.classList.add('visible');
-  backBtn.style.display='';nextBtn.disabled=false;
-
-  if(bmStep===3){nextBtn.textContent='Next — Your details →';nextBtn.className='bm-btn bm-btn-next'}
-  else if(bmStep===4){nextBtn.textContent='Next — Lock in rate →';nextBtn.className='bm-btn bm-btn-next'}
-  else if(bmStep===5){nextBtn.textContent='Review my quote →';nextBtn.className='bm-btn bm-btn-next'}
-  else if(bmStep===6){nextBtn.textContent='Send Quote Request →';nextBtn.className='bm-btn bm-btn-send'}
-}
-
-function bmNavBack(){if(bmStep>1)bmGoStep(bmStep-1)}
-function bmNavNext(){if(bmStep===6)bmSendQuote();else if(bmStep<6)bmGoStep(bmStep+1)}
 function updateBmProgress(step){document.querySelectorAll('.bm-pdot').forEach((d,i)=>{d.className='bm-pdot';if(i+1===step)d.classList.add('active');else if(i+1<step)d.classList.add('done')})}
 
 /* Commitment selectors */
@@ -1641,9 +1618,9 @@ function bmUpdateSavingsPreview(){
   }
 }
 
-function buildBmTiers(){bmCurrentTiers=[];bmSelectedTier=null;document.getElementById('bm-btn2').disabled=true;const tierMap={photos:'photography',video:'video',social:'social',touring:'touring',headshots:'headshots',launch:'launch',virtualstaging:'virtualstaging',specialty:'specialty',other:'other'};const hasP=bmChoices.includes('photos'),hasV=bmChoices.includes('video'),showB=hasP&&hasV;const sets=[];bmChoices.forEach(c=>{if(showB&&(c==='photos'||c==='video')){if(!sets.includes('bundles'))sets.push('bundles')}else sets.push(c)});sets.forEach(key=>{const ck=tierMap[key]||key;if(CATALOGUE[ck])CATALOGUE[ck].forEach(t=>bmCurrentTiers.push({...t,_setKey:key}))});const grid=document.getElementById('bm-tiers');grid.innerHTML=bmCurrentTiers.map((t,i)=>{const inc=t.includes?t.includes.slice(0,3).join(' · '):'';return'<div class="bm-tier'+(t.featured?' featured':'')+'" onclick="bmSelectTier('+i+')" data-idx="'+i+'"><div><div class="bm-tier-name">'+t.name+'</div><div class="bm-tier-includes">'+inc+'</div></div><div class="bm-tier-price">$'+t.price.toLocaleString('en-CA')+'</div></div>'}).join('');if(bmCurrentTiers.length===1)bmSelectTier(0)}
+function buildBmTiers(){bmCurrentTiers=[];bmSelectedTier=null;const tierMap={photos:'photography',video:'video',social:'social',touring:'touring',headshots:'headshots',launch:'launch',virtualstaging:'virtualstaging',specialty:'specialty',other:'other'};const hasP=bmChoices.includes('photos'),hasV=bmChoices.includes('video'),showB=hasP&&hasV;const sets=[];bmChoices.forEach(c=>{if(showB&&(c==='photos'||c==='video')){if(!sets.includes('bundles'))sets.push('bundles')}else sets.push(c)});sets.forEach(key=>{const ck=tierMap[key]||key;if(CATALOGUE[ck])CATALOGUE[ck].forEach(t=>bmCurrentTiers.push({...t,_setKey:key}))});const grid=document.getElementById('bm-tiers');grid.innerHTML=bmCurrentTiers.map((t,i)=>{const inc=t.includes?t.includes.slice(0,3).join(' · '):'';return'<div class="bm-tier'+(t.featured?' featured':'')+'" onclick="bmSelectTier('+i+')" data-idx="'+i+'"><div><div class="bm-tier-name">'+t.name+'</div><div class="bm-tier-includes">'+inc+'</div></div><div class="bm-tier-price">$'+t.price.toLocaleString('en-CA')+'</div></div>'}).join('');if(bmCurrentTiers.length===1)bmSelectTier(0)}
 
-function bmSelectTier(idx){if(bmSelectedTier===idx){bmSelectedTier=null;document.querySelectorAll('.bm-tier').forEach(t=>t.classList.remove('selected'))}else{bmSelectedTier=idx;document.querySelectorAll('.bm-tier').forEach(t=>t.classList.remove('selected'));const el=document.querySelector('.bm-tier[data-idx="'+idx+'"]');if(el)el.classList.add('selected')}updateBmNav()}
+function bmSelectTier(idx){if(bmSelectedTier===idx){bmSelectedTier=null;document.querySelectorAll('.bm-tier').forEach(t=>t.classList.remove('selected'))}else{bmSelectedTier=idx;document.querySelectorAll('.bm-tier').forEach(t=>t.classList.remove('selected'));const el=document.querySelector('.bm-tier[data-idx="'+idx+'"]');if(el)el.classList.add('selected')}document.getElementById('bm-nav2').style.display=bmSelectedTier!==null?'flex':'none'}
 
 function buildBmAddons(){bmSelectedAddons=[];const container=document.getElementById('bm-addons');const tn=(bmSelectedTier!==null&&bmCurrentTiers[bmSelectedTier])?bmCurrentTiers[bmSelectedTier].name.toLowerCase():'';const filtered=ADDONS.filter(a=>{if((tn.includes('drone')||tn.includes('signature')||tn.includes('launch'))&&a.name==='Drone Photo / Video')return false;if(tn.includes('floor plan')&&a.name==='Floor Plans')return false;return true});container.innerHTML=filtered.map((a,i)=>'<div class="bm-addon" onclick="bmToggleAddon(this)" data-name="'+a.name+'" data-price="'+a.price+'"><div><div class="bm-addon-name">'+a.name+'</div><div style="font-size:.7rem;color:var(--ink-sub);margin-top:2px;line-height:1.4">'+a.desc+'</div></div><div class="bm-addon-price">+$'+a.price+'</div></div>').join('')}
 
@@ -1895,7 +1872,7 @@ function calcGoStep(step){
 function calcShowResults(){
   if(calcListingPrice < 100000) return;
   const price = calcListingPrice;
-  const lowPct = 0.0015, highPct = 0.0025;
+  const lowPct = 0.0008, highPct = 0.0015;
   const lowBudget = Math.round(price * lowPct / 50) * 50;
   const highBudget = Math.round(price * highPct / 50) * 50;
   const extraSalePrice = Math.round(price * 0.015);
@@ -1907,22 +1884,66 @@ function calcShowResults(){
   document.getElementById('calc-roi-extra').textContent = '+$' + extraSalePrice.toLocaleString('en-CA');
   document.getElementById('calc-roi-return').textContent = roi + ':1';
 
-  // Pick recommended package
-  let rec;
-  if(midBudget <= 400) rec = {name:'Starter Listing Bundle',price:375,desc:'30 photos + 30-sec reel. Perfect for condos and starter homes.',includes:'HDR photos, vertical reel, same-day delivery'};
-  else if(midBudget <= 650) rec = {name:'Pro Listing Bundle',price:550,desc:'The most booked option. Photos, cinematic video, and drone — everything a buyer needs to fall in love.',includes:'40 HDR photos, cinematic video, drone b-roll'};
-  else if(midBudget <= 900) rec = {name:'Signature Cinematic Package',price:595,desc:'Our flagship. 40 HDR photos, cinematic walkthrough, drone, and a reel — all from one shoot.',includes:'40 HDR, cinematic video, drone, social reel'};
-  else if(midBudget <= 1400) rec = {name:'Listing Launch — Pro',price:1200,desc:'The complete launch. Media, property website, social content, and drone. Everything ready to go live the same week.',includes:'40 photos, cinematic video, property website, 5 social posts, drone'};
-  else rec = {name:'Listing Launch — Premium',price:1800,desc:'White glove treatment for luxury listings. Full cinematic production, property website, complete social content pack, drone, and twilight.',includes:'Luxury photos, cinematic film, website, full social pack, drone + twilight'};
+  // Pick base package based on listing price tiers
+  let rec, addons = [];
 
-  const savings = midBudget - rec.price;
+  if(price < 600000){
+    rec = {name:'Starter Listing Bundle',price:375,desc:'30 HDR photos and a 30-second reel. Clean, fast, and everything your listing needs to stand out.'};
+  } else if(price < 900000){
+    rec = {name:'Pro Listing Bundle',price:550,desc:'40 HDR photos, cinematic walkthrough video, and drone — the package most Toronto agents book.'};
+    addons.push({name:'Floor Plans',price:100});
+  } else if(price < 1500000){
+    rec = {name:'Signature Cinematic Package',price:595,desc:'40 HDR photos, cinematic video, drone, and a social reel — all from one shoot. Our most complete single-listing package.'};
+    addons.push({name:'Floor Plans',price:100});
+    addons.push({name:'Twilight Add-On',price:75});
+  } else if(price < 2500000){
+    rec = {name:'Listing Launch — Pro',price:1200,desc:'40 photos, cinematic video, property website, 5 social posts, and drone. Everything ready to go live the same week.'};
+    addons.push({name:'Twilight Shoot',price:175});
+    addons.push({name:'Virtual Staging (3 rooms)',price:225});
+  } else if(price < 5000000){
+    rec = {name:'Listing Launch — Premium',price:1800,desc:'Luxury photos, cinematic film, property website, full social content pack, drone, and twilight. The white glove experience.'};
+    addons.push({name:'Virtual Staging (6 rooms)',price:395});
+    addons.push({name:'Neighbourhood B-Roll',price:50});
+    addons.push({name:'Property Feature Sheet',price:75});
+  } else {
+    rec = {name:'Listing Launch — Premium',price:1800,desc:'Full cinematic production for luxury and estate properties. Architectural-grade media designed for discerning sellers.'};
+    addons.push({name:'Virtual Staging (Full Home)',price:595});
+    addons.push({name:'Dedicated Twilight Shoot',price:175});
+    addons.push({name:'Neighbourhood B-Roll',price:50});
+    addons.push({name:'Property Feature Sheet',price:75});
+    addons.push({name:'Agent On-Camera Intro',price:100});
+  }
+
+  const addonTotal = addons.reduce((s,a) => s + a.price, 0);
+  const grandTotal = rec.price + addonTotal;
+
   const pkgEl = document.getElementById('calc-rec-pkg');
-  pkgEl.innerHTML = '<div class="calc-rec-pkg-label">Recommended for you</div>'
+  let html = '<div class="calc-rec-pkg-label">Recommended for you</div>'
     + '<div class="calc-rec-pkg-name">' + rec.name + '</div>'
     + '<div class="calc-rec-pkg-price">$' + rec.price.toLocaleString('en-CA') + '</div>'
-    + '<div class="calc-rec-pkg-desc">' + rec.desc + '</div>'
-    + (savings > 0 ? '<div class="calc-rec-pkg-savings">That\'s $' + savings.toLocaleString('en-CA') + ' under the recommended spend — better media for less.</div>' : '<div class="calc-rec-pkg-savings">Right in the sweet spot of your recommended media budget.</div>');
+    + '<div class="calc-rec-pkg-desc">' + rec.desc + '</div>';
 
+  if(addons.length > 0){
+    html += '<div class="calc-rec-addons">'
+      + '<div class="calc-rec-addons-title">Recommended add-ons for this price range</div>';
+    addons.forEach(a => {
+      html += '<div class="calc-rec-addon-item"><span>' + a.name + '</span><span>$' + a.price.toLocaleString('en-CA') + '</span></div>';
+    });
+    html += '</div>';
+    html += '<div class="calc-rec-total"><span>Total investment</span><span>$' + grandTotal.toLocaleString('en-CA') + '</span></div>';
+  }
+
+  // Positioning message
+  if(grandTotal >= lowBudget && grandTotal <= highBudget){
+    html += '<div class="calc-rec-pkg-savings">Right in the sweet spot. This is what top-producing agents invest at this price point.</div>';
+  } else if(grandTotal < lowBudget){
+    const diff = lowBudget - grandTotal;
+    html += '<div class="calc-rec-pkg-savings">$' + diff.toLocaleString('en-CA') + ' under the range — premium results without the premium markup.</div>';
+  } else {
+    html += '<div class="calc-rec-pkg-savings">A comprehensive investment that positions this listing at the very top of the market.</div>';
+  }
+
+  pkgEl.innerHTML = html;
   calcGoStep(2);
 }
 
