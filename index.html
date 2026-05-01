@@ -491,6 +491,118 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display'
 }
 .calc-rec-total span:last-child{color:var(--gold);font-size:1.1rem}
 
+/* ── Budget Builder ── */
+.bb-section{background:var(--ink);margin-bottom:var(--gap);overflow:hidden}
+.bb-inner{max-width:860px;margin:0 auto;padding:64px 24px}
+.bb-inner h2{
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue','Segoe UI',sans-serif;
+  font-size:clamp(2rem,5vw,3rem);font-weight:600;text-align:center;
+  color:#fff;margin-bottom:6px;letter-spacing:-.015em;
+}
+.bb-inner .bb-sub{font-size:1rem;color:rgba(255,255,255,.5);text-align:center;margin-bottom:40px;line-height:1.5}
+
+.bb-step{display:none;animation:fadeUp .3s ease}
+.bb-step.active{display:block}
+
+.bb-price-input{
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue','Segoe UI',sans-serif;
+  font-size:2.4rem;font-weight:700;color:#fff;
+  text-align:center;border:none;border-bottom:3px solid var(--gold);
+  padding:12px 0;width:100%;background:transparent;outline:none;
+  letter-spacing:-.02em;
+}
+.bb-price-input::placeholder{color:rgba(255,255,255,.2);font-weight:400}
+.bb-hint{font-size:.78rem;color:rgba(255,255,255,.35);margin-top:12px;text-align:center}
+.bb-btn{
+  display:inline-block;margin-top:28px;padding:14px 36px;
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue','Segoe UI',sans-serif;
+  font-size:.95rem;font-weight:600;color:var(--teal);background:var(--gold);
+  border:none;border-radius:24px;cursor:pointer;transition:background .2s;
+}
+.bb-btn:hover{background:var(--gold-light)}
+.bb-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* Service picker grid */
+.bb-category{margin-bottom:24px}
+.bb-category-title{
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue','Segoe UI',sans-serif;
+  font-size:.72rem;font-weight:600;color:var(--gold);text-transform:uppercase;
+  letter-spacing:.06em;margin-bottom:10px;padding-bottom:6px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.bb-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 14px;margin-bottom:6px;
+  border:1px solid rgba(255,255,255,.08);border-radius:10px;
+  cursor:pointer;transition:border-color .15s,background .15s;
+  gap:12px;
+}
+.bb-item:hover{border-color:rgba(255,255,255,.2)}
+.bb-item.selected{border-color:var(--gold);background:rgba(201,168,76,.08)}
+.bb-item.over-budget{opacity:.35;cursor:not-allowed}
+.bb-item.over-budget:hover{border-color:rgba(255,255,255,.08)}
+.bb-item-left{flex:1;min-width:0}
+.bb-item-name{font-size:.82rem;font-weight:600;color:#fff}
+.bb-item-desc{font-size:.68rem;color:rgba(255,255,255,.35);margin-top:2px;line-height:1.4}
+.bb-item-price{
+  font-size:.88rem;font-weight:600;color:var(--gold);white-space:nowrap;flex-shrink:0;
+}
+.bb-item-check{
+  width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.15);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.6rem;color:transparent;flex-shrink:0;transition:.15s;
+}
+.bb-item.selected .bb-item-check{background:var(--gold);border-color:var(--gold);color:var(--ink)}
+
+/* Sticky budget bar */
+.bb-budget-bar{
+  position:sticky;bottom:0;
+  background:var(--ink);border-top:1px solid rgba(255,255,255,.08);
+  padding:16px 0;margin-top:24px;
+  display:flex;justify-content:space-between;align-items:center;gap:16px;
+  flex-wrap:wrap;
+}
+.bb-bar-left{}
+.bb-bar-spent{
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue','Segoe UI',sans-serif;
+  font-size:1.1rem;font-weight:700;color:#fff;
+}
+.bb-bar-remaining{font-size:.72rem;color:rgba(255,255,255,.35);margin-top:2px}
+.bb-bar-meter{
+  width:100%;height:4px;background:rgba(255,255,255,.08);border-radius:2px;margin-top:8px;overflow:hidden;
+}
+.bb-bar-meter-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .3s ease}
+.bb-bar-meter-fill.over{background:#e53e3e}
+
+/* BB form */
+.bb-form{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+.bb-field{display:flex;flex-direction:column;gap:4px}
+.bb-field.full{grid-column:1/-1}
+.bb-field label{font-size:.72rem;font-weight:600;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.06em}
+.bb-field input{
+  border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:10px 12px;
+  font-size:.85rem;font-family:inherit;color:#fff;background:rgba(255,255,255,.06);
+  transition:border-color .2s;outline:none;
+}
+.bb-field input:focus{border-color:var(--gold)}
+.bb-field input::placeholder{color:rgba(255,255,255,.2)}
+
+/* BB summary */
+.bb-summary{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:24px;margin-bottom:24px}
+.bb-summary-item{display:flex;justify-content:space-between;padding:6px 0;font-size:.82rem;color:rgba(255,255,255,.6);border-bottom:1px solid rgba(255,255,255,.04)}
+.bb-summary-item:last-child{border-bottom:none}
+.bb-summary-total{display:flex;justify-content:space-between;padding:12px 0 0;font-size:1.1rem;font-weight:700;color:var(--gold)}
+
+.bb-success{text-align:center;padding:20px 0}
+.bb-success-icon{font-size:2.4rem;margin-bottom:12px}
+.bb-success h3{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue','Segoe UI',sans-serif;font-size:1.4rem;font-weight:600;color:#fff;margin-bottom:8px}
+.bb-success p{font-size:.88rem;color:rgba(255,255,255,.45);line-height:1.6;max-width:400px;margin:0 auto}
+
+@media(max-width:734px){
+  .bb-form{grid-template-columns:1fr}
+  .bb-price-input{font-size:1.8rem}
+}
+
 /* Step 3: lead capture */
 .calc-form{
   max-width:480px;margin:0 auto;
@@ -649,6 +761,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display'
       <li><a class="gn-link" data-dd="packages">Packages</a></li>
       <li><a class="gn-link" data-dd="specialty">More</a></li>
       <li><a class="gn-link" href="#media-calculator" onclick="closeAllDropdowns()" style="color:var(--gold)">Media Calculator</a></li>
+      <li><a class="gn-link" href="#budget-builder" onclick="closeAllDropdowns()" style="color:var(--gold)">Budget Builder</a></li>
     </ul>
     <div style="display:flex;align-items:center;gap:8px">
       <button class="gn-cta desktop-only" onclick="openBooking()">Book a Shoot</button>
@@ -717,7 +830,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display'
       <div class="gn-dd-link" onclick="closeAllDropdowns();openBookingWith('photos')">Starter Bundle</div>
       <div class="gn-dd-link" onclick="closeAllDropdowns();openBookingWith('photos')">Pro Bundle</div>
       <div class="gn-dd-link" onclick="closeAllDropdowns();openBookingWith('photos')">Luxury Bundle</div>
-      <div class="gn-dd-link" onclick="closeAllDropdowns();openBookingWith('photos')">Signature Cinematic</div>
     </div>
     <div class="gn-dd-col">
       <div class="gn-dd-col-title">More from Video</div>
@@ -853,6 +965,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display'
     <div class="mm-link" onclick="mmShowSub('packages')">Packages <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 6 15 12 9 18"/></svg></div>
     <div class="mm-link" onclick="mmShowSub('specialty')">More <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 6 15 12 9 18"/></svg></div>
     <div class="mm-link" onclick="toggleMobileMenu();document.getElementById('media-calculator').scrollIntoView({behavior:'smooth'})" style="color:var(--teal)">Media Calculator</div>
+    <div class="mm-link" onclick="toggleMobileMenu();document.getElementById('budget-builder').scrollIntoView({behavior:'smooth'})" style="color:var(--teal)">Budget Builder</div>
     <button class="mm-cta" onclick="toggleMobileMenu();openBooking()">Book a Shoot</button>
   </div>
 
@@ -952,6 +1065,109 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display'
         <h3>Check your inbox, <span id="calc-success-name"></span>.</h3>
         <p>We're putting together your custom media plan based on your listing price and volume. You'll hear from us within 24 hours.</p>
         <button class="calc-btn" onclick="openBooking()" style="margin-top:24px">Book a shoot now →</button>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ★ BUDGET BUILDER — Build your package -->
+<section class="bb-section" id="budget-builder">
+  <div class="bb-inner">
+
+    <div class="bb-step active" id="bb-step1">
+      <h2>I have a budget of...</h2>
+      <p class="bb-sub">Tell us what you're working with. We'll show you everything you can get.</p>
+      <div style="max-width:480px;margin:0 auto;text-align:center">
+        <input type="text" class="bb-price-input" id="bb-budget" placeholder="$500" oninput="bbFormatBudget(this)">
+        <div class="bb-hint">Your total media budget for this listing</div>
+        <button class="bb-btn" id="bb-btn1" onclick="bbShowOptions()" disabled>Show me what I can get →</button>
+      </div>
+    </div>
+
+    <div class="bb-step" id="bb-step2">
+      <h2>Build your package.</h2>
+      <p class="bb-sub">Pick what you need — your running total updates as you go.</p>
+      <div id="bb-options"></div>
+      <div class="bb-budget-bar">
+        <div class="bb-bar-left">
+          <div class="bb-bar-spent"><span id="bb-spent">$0</span> <span style="font-weight:400;font-size:.78rem;color:rgba(255,255,255,.35)">of <span id="bb-budget-display">$0</span></span></div>
+          <div class="bb-bar-remaining" id="bb-remaining">$0 remaining</div>
+          <div class="bb-bar-meter"><div class="bb-bar-meter-fill" id="bb-meter" style="width:0%"></div></div>
+        </div>
+        <button class="bb-btn" id="bb-btn2" onclick="bbGoStep(3)" disabled>Get my quote →</button>
+      </div>
+    </div>
+
+    <div class="bb-step" id="bb-step3">
+      <h2>Almost there.</h2>
+      <p class="bb-sub">Tell us who you are so we can send your custom quote.</p>
+      <div class="bb-form">
+        <div class="bb-field"><label>Your Name *</label><input id="bb-name" type="text" placeholder="Jane Smith"></div>
+        <div class="bb-field"><label>Brokerage</label><input id="bb-brokerage" type="text" placeholder="RE/MAX, Compass…"></div>
+        <div class="bb-field"><label>Email *</label><input id="bb-email" type="email" placeholder="jane@brokerage.com"></div>
+        <div class="bb-field"><label>Phone *</label><input id="bb-phone" type="tel" placeholder="(416) 555-1234"></div>
+        <div class="bb-field full"><label>Property Address</label><input id="bb-address" type="text" placeholder="123 Main St, Toronto…"></div>
+      </div>
+      <div style="text-align:center">
+        <button class="bb-btn" onclick="bbGoStep(4)">Next — Lock in your rate →</button>
+        <div style="margin-top:12px"><a href="#" onclick="event.preventDefault();bbGoStep(2)" style="font-size:.78rem;color:rgba(255,255,255,.35);text-decoration:none">← Back to builder</a></div>
+      </div>
+    </div>
+
+    <div class="bb-step" id="bb-step4">
+      <h2>Lock in your rate.</h2>
+      <p class="bb-sub">Commit longer or pay upfront to save. Discounts stack.</p>
+      <div style="margin-bottom:20px">
+        <div style="font-size:.72rem;font-weight:600;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Commitment Length</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:0" id="bb-duration-grid">
+          <div class="bb-item selected" data-dur="0" onclick="bbSelectDuration(this)" style="text-align:center;justify-content:center"><div class="bb-item-name">One-time</div><div class="bb-item-desc">No discount</div></div>
+          <div class="bb-item" data-dur="3" onclick="bbSelectDuration(this)" style="text-align:center;justify-content:center"><div class="bb-item-name">3 months</div><div class="bb-item-desc">5% off</div></div>
+          <div class="bb-item" data-dur="6" onclick="bbSelectDuration(this)" style="text-align:center;justify-content:center"><div class="bb-item-name">6 months</div><div class="bb-item-desc">10% off</div></div>
+          <div class="bb-item" data-dur="12" onclick="bbSelectDuration(this)" style="text-align:center;justify-content:center"><div class="bb-item-name">12 months</div><div class="bb-item-desc">15% off</div></div>
+        </div>
+      </div>
+      <div style="margin-bottom:20px">
+        <div style="font-size:.72rem;font-weight:600;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Payment Method</div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:0" id="bb-payment-grid">
+          <div class="bb-item selected" data-pay="monthly" onclick="bbSelectPayment(this)" style="text-align:center;justify-content:center"><div class="bb-item-name">Pay Monthly</div><div class="bb-item-desc">No extra discount</div></div>
+          <div class="bb-item" data-pay="upfront" onclick="bbSelectPayment(this)" style="text-align:center;justify-content:center"><div class="bb-item-name">Pay in Full</div><div class="bb-item-desc">Extra 5% off</div></div>
+        </div>
+      </div>
+      <div id="bb-savings-preview" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:20px;margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+          <div>
+            <div style="font-size:.72rem;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Your Price</div>
+            <div id="bb-preview-price" style="font-size:1.4rem;font-weight:700;color:var(--gold)">$0</div>
+            <div id="bb-preview-original" style="font-size:.78rem;color:rgba(255,255,255,.25);text-decoration:line-through;margin-top:2px"></div>
+          </div>
+          <div style="text-align:right">
+            <div id="bb-preview-savings" style="font-size:.88rem;color:var(--teal-light);font-weight:600"></div>
+            <div id="bb-preview-permonth" style="font-size:.72rem;color:rgba(255,255,255,.3);margin-top:2px"></div>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center">
+        <button class="bb-btn" onclick="bbShowSummary()">Review my quote →</button>
+        <div style="margin-top:12px"><a href="#" onclick="event.preventDefault();bbGoStep(3)" style="font-size:.78rem;color:rgba(255,255,255,.35);text-decoration:none">← Back</a></div>
+      </div>
+    </div>
+
+    <div class="bb-step" id="bb-step5">
+      <h2>Your quote.</h2>
+      <p class="bb-sub">Everything look good? We'll review and confirm all details before anything is booked.</p>
+      <div id="bb-summary"></div>
+      <div style="text-align:center">
+        <button class="bb-btn" onclick="bbSubmit()">Send Quote Request →</button>
+        <div style="margin-top:12px"><a href="#" onclick="event.preventDefault();bbGoStep(4)" style="font-size:.78rem;color:rgba(255,255,255,.35);text-decoration:none">← Back</a></div>
+      </div>
+    </div>
+
+    <div class="bb-step" id="bb-step6">
+      <div class="bb-success">
+        <div class="bb-success-icon">✓</div>
+        <h3>Your quote is on its way, <span id="bb-success-name"></span>.</h3>
+        <p>We'll review your custom package and follow up within 24 hours to confirm everything before your shoot is locked in.</p>
       </div>
     </div>
 
@@ -1236,7 +1452,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display'
 
 <script>
 /* ═══════════ CATALOGUE ═══════════ */
-const CATALOGUE={photography:[{name:'Basic Listing Photos',price:175,includes:['Up to 25 HDR photos','Same-day delivery','MLS ready']},{name:'Standard Listing Photos',price:225,includes:['Up to 40 HDR photos','Same-day delivery','Social-ready crops']},{name:'Premium Listing Photos',price:275,includes:['Up to 60 HDR photos','Same-day delivery','Full interior + exterior'],featured:true},{name:'Luxury Estate Photos',price:325,includes:['60+ photos + detail shots','White glove service']}],video:[{name:'Basic Walkthrough Video',price:250,includes:['30–45 sec vertical reel','Music + colour grade']},{name:'Cinematic Listing Video',price:450,includes:['60–90 sec cinematic video','Drone b-roll available'],featured:true},{name:'Luxury Property Film',price:650,includes:['2–3 min cinematic film','Full production']}],bundles:[{name:'Starter Listing Bundle',price:375,includes:['30 photos + 30 sec reel']},{name:'Pro Listing Bundle',price:550,includes:['40 photos + cinematic video','Drone included'],featured:true},{name:'Luxury Listing Bundle',price:850,includes:['60 photos + luxury video']},{name:'Signature Cinematic Package',price:595,includes:['40 HDR + Cinematic + Drone + Reel']}],social:[{name:'Single Content Video',price:200,includes:['1 video up to 30 sec']},{name:'Starter — 5 Videos',price:750,includes:['5 videos','Saves $250 vs single']},{name:'Consistent — 10 Videos',price:1200,includes:['10 videos','Saves $800'],featured:true},{name:'Content Machine — 20 Videos',price:2200,includes:['20 videos','Saves $1,800']},{name:'Market Dominance — 30 Videos',price:3000,includes:['30 videos','Saves $3,000']}],virtual:[{name:'Virtual Tour (Matterport 3D)',price:200,includes:['Interactive 3D walkthrough','Shareable link'],featured:true}],floorplans:[{name:'Floor Plans',price:100,includes:['Accurate digital floor plans','MLS ready'],featured:true}],touring:[{name:'Floor Plans',price:100,includes:['Accurate digital floor plans','MLS ready']},{name:'Virtual Tour (Matterport 3D)',price:200,includes:['Interactive 3D walkthrough','Shareable link'],featured:true},{name:'Floor Plans + Virtual Tour',price:275,includes:['Floor plans + 3D tour','Save $25 bundled']},{name:'Twilight Add-On',price:75,includes:['Blue hour exterior shots','3-5 images']},{name:'Dedicated Twilight Shoot',price:175,includes:['Full twilight session','15+ images']},{name:'Neighbourhood Shots',price:125,includes:['Local cafes, parks, transit','10-15 images']}],twilight:[{name:'Twilight Add-On',price:75,includes:['Blue hour exterior shots']},{name:'Dedicated Twilight Shoot',price:175,includes:['Full twilight session','15+ images'],featured:true}],neighbourhood:[{name:'Neighbourhood Shots',price:125,includes:['Local cafes, parks, transit','10-15 images'],featured:true}],agentintro:[{name:'Agent Intro Reel',price:100,includes:['60 sec on-camera intro']},{name:'Agent Brand Package',price:275,includes:['Intro reel + 3 clips + headshots'],featured:true}],headshots:[{name:'Agent Headshot Session',price:150,includes:['30 min session','10 selects']},{name:'Personal Brand Session',price:275,includes:['60 min session','25 selects'],featured:true},{name:'Team / Brokerage Session',price:450,includes:['90 min session','Full team']}],launch:[{name:'Listing Launch — Starter',price:750,includes:['Photos + reel + property website']},{name:'Listing Launch — Pro',price:1200,includes:['40 photos + cinematic video + website + drone'],featured:true},{name:'Listing Launch — Premium',price:1800,includes:['Luxury photos + film + website + full social']}],virtualstaging:[{name:'3D Virtual Staging — Starter',price:225,includes:['3 rooms furnished']},{name:'3D Virtual Staging — Full',price:395,includes:['6 rooms furnished'],featured:true},{name:'3D Virtual Staging — Full Home',price:595,includes:['10 rooms furnished']}],luxury:[{name:'Luxury / Architectural Film',price:1200,includes:['3-5 min cinematic film','For $3M+ properties'],featured:true}],marketing:[{name:'Property Feature Sheet',price:75,includes:['Digital one-pager']},{name:'Property Brochure',price:125,includes:['Print-ready tri-fold'],featured:true},{name:'Google Business Pack',price:200,includes:['3 short clips']}],specialty:[{name:'Reels from Existing Photos',price:150,includes:['No shoot needed']},{name:'Open House Day-Of Content',price:250,includes:['30 min on-site'],featured:true},{name:'Tenant-Occupied Shoot',price:275,includes:['Staging guidance']},{name:'Seasonal Refresh Shoot',price:175,includes:['New photos for relisted']},{name:'Condo / Assignment Marketing',price:450,includes:['Preconstruction package']},{name:'Same-Day Rush Package',price:750,includes:['Full shoot + editing same day']}],retainer:[{name:'Agent Starter (Monthly)',price:900,includes:['2 listings/month'],tag:'monthly'},{name:'Agent Pro (Monthly)',price:1600,includes:['4 listings/month'],featured:true,tag:'monthly'},{name:'Team Package (Monthly)',price:2800,includes:['8 listings/month'],tag:'monthly'},{name:'Agent Starter (Yearly)',price:9180,includes:['Save $1,620/yr'],tag:'yearly'},{name:'Agent Pro (Yearly)',price:16320,includes:['Save $2,880/yr'],featured:true,tag:'yearly'},{name:'Team Package (Yearly)',price:28560,includes:['Save $5,040/yr'],tag:'yearly'},{name:'Starter Bundle (2 Shoots)',price:1100,includes:['2 shoots in 90 days'],tag:'onetime'},{name:'Pro Bundle (4 Shoots)',price:2100,includes:['4 shoots in 90 days'],featured:true,tag:'onetime'},{name:'Team Bundle (8 Shoots)',price:4000,includes:['8 shoots in 90 days'],tag:'onetime'}],other:[{name:'Commercial Photography',price:350,includes:['Office, retail, industrial']},{name:'Commercial Photo + Video',price:650,includes:['Full commercial production']},{name:'Airbnb Starter',price:175,includes:['20 lifestyle photos']},{name:'Airbnb Pro',price:325,includes:['30 photos + lifestyle reel']}]};
+const CATALOGUE={photography:[{name:'Basic Listing Photos',price:175,includes:['Up to 25 HDR photos','Same-day delivery','MLS ready']},{name:'Standard Listing Photos',price:225,includes:['Up to 40 HDR photos','Same-day delivery','Social-ready crops']},{name:'Premium Listing Photos',price:275,includes:['Up to 60 HDR photos','Same-day delivery','Full interior + exterior'],featured:true},{name:'Luxury Estate Photos',price:325,includes:['60+ photos + detail shots','White glove service']}],video:[{name:'Basic Walkthrough Video',price:250,includes:['30–45 sec vertical reel','Music + colour grade']},{name:'Cinematic Listing Video',price:450,includes:['60–90 sec cinematic video','Drone b-roll available'],featured:true},{name:'Luxury Property Film',price:650,includes:['2–3 min cinematic film','Full production']}],bundles:[{name:'Starter Listing Bundle',price:375,includes:['30 photos + 30 sec reel']},{name:'Pro Listing Bundle',price:650,includes:['40 photos + cinematic video','Drone + social reel included'],featured:true},{name:'Luxury Listing Bundle',price:850,includes:['60 photos + luxury film','Drone + social reel included']}],social:[{name:'Single Content Video',price:200,includes:['1 video up to 30 sec']},{name:'Starter — 5 Videos',price:750,includes:['5 videos','Saves $250 vs single']},{name:'Consistent — 10 Videos',price:1200,includes:['10 videos','Saves $800'],featured:true},{name:'Content Machine — 20 Videos',price:2200,includes:['20 videos','Saves $1,800']},{name:'Market Dominance — 30 Videos',price:3000,includes:['30 videos','Saves $3,000']}],virtual:[{name:'Virtual Tour (Matterport 3D)',price:200,includes:['Interactive 3D walkthrough','Shareable link'],featured:true}],floorplans:[{name:'Floor Plans',price:100,includes:['Accurate digital floor plans','MLS ready'],featured:true}],touring:[{name:'Floor Plans',price:100,includes:['Accurate digital floor plans','MLS ready']},{name:'Virtual Tour (Matterport 3D)',price:200,includes:['Interactive 3D walkthrough','Shareable link'],featured:true},{name:'Floor Plans + Virtual Tour',price:275,includes:['Floor plans + 3D tour','Save $25 bundled']},{name:'Twilight Add-On',price:75,includes:['Blue hour exterior shots','3-5 images']},{name:'Dedicated Twilight Shoot',price:175,includes:['Full twilight session','15+ images']},{name:'Neighbourhood Shots',price:125,includes:['Local cafes, parks, transit','10-15 images']}],twilight:[{name:'Twilight Add-On',price:75,includes:['Blue hour exterior shots']},{name:'Dedicated Twilight Shoot',price:175,includes:['Full twilight session','15+ images'],featured:true}],neighbourhood:[{name:'Neighbourhood Shots',price:125,includes:['Local cafes, parks, transit','10-15 images'],featured:true}],agentintro:[{name:'Agent Intro Reel',price:100,includes:['60 sec on-camera intro']},{name:'Agent Brand Package',price:275,includes:['Intro reel + 3 clips + headshots'],featured:true}],headshots:[{name:'Agent Headshot Session',price:150,includes:['30 min session','10 selects']},{name:'Personal Brand Session',price:275,includes:['60 min session','25 selects'],featured:true},{name:'Team / Brokerage Session',price:450,includes:['90 min session','Full team']}],launch:[{name:'Listing Launch — Starter',price:750,includes:['Photos + reel + property website']},{name:'Listing Launch — Pro',price:1200,includes:['40 photos + cinematic video + website + drone'],featured:true},{name:'Listing Launch — Premium',price:1800,includes:['Luxury photos + film + website + full social']}],virtualstaging:[{name:'3D Virtual Staging — Starter',price:225,includes:['3 rooms furnished']},{name:'3D Virtual Staging — Full',price:395,includes:['6 rooms furnished'],featured:true},{name:'3D Virtual Staging — Full Home',price:595,includes:['10 rooms furnished']}],luxury:[{name:'Luxury / Architectural Film',price:1200,includes:['3-5 min cinematic film','For $3M+ properties'],featured:true}],marketing:[{name:'Property Feature Sheet',price:75,includes:['Digital one-pager']},{name:'Property Brochure',price:125,includes:['Print-ready tri-fold'],featured:true},{name:'Google Business Pack',price:200,includes:['3 short clips']}],specialty:[{name:'Reels from Existing Photos',price:150,includes:['No shoot needed']},{name:'Open House Day-Of Content',price:250,includes:['30 min on-site'],featured:true},{name:'Tenant-Occupied Shoot',price:275,includes:['Staging guidance']},{name:'Seasonal Refresh Shoot',price:175,includes:['New photos for relisted']},{name:'Condo / Assignment Marketing',price:450,includes:['Preconstruction package']},{name:'Same-Day Rush Package',price:750,includes:['Full shoot + editing same day']}],retainer:[{name:'Agent Starter (Monthly)',price:900,includes:['2 listings/month'],tag:'monthly'},{name:'Agent Pro (Monthly)',price:1600,includes:['4 listings/month'],featured:true,tag:'monthly'},{name:'Team Package (Monthly)',price:2800,includes:['8 listings/month'],tag:'monthly'},{name:'Agent Starter (Yearly)',price:9180,includes:['Save $1,620/yr'],tag:'yearly'},{name:'Agent Pro (Yearly)',price:16320,includes:['Save $2,880/yr'],featured:true,tag:'yearly'},{name:'Team Package (Yearly)',price:28560,includes:['Save $5,040/yr'],tag:'yearly'},{name:'Starter Bundle (2 Shoots)',price:1100,includes:['2 shoots in 90 days'],tag:'onetime'},{name:'Pro Bundle (4 Shoots)',price:2100,includes:['4 shoots in 90 days'],featured:true,tag:'onetime'},{name:'Team Bundle (8 Shoots)',price:4000,includes:['8 shoots in 90 days'],tag:'onetime'}],other:[{name:'Commercial Photography',price:350,includes:['Office, retail, industrial']},{name:'Commercial Photo + Video',price:650,includes:['Full commercial production']},{name:'Airbnb Starter',price:175,includes:['20 lifestyle photos']},{name:'Airbnb Pro',price:325,includes:['30 photos + lifestyle reel']}]};
 
 const ADDONS=[
   {name:'Drone Photo / Video',price:75,desc:'The view your listing can\'t show from the ground.'},
@@ -1318,7 +1534,6 @@ const mmSubData={
       {name:'Luxury Property Film',action:"openBookingWith('video')",lg:true},
       {name:'Starter Bundle',action:"openBookingWith('photos')",sm:true},
       {name:'Pro Bundle',action:"openBookingWith('photos')",sm:true},
-      {name:'Signature Cinematic',action:"openBookingWith('photos')",sm:true},
     ]
   },
   social:{
@@ -1867,6 +2082,7 @@ function calcFormatPrice(input){
 function calcGoStep(step){
   document.querySelectorAll('.calc-step').forEach(s => s.classList.remove('active'));
   document.getElementById('calc-step'+step).classList.add('active');
+  document.getElementById('media-calculator').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 function calcShowResults(){
@@ -1890,10 +2106,10 @@ function calcShowResults(){
   if(price < 600000){
     rec = {name:'Starter Listing Bundle',price:375,desc:'30 HDR photos and a 30-second reel. Clean, fast, and everything your listing needs to stand out.'};
   } else if(price < 900000){
-    rec = {name:'Pro Listing Bundle',price:550,desc:'40 HDR photos, cinematic walkthrough video, and drone — the package most Toronto agents book.'};
+    rec = {name:'Pro Listing Bundle',price:650,desc:'40 HDR photos, cinematic video, drone, and a social reel — the package most Toronto agents book.'};
     addons.push({name:'Floor Plans',price:100});
   } else if(price < 1500000){
-    rec = {name:'Signature Cinematic Package',price:595,desc:'40 HDR photos, cinematic video, drone, and a social reel — all from one shoot. Our most complete single-listing package.'};
+    rec = {name:'Pro Listing Bundle',price:650,desc:'40 HDR photos, cinematic video, drone, and a social reel — the package most Toronto agents book.'};
     addons.push({name:'Floor Plans',price:100});
     addons.push({name:'Twilight Add-On',price:75});
   } else if(price < 2500000){
@@ -1991,6 +2207,291 @@ function calcSubmit(){
 
   document.getElementById('calc-success-name').textContent = name.split(' ')[0];
   calcGoStep(4);
+}
+
+/* ═══════════ BUDGET BUILDER ═══════════ */
+let bbBudget = 0;
+let bbSelected = [];
+
+const BB_SERVICES = [
+  {cat:'Photography',items:[
+    {name:'Basic Listing Photos',price:175,desc:'Up to 25 HDR photos, same-day delivery'},
+    {name:'Standard Listing Photos',price:225,desc:'Up to 40 HDR photos, social-ready crops'},
+    {name:'Premium Listing Photos',price:275,desc:'Up to 60 HDR photos, full interior + exterior'},
+    {name:'Luxury Estate Photos',price:325,desc:'60+ photos, detail shots, white glove service'},
+  ]},
+  {cat:'Video',items:[
+    {name:'Basic Walkthrough Video',price:250,desc:'30-45 sec vertical reel, music + colour grade'},
+    {name:'Cinematic Listing Video',price:450,desc:'60-90 sec cinematic, drone b-roll available'},
+    {name:'Luxury Property Film',price:650,desc:'2-3 min cinematic film, full production'},
+  ]},
+  {cat:'Bundles',items:[
+    {name:'Starter Listing Bundle',price:375,desc:'30 photos + 30 sec reel'},
+    {name:'Pro Listing Bundle',price:650,desc:'40 photos + cinematic video + drone + social reel'},
+    {name:'Luxury Listing Bundle',price:850,desc:'60 photos + luxury video, full production'},
+  ]},
+  {cat:'Tours & Plans',items:[
+    {name:'Floor Plans',price:100,desc:'Accurate digital floor plans, MLS ready'},
+    {name:'Virtual Tour (Matterport 3D)',price:200,desc:'Interactive 3D walkthrough, shareable link'},
+    {name:'Floor Plans + Virtual Tour',price:275,desc:'Both bundled, save $25'},
+    {name:'Twilight Add-On',price:75,desc:'Blue hour exterior shots, 3-5 images'},
+    {name:'Dedicated Twilight Shoot',price:175,desc:'Full twilight session, 15+ images'},
+  ]},
+  {cat:'Social Content',items:[
+    {name:'Single Content Video',price:200,desc:'One video up to 30 seconds'},
+    {name:'5-Video Starter',price:750,desc:'5 videos, saves $250 vs single'},
+    {name:'10-Video Pack',price:1200,desc:'10 videos, saves $800 vs single'},
+  ]},
+  {cat:'Branding',items:[
+    {name:'Agent Headshot Session',price:150,desc:'30 min, 10 edited selects'},
+    {name:'Personal Brand Session',price:275,desc:'60 min, 25 selects, lifestyle + headshots'},
+    {name:'Agent Intro Reel',price:100,desc:'60 sec on-camera intro'},
+  ]},
+  {cat:'Staging & Marketing',items:[
+    {name:'Virtual Staging — 3 Rooms',price:225,desc:'3 rooms digitally furnished'},
+    {name:'Virtual Staging — 6 Rooms',price:395,desc:'6 rooms, 3 style options'},
+    {name:'Property Feature Sheet',price:75,desc:'Branded one-pager for open house'},
+    {name:'Neighbourhood B-Roll',price:50,desc:'Local cafes, parks, transit on camera'},
+  ]},
+  {cat:'Listing Launch',items:[
+    {name:'Listing Launch — Starter',price:750,desc:'Photos + reel + property website'},
+    {name:'Listing Launch — Pro',price:1200,desc:'40 photos + video + website + drone'},
+    {name:'Listing Launch — Premium',price:1800,desc:'Luxury media + website + full social pack'},
+  ]},
+  {cat:'Add-Ons',items:[
+    {name:'Drone Photo / Video',price:75,desc:'Aerial shots of property and neighbourhood'},
+    {name:'Listing Reel Cut',price:75,desc:'30-sec reel from your photos and video'},
+    {name:'Social Media Package',price:150,desc:'5 ready-to-post graphics for Instagram'},
+  ]},
+];
+
+function bbFormatBudget(input){
+  let raw = input.value.replace(/[^0-9]/g,'');
+  if(raw.length > 0){
+    bbBudget = parseInt(raw);
+    input.value = '$' + parseInt(raw).toLocaleString('en-CA');
+  } else {
+    bbBudget = 0;
+    input.value = '';
+  }
+  document.getElementById('bb-btn1').disabled = bbBudget < 100;
+}
+
+function bbGoStep(step){
+  if(step === 4) bbUpdateSavingsPreview();
+  document.querySelectorAll('.bb-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('bb-step'+step).classList.add('active');
+  document.getElementById('budget-builder').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function bbShowOptions(){
+  if(bbBudget < 100) return;
+  bbSelected = [];
+  const container = document.getElementById('bb-options');
+  let html = '';
+
+  BB_SERVICES.forEach(cat => {
+    // Only show categories that have at least one affordable item
+    const affordable = cat.items.filter(i => i.price <= bbBudget);
+    if(affordable.length === 0) return;
+
+    html += '<div class="bb-category"><div class="bb-category-title">' + cat.cat + '</div>';
+    cat.items.forEach(item => {
+      html += '<div class="bb-item" data-name="' + item.name + '" data-price="' + item.price + '" onclick="bbToggleItem(this)">'
+        + '<div class="bb-item-check">✓</div>'
+        + '<div class="bb-item-left"><div class="bb-item-name">' + item.name + '</div><div class="bb-item-desc">' + item.desc + '</div></div>'
+        + '<div class="bb-item-price">$' + item.price.toLocaleString('en-CA') + '</div>'
+        + '</div>';
+    });
+    html += '</div>';
+  });
+
+  container.innerHTML = html;
+  document.getElementById('bb-budget-display').textContent = '$' + bbBudget.toLocaleString('en-CA');
+  bbUpdateBar();
+  bbGoStep(2);
+}
+
+function bbToggleItem(el){
+  const name = el.dataset.name;
+  const price = Number(el.dataset.price);
+
+  if(el.classList.contains('selected')){
+    el.classList.remove('selected');
+    bbSelected = bbSelected.filter(s => s.name !== name);
+  } else {
+    el.classList.add('selected');
+    bbSelected.push({name, price});
+  }
+  bbUpdateBar();
+}
+
+function bbUpdateBar(){
+  const spent = bbSelected.reduce((s,i) => s + i.price, 0);
+  const remaining = bbBudget - spent;
+  const pct = bbBudget > 0 ? (spent / bbBudget) * 100 : 0;
+
+  document.getElementById('bb-spent').textContent = '$' + spent.toLocaleString('en-CA');
+
+  if(remaining >= 0){
+    document.getElementById('bb-remaining').textContent = '$' + remaining.toLocaleString('en-CA') + ' remaining';
+  } else {
+    document.getElementById('bb-remaining').innerHTML = '$' + Math.abs(remaining).toLocaleString('en-CA') + ' over budget — <span style="color:var(--gold)">worth it though</span>';
+  }
+
+  const meter = document.getElementById('bb-meter');
+  meter.style.width = Math.min(pct, 100) + '%';
+  meter.className = 'bb-bar-meter-fill' + (remaining < 0 ? ' over' : '');
+
+  document.getElementById('bb-btn2').disabled = bbSelected.length === 0;
+}
+
+let bbDuration = 0;
+let bbPayMethod = 'monthly';
+
+function bbSelectDuration(el){
+  document.querySelectorAll('#bb-duration-grid .bb-item').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  bbDuration = Number(el.dataset.dur);
+  bbUpdateSavingsPreview();
+}
+
+function bbSelectPayment(el){
+  document.querySelectorAll('#bb-payment-grid .bb-item').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  bbPayMethod = el.dataset.pay;
+  bbUpdateSavingsPreview();
+}
+
+function bbUpdateSavingsPreview(){
+  const spent = bbSelected.reduce((s,i) => s + i.price, 0);
+  const months = bbDuration || 1;
+  const totalBase = spent * months;
+  const durDisc = {0:0,3:.05,6:.10,12:.15}[bbDuration] || 0;
+  const payDisc = bbPayMethod === 'upfront' ? .05 : 0;
+  const totalDisc = durDisc + payDisc;
+  const discountAmt = Math.round(totalBase * totalDisc);
+  const finalPrice = totalBase - discountAmt;
+  const pctOff = Math.round(totalDisc * 100);
+
+  document.getElementById('bb-preview-price').textContent = '$' + finalPrice.toLocaleString('en-CA');
+
+  if(discountAmt > 0){
+    document.getElementById('bb-preview-original').textContent = '$' + totalBase.toLocaleString('en-CA');
+    document.getElementById('bb-preview-savings').textContent = 'You save $' + discountAmt.toLocaleString('en-CA') + ' (' + pctOff + '% off)';
+  } else {
+    document.getElementById('bb-preview-original').textContent = '';
+    document.getElementById('bb-preview-savings').textContent = 'No discount applied';
+  }
+
+  if(months > 1){
+    const perMonth = Math.round(finalPrice / months);
+    document.getElementById('bb-preview-permonth').textContent = '$' + perMonth.toLocaleString('en-CA') + '/month × ' + months + ' months';
+  } else {
+    document.getElementById('bb-preview-permonth').textContent = 'One-time payment';
+  }
+
+  // Update payment labels
+  const monthlyOpt = document.querySelector('#bb-payment-grid .bb-item[data-pay="monthly"]');
+  const upfrontOpt = document.querySelector('#bb-payment-grid .bb-item[data-pay="upfront"]');
+  if(bbDuration === 0){
+    monthlyOpt.querySelector('.bb-item-desc').textContent = 'Standard';
+    upfrontOpt.querySelector('.bb-item-desc').textContent = '5% off';
+  } else {
+    monthlyOpt.querySelector('.bb-item-desc').textContent = 'No extra discount';
+    upfrontOpt.querySelector('.bb-item-desc').textContent = 'Extra 5% off';
+  }
+}
+
+function bbShowSummary(){
+  const spent = bbSelected.reduce((s,i) => s + i.price, 0);
+  const months = bbDuration || 1;
+  const totalBase = spent * months;
+  const durDisc = {0:0,3:.05,6:.10,12:.15}[bbDuration] || 0;
+  const payDisc = bbPayMethod === 'upfront' ? .05 : 0;
+  const totalDisc = durDisc + payDisc;
+  const discountAmt = Math.round(totalBase * totalDisc);
+  const afterDiscount = totalBase - discountAmt;
+  const hst = Math.round(afterDiscount * 0.13);
+  const total = afterDiscount + hst;
+
+  const durLabel = bbDuration === 0 ? 'One-time' : bbDuration + '-month commitment';
+  const payLabel = bbPayMethod === 'upfront' ? 'Pay in full' : 'Pay monthly';
+
+  let html = '';
+  bbSelected.forEach(i => {
+    html += '<div class="bb-summary-item"><span>' + i.name + (months > 1 ? ' × ' + months + ' mo' : '') + '</span><span>$' + (i.price * months).toLocaleString('en-CA') + '</span></div>';
+  });
+  if(discountAmt > 0){
+    const pctOff = Math.round(totalDisc * 100);
+    html += '<div class="bb-summary-item" style="color:var(--teal-light)"><span>' + durLabel + ' · ' + payLabel + ' (' + pctOff + '% off)</span><span>-$' + discountAmt.toLocaleString('en-CA') + '</span></div>';
+  } else {
+    html += '<div class="bb-summary-item" style="opacity:.4"><span>' + durLabel + ' · ' + payLabel + '</span><span>—</span></div>';
+  }
+  html += '<div class="bb-summary-item" style="opacity:.4"><span>HST (13%)</span><span>$' + hst.toLocaleString('en-CA') + '</span></div>';
+  html += '<div class="bb-summary-total"><span>Total</span><span>$' + total.toLocaleString('en-CA') + '</span></div>';
+  if(months > 1 && bbPayMethod === 'monthly'){
+    const perMonth = Math.round(total / months);
+    html += '<div style="text-align:right;font-size:.72rem;color:rgba(255,255,255,.3);margin-top:4px">$' + perMonth.toLocaleString('en-CA') + '/month × ' + months + ' months</div>';
+  }
+  document.getElementById('bb-summary').innerHTML = '<div class="bb-summary">' + html + '</div>';
+  bbGoStep(5);
+}
+
+function bbSubmit(){
+  const name = document.getElementById('bb-name').value.trim();
+  const email = document.getElementById('bb-email').value.trim();
+  const phone = document.getElementById('bb-phone').value.trim();
+
+  if(!name || !email || !phone){
+    ['bb-name','bb-email','bb-phone'].forEach(id => {
+      const inp = document.getElementById(id);
+      if(!inp.value.trim()){
+        inp.style.borderColor='#e53e3e';
+        inp.addEventListener('input',function fix(){inp.style.borderColor='';inp.removeEventListener('input',fix)},{once:true});
+      }
+    });
+    bbGoStep(3);
+    return;
+  }
+
+  const spent = bbSelected.reduce((s,i) => s + i.price, 0);
+  const months = bbDuration || 1;
+  const totalBase = spent * months;
+  const durDisc = {0:0,3:.05,6:.10,12:.15}[bbDuration] || 0;
+  const payDisc = bbPayMethod === 'upfront' ? .05 : 0;
+  const totalDisc = durDisc + payDisc;
+  const discountAmt = Math.round(totalBase * totalDisc);
+  const afterDiscount = totalBase - discountAmt;
+  const hst = Math.round(afterDiscount * 0.13);
+  const total = afterDiscount + hst;
+
+  const lead = {
+    id: 'bb_' + Date.now(),
+    type: 'budget_builder',
+    fromPricing: true,
+    client: name,
+    brokerage: document.getElementById('bb-brokerage').value.trim(),
+    email, phone,
+    address: document.getElementById('bb-address').value.trim(),
+    budget: bbBudget,
+    lineItems: bbSelected.map((i,idx) => ({id:'li_'+(Date.now()+idx), desc:i.name, price:i.price, qty:1})),
+    commitment: {duration:bbDuration, payMethod:bbPayMethod, discountPct:Math.round(totalDisc*100), discountAmt},
+    subtotal: afterDiscount, useTax:true, tax:hst, total, remaining:total, deposit:0,
+    createdAt: new Date().toISOString()
+  };
+
+  localStorage.setItem('reel_estate_pending_quote', JSON.stringify(lead));
+
+  const SB_URL='https://dgoiormpqixydbijuqoe.supabase.co',SB_KEY='sb_publishable_nz-LREWZbxC0FaN8evKVlQ_ik4PffGj';
+  fetch(SB_URL+'/rest/v1/pending_quotes',{
+    method:'POST',
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+    body:JSON.stringify({id:lead.id, data:lead, processed:false, created_at:lead.createdAt})
+  }).catch(e=>console.warn('Supabase sync failed',e));
+
+  document.getElementById('bb-success-name').textContent = name.split(' ')[0];
+  bbGoStep(6);
 }
 
 /* ═══════════ HERO VIDEO REEL ═══════════ */
