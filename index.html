@@ -1037,6 +1037,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display'
 
       <div style="text-align:center">
         <button class="calc-btn" onclick="calcShowCapture()">Get my custom media plan →</button>
+        <div style="margin-top:12px"><button class="calc-btn" onclick="calcToBudgetBuilder()" style="background:transparent;border:2px solid var(--teal);color:var(--teal)">Build this package myself →</button></div>
         <div style="margin-top:12px"><a href="#" onclick="event.preventDefault();calcGoStep(1)" style="font-size:.78rem;color:var(--ink-sub);text-decoration:none">← Try a different price</a></div>
       </div>
     </div>
@@ -1452,7 +1453,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display'
 
 <script>
 /* ═══════════ CATALOGUE ═══════════ */
-const CATALOGUE={photography:[{name:'Basic Listing Photos',price:175,includes:['Up to 25 HDR photos','Same-day delivery','MLS ready']},{name:'Standard Listing Photos',price:225,includes:['Up to 40 HDR photos','Same-day delivery','Social-ready crops']},{name:'Premium Listing Photos',price:275,includes:['Up to 60 HDR photos','Same-day delivery','Full interior + exterior'],featured:true},{name:'Luxury Estate Photos',price:325,includes:['60+ photos + detail shots','White glove service']}],video:[{name:'Basic Walkthrough Video',price:250,includes:['30–45 sec vertical reel','Music + colour grade']},{name:'Cinematic Listing Video',price:450,includes:['60–90 sec cinematic video','Drone b-roll available'],featured:true},{name:'Luxury Property Film',price:650,includes:['2–3 min cinematic film','Full production']}],bundles:[{name:'Starter Listing Bundle',price:375,includes:['30 photos + 30 sec reel']},{name:'Pro Listing Bundle',price:650,includes:['40 photos + cinematic video','Drone + social reel included'],featured:true},{name:'Luxury Listing Bundle',price:850,includes:['60 photos + luxury film','Drone + social reel included']}],social:[{name:'Single Content Video',price:200,includes:['1 video up to 30 sec']},{name:'Starter — 5 Videos',price:750,includes:['5 videos','Saves $250 vs single']},{name:'Consistent — 10 Videos',price:1200,includes:['10 videos','Saves $800'],featured:true},{name:'Content Machine — 20 Videos',price:2200,includes:['20 videos','Saves $1,800']},{name:'Market Dominance — 30 Videos',price:3000,includes:['30 videos','Saves $3,000']}],virtual:[{name:'Virtual Tour (Matterport 3D)',price:200,includes:['Interactive 3D walkthrough','Shareable link'],featured:true}],floorplans:[{name:'Floor Plans',price:100,includes:['Accurate digital floor plans','MLS ready'],featured:true}],touring:[{name:'Floor Plans',price:100,includes:['Accurate digital floor plans','MLS ready']},{name:'Virtual Tour (Matterport 3D)',price:200,includes:['Interactive 3D walkthrough','Shareable link'],featured:true},{name:'Floor Plans + Virtual Tour',price:275,includes:['Floor plans + 3D tour','Save $25 bundled']},{name:'Twilight Add-On',price:75,includes:['Blue hour exterior shots','3-5 images']},{name:'Dedicated Twilight Shoot',price:175,includes:['Full twilight session','15+ images']},{name:'Neighbourhood Shots',price:125,includes:['Local cafes, parks, transit','10-15 images']}],twilight:[{name:'Twilight Add-On',price:75,includes:['Blue hour exterior shots']},{name:'Dedicated Twilight Shoot',price:175,includes:['Full twilight session','15+ images'],featured:true}],neighbourhood:[{name:'Neighbourhood Shots',price:125,includes:['Local cafes, parks, transit','10-15 images'],featured:true}],agentintro:[{name:'Agent Intro Reel',price:100,includes:['60 sec on-camera intro']},{name:'Agent Brand Package',price:275,includes:['Intro reel + 3 clips + headshots'],featured:true}],headshots:[{name:'Agent Headshot Session',price:150,includes:['30 min session','10 selects']},{name:'Personal Brand Session',price:275,includes:['60 min session','25 selects'],featured:true},{name:'Team / Brokerage Session',price:450,includes:['90 min session','Full team']}],launch:[{name:'Listing Launch — Starter',price:750,includes:['Photos + reel + property website']},{name:'Listing Launch — Pro',price:1200,includes:['40 photos + cinematic video + website + drone'],featured:true},{name:'Listing Launch — Premium',price:1800,includes:['Luxury photos + film + website + full social']}],virtualstaging:[{name:'3D Virtual Staging — Starter',price:225,includes:['3 rooms furnished']},{name:'3D Virtual Staging — Full',price:395,includes:['6 rooms furnished'],featured:true},{name:'3D Virtual Staging — Full Home',price:595,includes:['10 rooms furnished']}],luxury:[{name:'Luxury / Architectural Film',price:1200,includes:['3-5 min cinematic film','For $3M+ properties'],featured:true}],marketing:[{name:'Property Feature Sheet',price:75,includes:['Digital one-pager']},{name:'Property Brochure',price:125,includes:['Print-ready tri-fold'],featured:true},{name:'Google Business Pack',price:200,includes:['3 short clips']}],specialty:[{name:'Reels from Existing Photos',price:150,includes:['No shoot needed']},{name:'Open House Day-Of Content',price:250,includes:['30 min on-site'],featured:true},{name:'Tenant-Occupied Shoot',price:275,includes:['Staging guidance']},{name:'Seasonal Refresh Shoot',price:175,includes:['New photos for relisted']},{name:'Condo / Assignment Marketing',price:450,includes:['Preconstruction package']},{name:'Same-Day Rush Package',price:750,includes:['Full shoot + editing same day']}],retainer:[{name:'Agent Starter (Monthly)',price:900,includes:['2 listings/month'],tag:'monthly'},{name:'Agent Pro (Monthly)',price:1600,includes:['4 listings/month'],featured:true,tag:'monthly'},{name:'Team Package (Monthly)',price:2800,includes:['8 listings/month'],tag:'monthly'},{name:'Agent Starter (Yearly)',price:9180,includes:['Save $1,620/yr'],tag:'yearly'},{name:'Agent Pro (Yearly)',price:16320,includes:['Save $2,880/yr'],featured:true,tag:'yearly'},{name:'Team Package (Yearly)',price:28560,includes:['Save $5,040/yr'],tag:'yearly'},{name:'Starter Bundle (2 Shoots)',price:1100,includes:['2 shoots in 90 days'],tag:'onetime'},{name:'Pro Bundle (4 Shoots)',price:2100,includes:['4 shoots in 90 days'],featured:true,tag:'onetime'},{name:'Team Bundle (8 Shoots)',price:4000,includes:['8 shoots in 90 days'],tag:'onetime'}],other:[{name:'Commercial Photography',price:350,includes:['Office, retail, industrial']},{name:'Commercial Photo + Video',price:650,includes:['Full commercial production']},{name:'Airbnb Starter',price:175,includes:['20 lifestyle photos']},{name:'Airbnb Pro',price:325,includes:['30 photos + lifestyle reel']}]};
+const CATALOGUE={photography:[{name:'Basic Listing Photos',price:175,includes:['Up to 25 HDR photos','Same-day delivery','MLS ready']},{name:'Standard Listing Photos',price:225,includes:['Up to 40 HDR photos','Same-day delivery','Social-ready crops']},{name:'Premium Listing Photos',price:275,includes:['Up to 60 HDR photos','Same-day delivery','Full interior + exterior'],featured:true},{name:'Luxury Estate Photos',price:325,includes:['60+ photos + detail shots','White glove service']}],video:[{name:'Basic Walkthrough Video',price:250,includes:['Up to 30 sec vertical reel','Music + colour grade']},{name:'Standard Listing Video',price:350,includes:['Up to 30 sec cinematic video','Colour graded + transitions']},{name:'Cinematic Listing Video',price:450,includes:['Up to 60 sec cinematic video','Drone b-roll available'],featured:true},{name:'Luxury Property Film',price:650,includes:['60+ sec cinematic film','Full production']}],bundles:[{name:'Starter Listing Bundle',price:375,includes:['30 photos + 30 sec reel']},{name:'Pro Listing Bundle',price:650,includes:['40 photos + cinematic video','Drone + social reel included'],featured:true},{name:'Luxury Listing Bundle',price:850,includes:['60 photos + luxury film','Drone + social reel included']}],social:[{name:'Single Content Video',price:200,includes:['1 video up to 30 sec']},{name:'Starter — 5 Videos',price:750,includes:['5 videos','Saves $250 vs single']},{name:'Consistent — 10 Videos',price:1200,includes:['10 videos','Saves $800'],featured:true},{name:'Content Machine — 20 Videos',price:2200,includes:['20 videos','Saves $1,800']},{name:'Market Dominance — 30 Videos',price:3000,includes:['30 videos','Saves $3,000']}],virtual:[{name:'Virtual Tour (Matterport 3D)',price:200,includes:['Interactive 3D walkthrough','Shareable link'],featured:true}],floorplans:[{name:'Floor Plans',price:100,includes:['Accurate digital floor plans','MLS ready'],featured:true}],touring:[{name:'Floor Plans',price:100,includes:['Accurate digital floor plans','MLS ready']},{name:'Virtual Tour (Matterport 3D)',price:200,includes:['Interactive 3D walkthrough','Shareable link'],featured:true},{name:'Floor Plans + Virtual Tour',price:275,includes:['Floor plans + 3D tour','Save $25 bundled']},{name:'Twilight Add-On',price:75,includes:['Blue hour exterior shots','3-5 images']},{name:'Dedicated Twilight Shoot',price:175,includes:['Full twilight session','15+ images']},{name:'Neighbourhood Shots',price:125,includes:['Local cafes, parks, transit','10-15 images']}],twilight:[{name:'Twilight Add-On',price:75,includes:['Blue hour exterior shots']},{name:'Dedicated Twilight Shoot',price:175,includes:['Full twilight session','15+ images'],featured:true}],neighbourhood:[{name:'Neighbourhood Shots',price:125,includes:['Local cafes, parks, transit','10-15 images'],featured:true}],agentintro:[{name:'Agent Intro Reel',price:100,includes:['60 sec on-camera intro']},{name:'Agent Brand Package',price:275,includes:['Intro reel + 3 clips + headshots'],featured:true}],headshots:[{name:'Agent Headshot Session',price:150,includes:['30 min session','10 selects']},{name:'Personal Brand Session',price:275,includes:['60 min session','25 selects'],featured:true},{name:'Team / Brokerage Session',price:450,includes:['90 min session','Full team']}],launch:[{name:'Listing Launch — Starter',price:750,includes:['Photos + reel + property website']},{name:'Listing Launch — Pro',price:1200,includes:['40 photos + cinematic video + website + drone'],featured:true},{name:'Listing Launch — Premium',price:1800,includes:['Luxury photos + film + website + full social']}],virtualstaging:[{name:'3D Virtual Staging — Starter',price:225,includes:['3 rooms furnished']},{name:'3D Virtual Staging — Full',price:395,includes:['6 rooms furnished'],featured:true},{name:'3D Virtual Staging — Full Home',price:595,includes:['10 rooms furnished']}],luxury:[{name:'Luxury / Architectural Film',price:1200,includes:['3-5 min cinematic film','For $3M+ properties'],featured:true}],marketing:[{name:'Property Feature Sheet',price:75,includes:['Digital one-pager']},{name:'Property Brochure',price:125,includes:['Print-ready tri-fold'],featured:true},{name:'Google Business Pack',price:200,includes:['3 short clips']}],specialty:[{name:'Reels from Existing Photos',price:150,includes:['No shoot needed']},{name:'Open House Day-Of Content',price:250,includes:['30 min on-site'],featured:true},{name:'Tenant-Occupied Shoot',price:275,includes:['Staging guidance']},{name:'Seasonal Refresh Shoot',price:175,includes:['New photos for relisted']},{name:'Condo / Assignment Marketing',price:450,includes:['Preconstruction package']},{name:'Same-Day Rush Package',price:750,includes:['Full shoot + editing same day']}],retainer:[{name:'Agent Starter (Monthly)',price:900,includes:['2 listings/month'],tag:'monthly'},{name:'Agent Pro (Monthly)',price:1600,includes:['4 listings/month'],featured:true,tag:'monthly'},{name:'Team Package (Monthly)',price:2800,includes:['8 listings/month'],tag:'monthly'},{name:'Agent Starter (Yearly)',price:9180,includes:['Save $1,620/yr'],tag:'yearly'},{name:'Agent Pro (Yearly)',price:16320,includes:['Save $2,880/yr'],featured:true,tag:'yearly'},{name:'Team Package (Yearly)',price:28560,includes:['Save $5,040/yr'],tag:'yearly'},{name:'Starter Bundle (2 Shoots)',price:1100,includes:['2 shoots in 90 days'],tag:'onetime'},{name:'Pro Bundle (4 Shoots)',price:2100,includes:['4 shoots in 90 days'],featured:true,tag:'onetime'},{name:'Team Bundle (8 Shoots)',price:4000,includes:['8 shoots in 90 days'],tag:'onetime'}],other:[{name:'Commercial Photography',price:350,includes:['Office, retail, industrial']},{name:'Commercial Photo + Video',price:650,includes:['Full commercial production']},{name:'Airbnb Starter',price:175,includes:['20 lifestyle photos']},{name:'Airbnb Pro',price:325,includes:['30 photos + lifestyle reel']}]};
 
 const ADDONS=[
   {name:'Drone Photo / Video',price:75,desc:'The view your listing can\'t show from the ground.'},
@@ -2066,6 +2067,9 @@ updateCartUI();
 
 /* ═══════════ MEDIA CALCULATOR ═══════════ */
 let calcListingPrice = 0;
+let calcLastRec = null;
+let calcLastAddons = [];
+let calcLastBudget = 0;
 
 function calcFormatPrice(input){
   let raw = input.value.replace(/[^0-9]/g,'');
@@ -2160,6 +2164,12 @@ function calcShowResults(){
   }
 
   pkgEl.innerHTML = html;
+  
+  // Store for budget builder bridge
+  calcLastRec = rec;
+  calcLastAddons = addons;
+  calcLastBudget = highBudget;
+
   calcGoStep(2);
 }
 
@@ -2209,6 +2219,37 @@ function calcSubmit(){
   calcGoStep(4);
 }
 
+/* ═══════════ CALC → BUDGET BUILDER BRIDGE ═══════════ */
+function calcToBudgetBuilder(){
+  // Set the budget to the calculator's recommended high end
+  bbBudget = calcLastBudget;
+  
+  // Pre-fill the budget input
+  const budgetInput = document.getElementById('bb-budget');
+  budgetInput.value = '$' + bbBudget.toLocaleString('en-CA');
+  document.getElementById('bb-btn1').disabled = false;
+  
+  // Build the options list
+  bbShowOptions();
+  
+  // Pre-select the recommended items
+  const itemsToSelect = [calcLastRec.name, ...calcLastAddons.map(a => a.name)];
+  document.querySelectorAll('#bb-options .bb-item').forEach(el => {
+    if(itemsToSelect.includes(el.dataset.name)){
+      el.classList.add('selected');
+      const name = el.dataset.name;
+      const price = Number(el.dataset.price);
+      if(!bbSelected.find(s => s.name === name)){
+        bbSelected.push({name, price});
+      }
+    }
+  });
+  bbUpdateBar();
+  
+  // Scroll to budget builder
+  document.getElementById('budget-builder').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
 /* ═══════════ BUDGET BUILDER ═══════════ */
 let bbBudget = 0;
 let bbSelected = [];
@@ -2221,9 +2262,10 @@ const BB_SERVICES = [
     {name:'Luxury Estate Photos',price:325,desc:'60+ photos, detail shots, white glove service'},
   ]},
   {cat:'Video',items:[
-    {name:'Basic Walkthrough Video',price:250,desc:'30-45 sec vertical reel, music + colour grade'},
-    {name:'Cinematic Listing Video',price:450,desc:'60-90 sec cinematic, drone b-roll available'},
-    {name:'Luxury Property Film',price:650,desc:'2-3 min cinematic film, full production'},
+    {name:'Basic Walkthrough Video',price:250,desc:'Up to 30 sec vertical reel, music + colour grade'},
+    {name:'Standard Listing Video',price:350,desc:'Up to 30 sec cinematic video, colour graded'},
+    {name:'Cinematic Listing Video',price:450,desc:'Up to 60 sec cinematic, drone b-roll available'},
+    {name:'Luxury Property Film',price:650,desc:'60+ sec cinematic film, full production'},
   ]},
   {cat:'Bundles',items:[
     {name:'Starter Listing Bundle',price:375,desc:'30 photos + 30 sec reel'},
